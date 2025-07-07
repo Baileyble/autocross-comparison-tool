@@ -1175,8 +1175,8 @@
 
         function generateShareableURL() {
             const baseURL = window.location.origin + window.location.pathname;
-            const video1 = encodeURIComponent(document.getElementById('video1Url').value);
-            const video2 = encodeURIComponent(document.getElementById('video2Url').value);
+            const video1 = document.getElementById('video1Url').value;
+            const video2 = document.getElementById('video2Url').value;
             const start1 = document.getElementById('video1Start').value;
             const start2 = document.getElementById('video2Start').value;
             
@@ -1185,6 +1185,7 @@
                 return;
             }
             
+            // URLSearchParams will handle encoding automatically
             const params = new URLSearchParams({
                 v1: video1,
                 v2: video2,
