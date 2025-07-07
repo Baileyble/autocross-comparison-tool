@@ -867,6 +867,64 @@
             justify-content: flex-end;
         }
 
+        /* Compact mode for mobile */
+        .compact-mode .panel-header,
+        .compact-mode .panel-footer,
+        .compact-mode .size-adjuster,
+        .compact-mode .dashboard-header {
+            display: none !important;
+        }
+
+        .compact-mode {
+            padding: 0.5rem !important;
+        }
+
+        .compact-mode .video-grid {
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .compact-mode .video-panel {
+            border-radius: 0;
+        }
+
+        .compact-mode .video-frame {
+            height: calc(50vh - 60px) !important;
+        }
+
+        .compact-mode .playback-controls {
+            padding: 0.75rem;
+            margin-bottom: 0;
+            border-radius: 0;
+        }
+
+        .compact-mode .controls-grid {
+            margin-bottom: 0;
+        }
+
+        .compact-mode .control-btn {
+            padding: 0.75rem;
+        }
+
+        .compact-mode .control-icon {
+            font-size: 1.25rem;
+        }
+
+        .compact-mode .control-text {
+            display: none;
+        }
+
+        .exit-compact {
+            position: fixed;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 1000;
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .header-content {
@@ -885,6 +943,11 @@
 
             .btn {
                 width: 100%;
+            }
+            
+            /* Auto-enable compact mode on small screens */
+            .analysis-dashboard.active {
+                position: relative;
             }
         }
     </style>
@@ -982,6 +1045,10 @@
                 <button id="fullscreenBtn" class="btn btn-secondary" style="display: none;">
                     <span>⛶</span>
                     Fullscreen View
+                </button>
+                <button id="compactBtn" class="btn btn-secondary" style="display: none;">
+                    <span>📱</span>
+                    Compact Mode
                 </button>
             </div>
         </div>
@@ -1119,6 +1186,7 @@
         let players = [];
         let apiReady = false;
         let isFullscreen = false;
+        let isCompact = false;
         let timeUpdateInterval;
         let sliderValue = 100;
 
@@ -1302,6 +1370,7 @@
                 document.getElementById('emptyDashboard').style.display = 'none';
                 document.getElementById('analysisDashboard').classList.add('active');
                 document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('compactBtn').style.display = 'inline-flex';
                 
                 // Update timers
                 document.getElementById('timer1').textContent = formatTime(video1StartTime);
@@ -1328,7 +1397,13 @@
                     'start': Math.floor(video1StartTime),
                     'controls': 1,
                     'rel': 0,
-                    'modestbranding': 1
+                    'modestbranding': 1,
+                    'fs': 1,
+                    'iv_load_policy': 3,  // Disable video annotations
+                    'disablekb': 0,
+                    'playsinline': 1,     // Better mobile support
+                    'cc_load_policy': 0,  // Hide closed captions by default
+                    'origin': window.location.origin
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -1344,7 +1419,13 @@
                     'start': Math.floor(video2StartTime),
                     'controls': 1,
                     'rel': 0,
-                    'modestbranding': 1
+                    'modestbranding': 1,
+                    'fs': 1,
+                    'iv_load_policy': 3,  // Disable video annotations
+                    'disablekb': 0,
+                    'playsinline': 1,     // Better mobile support
+                    'cc_load_policy': 0,  // Hide closed captions by default
+                    'origin': window.location.origin
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -1502,6 +1583,35 @@
             }
         }
 
+        function toggleCompact() {
+            const container = document.querySelector('.dashboard-container');
+            const btn = document.getElementById('compactBtn');
+            
+            if (isCompact) {
+                container.classList.remove('compact-mode');
+                btn.innerHTML = '<span>📱</span> Compact Mode';
+                // Remove exit button if exists
+                const exitBtn = document.querySelector('.exit-compact');
+                if (exitBtn) exitBtn.remove();
+                isCompact = false;
+            } else {
+                container.classList.add('compact-mode');
+                btn.innerHTML = '<span>📱</span> Exit Compact';
+                
+                // Add floating exit button for mobile
+                const exitBtn = document.createElement('button');
+                exitBtn.className = 'btn btn-secondary exit-compact';
+                exitBtn.innerHTML = '✕ Exit';
+                exitBtn.onclick = toggleCompact;
+                container.appendChild(exitBtn);
+                
+                isCompact = true;
+                
+                // Scroll to video section
+                document.getElementById('analysisDashboard').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadFromURLParams();
@@ -1511,6 +1621,7 @@
             // Event listeners
             document.getElementById('loadVideosBtn').onclick = loadVideos;
             document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
+            document.getElementById('compactBtn').onclick = toggleCompact;
             document.getElementById('playBtn').onclick = playBoth;
             document.getElementById('pauseBtn').onclick = pauseBoth;
             document.getElementById('restartBtn').onclick = restartBoth;
