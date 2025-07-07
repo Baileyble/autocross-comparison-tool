@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RACE METRICS | Performance Analysis Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Bebas+Neue&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        :root {
+            --accent-orange: #ff6b35;
+            --accent-teal: #00d9ff;
+            --accent-lime: #a8ff00;
+            --warning-red: #ff3366;
+            --deep-black: #000000;
+            --surface-dark: #0a0a0a;
+            --surface-mid: #151515;
+            --surface-light: #1f1f1f;
+            --border-color: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #606060;
+            --gradient-1: linear-gradient(135deg, #ff6b35 0%, #ff3366 100%);
+            --gradient-2: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
+            --gradient-3: linear-gradient(135deg, #a8ff00 0%, #00d9ff 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--deep-black);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background mesh */
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .mesh-gradient {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background: radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(168, 255, 0, 0.05) 0%, transparent 50%);
+            animation: meshRotate 30s linear infinite;
+        }
+
+        @keyframes meshRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Data stream effect */
+        .data-streams {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .stream {
+            position: absolute;
+            width: 1px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--accent-teal), transparent);
+            animation: dataFlow 3s linear infinite;
+        }
+
+        .stream:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .stream:nth-child(2) { left: 30%; animation-delay: 0.5s; }
+        .stream:nth-child(3) { left: 50%; animation-delay: 1s; }
+        .stream:nth-child(4) { left: 70%; animation-delay: 1.5s; }
+        .stream:nth-child(5) { left: 90%; animation-delay: 2s; }
+
+        @keyframes dataFlow {
+            0% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        /* Dashboard header */
+        .dashboard-header {
+            background: var(--surface-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            letter-spacing: 0.1em;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-lime);
+            border-radius: 50%;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(168, 255, 0, 0.7);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(168, 255, 0, 0);
+            }
+        }
+
+        .status-text {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Main container */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Configuration section */
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .config-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-card {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .config-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-orange);
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.1);
+        }
+
+        .config-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .config-card:nth-child(2)::before {
+            background: var(--gradient-2);
+        }
+
+        .config-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            background: var(--surface-mid);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .run-badge {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .config-card:nth-child(2) .run-badge {
+            background: var(--gradient-2);
+        }
+
+        .run-badge::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            background: rgba(0, 217, 255, 0.05);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+        }
+
+        /* Control center */
+        .control-center {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+        }
+
+        .control-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--surface-mid);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-teal);
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Analysis dashboard */
+        .analysis-dashboard {
+            display: none;
+            opacity: 0;
+        }
+
+        .analysis-dashboard.active {
+            display: block;
+            animation: dashboardReveal 1s ease-out forwards;
+        }
+
+        @keyframes dashboardReveal {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-panel {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .panel-header {
+            background: var(--surface-mid);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .run-chip {
+            background: var(--gradient-1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .video-panel:nth-child(2) .run-chip {
+            background: var(--gradient-2);
+        }
+
+        .timer {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.125rem;
+            color: var(--accent-lime);
+            background: var(--surface-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--accent-lime);
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(168, 255, 0, 0.3), transparent);
+            animation: timerSweep 2s linear infinite;
+        }
+
+        @keyframes timerSweep {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .video-frame {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border: none;
+        }
+
+        .panel-footer {
+            background: var(--surface-mid);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .metrics {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            color: var(--accent-teal);
+            font-weight: 600;
+        }
+
+        .sync-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sync {
+            padding: 0.5rem 1rem;
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sync:hover {
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+            background: rgba(168, 255, 0, 0.1);
+        }
+
+        /* Playback controls */
+        .playback-controls {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            background: var(--surface-light);
+            border-color: var(--accent-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.2);
+        }
+
+        .control-icon {
+            font-size: 1.5rem;
+        }
+
+        .control-text {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Size adjustment */
+        .size-adjuster {
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .adjuster-label {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 80px;
+        }
+
+        .slider-track {
+            flex: 1;
+            height: 6px;
+            background: var(--surface-dark);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--gradient-3);
+            border-radius: 3px;
+            width: 50%;
+            transition: width 0.3s ease;
+        }
+
+        .slider-thumb {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .slider-thumb:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 4px 20px rgba(168, 255, 0, 0.4);
+        }
+
+        .size-value {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.25rem;
+            color: var(--accent-lime);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Empty state */
+        .empty-dashboard {
+            text-align: center;
+            padding: 6rem 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.4s forwards;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            filter: grayscale(1);
+            opacity: 0.2;
+        }
+
+        .empty-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+        }
+
+        .empty-desc {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--surface-light);
+            border-radius: 50%;
+            border-top-color: var(--accent-orange);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Fullscreen mode */
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--deep-black);
+            z-index: 9999;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fullscreen-mode .video-grid {
+            flex: 1;
+        }
+
+        .fullscreen-mode .video-frame {
+            height: calc(50vh - 120px);
+        }
+
+        .exit-fullscreen {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10000;
+        }
+
+        /* Share modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            animation: modalScale 0.3s ease-out;
+        }
+
+        @keyframes modalScale {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            margin: 0;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-body {
+            margin-bottom: 2rem;
+        }
+
+        .share-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .control-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh">
+        <div class="mesh-gradient"></div>
+    </div>
+
+    <div class="data-streams">
+        <div class="stream"></div>
+        <div class="stream"></div>
+        <div class="stream"></div>
+        <div class="stream"></div>
+        <div class="stream"></div>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1 class="logo">RACE METRICS</h1>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">System Online</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Configuration Section -->
+        <div class="config-section">
+            <div class="config-card">
+                <div class="card-header">
+                    <div class="card-label">
+                        <div class="run-badge">A</div>
+                        <div>
+                            <h3 class="card-title">Run A Configuration</h3>
+                            <p class="card-subtitle">First Performance Run</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">YouTube Video URL</label>
+                        <input type="text" class="form-input" id="video1Url" 
+                               placeholder="https://www.youtube.com/watch?v=..." 
+                               value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Start Time (Seconds)</label>
+                        <input type="number" class="form-input" id="video1Start" 
+                               min="0" step="0.1" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="card-header">
+                    <div class="card-label">
+                        <div class="run-badge">B</div>
+                        <div>
+                            <h3 class="card-title">Run B Configuration</h3>
+                            <p class="card-subtitle">Second Performance Run</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">YouTube Video URL</label>
+                        <input type="text" class="form-input" id="video2Url" 
+                               placeholder="https://www.youtube.com/watch?v=..." 
+                               value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Start Time (Seconds)</label>
+                        <input type="number" class="form-input" id="video2Start" 
+                               min="0" step="0.1" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Center -->
+        <div class="control-center">
+            <div class="control-actions">
+                <button id="loadVideosBtn" class="btn btn-primary">
+                    <span>🚀</span>
+                    <span id="loadBtnText">Launch Analysis</span>
+                </button>
+                <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()">
+                    <span>🔗</span>
+                    Share Configuration
+                </button>
+                <button id="fullscreenBtn" class="btn btn-secondary" style="display: none;">
+                    <span>⛶</span>
+                    Fullscreen View
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyDashboard" class="empty-dashboard">
+            <div class="empty-icon">📊</div>
+            <h2 class="empty-title">NO DATA LOADED</h2>
+            <p class="empty-desc">Configure both runs and launch analysis to begin performance comparison</p>
+        </div>
+
+        <!-- Analysis Dashboard -->
+        <div id="analysisDashboard" class="analysis-dashboard">
+            <div class="video-grid">
+                <div class="video-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="run-chip">RUN A</span>
+                            <span>Performance Analysis</span>
+                        </div>
+                        <div class="timer" id="timer1">00:00.00</div>
+                    </div>
+                    <iframe id="iframe1" class="video-frame" style="display: none;" allowfullscreen></iframe>
+                    <div id="player1" class="video-frame"></div>
+                    <div class="panel-footer">
+                        <div class="metrics">
+                            <div class="metric">
+                                <span class="metric-label">Status</span>
+                                <span class="metric-value" id="status1">READY</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Elapsed</span>
+                                <span class="metric-value" id="elapsed1">0.0s</span>
+                            </div>
+                        </div>
+                        <div class="sync-buttons">
+                            <button class="btn-sync" onclick="adjustTime(1, -0.1)">-0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(1, 0.1)">+0.1s</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="run-chip">RUN B</span>
+                            <span>Performance Analysis</span>
+                        </div>
+                        <div class="timer" id="timer2">00:00.00</div>
+                    </div>
+                    <iframe id="iframe2" class="video-frame" style="display: none;" allowfullscreen></iframe>
+                    <div id="player2" class="video-frame"></div>
+                    <div class="panel-footer">
+                        <div class="metrics">
+                            <div class="metric">
+                                <span class="metric-label">Status</span>
+                                <span class="metric-value" id="status2">READY</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Elapsed</span>
+                                <span class="metric-value" id="elapsed2">0.0s</span>
+                            </div>
+                        </div>
+                        <div class="sync-buttons">
+                            <button class="btn-sync" onclick="adjustTime(2, -0.1)">-0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(2, 0.1)">+0.1s</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="playback-controls">
+                <div class="controls-grid">
+                    <button class="control-btn" id="playBtn">
+                        <span class="control-icon">▶</span>
+                        <span class="control-text">Play</span>
+                    </button>
+                    <button class="control-btn" id="pauseBtn">
+                        <span class="control-icon">⏸</span>
+                        <span class="control-text">Pause</span>
+                    </button>
+                    <button class="control-btn" id="restartBtn">
+                        <span class="control-icon">↺</span>
+                        <span class="control-text">Restart</span>
+                    </button>
+                    <button class="control-btn" id="rewindBtn">
+                        <span class="control-icon">⏪</span>
+                        <span class="control-text">-5 Sec</span>
+                    </button>
+                </div>
+
+                <div class="size-adjuster">
+                    <span class="adjuster-label">View Size</span>
+                    <div class="slider-track" id="sliderTrack">
+                        <div class="slider-fill" id="sliderFill"></div>
+                        <div class="slider-thumb" id="sliderThumb"></div>
+                    </div>
+                    <span class="size-value" id="sizeValue">100%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 class="modal-title">SHARE CONFIGURATION</h2>
+            </div>
+            <div class="modal-body">
+                <p>Copy this URL to share your analysis configuration:</p>
+                <input type="text" class="share-input" id="shareUrl" readonly>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeShareModal()">Close</button>
+                <button class="btn btn-primary" onclick="copyShareUrl()">Copy URL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let player1, player2;
+        let video1StartTime = 0;
+        let video2StartTime = 0;
+        let players = [];
+        let apiReady = false;
+        let isFullscreen = false;
+        let timeUpdateInterval;
+        let sliderValue = 100;
+
+        // Initialize custom slider
+        function initializeSlider() {
+            const track = document.getElementById('sliderTrack');
+            const thumb = document.getElementById('sliderThumb');
+            const fill = document.getElementById('sliderFill');
+            const valueDisplay = document.getElementById('sizeValue');
+            
+            let isDragging = false;
+            
+            function updateSlider(e) {
+                const rect = track.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                const value = Math.round(50 + (percentage / 100) * 100);
+                
+                sliderValue = value;
+                thumb.style.left = percentage + '%';
+                fill.style.width = percentage + '%';
+                valueDisplay.textContent = value + '%';
+                
+                // Update video sizes
+                const frames = document.querySelectorAll('.video-frame');
+                frames.forEach(frame => {
+                    frame.style.height = (400 * value / 100) + 'px';
+                });
+            }
+            
+            thumb.addEventListener('mousedown', () => { isDragging = true; });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) updateSlider(e);
+            });
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            track.addEventListener('click', updateSlider);
+        }
+
+        // URL Parameter handling
+        function loadFromURLParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            const video1 = urlParams.get('v1') || urlParams.get('video1');
+            const video2 = urlParams.get('v2') || urlParams.get('video2');
+            const start1 = urlParams.get('t1') || urlParams.get('start1');
+            const start2 = urlParams.get('t2') || urlParams.get('start2');
+            const autoload = urlParams.get('autoload') || urlParams.get('auto');
+            
+            if (video1) document.getElementById('video1Url').value = video1;
+            if (video2) document.getElementById('video2Url').value = video2;
+            if (start1) document.getElementById('video1Start').value = parseFloat(start1);
+            if (start2) document.getElementById('video2Start').value = parseFloat(start2);
+            
+            if (autoload === 'true' && video1 && video2) {
+                setTimeout(() => { loadVideos(); }, 1000);
+            }
+        }
+
+        function generateShareableURL() {
+            const baseURL = window.location.origin + window.location.pathname;
+            const video1 = encodeURIComponent(document.getElementById('video1Url').value);
+            const video2 = encodeURIComponent(document.getElementById('video2Url').value);
+            const start1 = document.getElementById('video1Start').value;
+            const start2 = document.getElementById('video2Start').value;
+            
+            if (!video1 || !video2) {
+                alert('Please enter both YouTube URLs before sharing');
+                return;
+            }
+            
+            const params = new URLSearchParams({
+                v1: video1,
+                v2: video2,
+                t1: start1,
+                t2: start2,
+                autoload: 'true'
+            });
+            
+            return `${baseURL}?${params.toString()}`;
+        }
+
+        function showShareModal() {
+            const shareURL = generateShareableURL();
+            if (!shareURL) return;
+            
+            document.getElementById('shareUrl').value = shareURL;
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.remove('active');
+        }
+
+        function copyShareUrl() {
+            const shareUrl = document.getElementById('shareUrl');
+            shareUrl.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.background = 'var(--gradient-3)';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        // YouTube API
+        function onYouTubeIframeAPIReady() {
+            apiReady = true;
+            updateApiStatus(true);
+        }
+
+        function updateApiStatus(ready) {
+            const loadBtn = document.getElementById('loadVideosBtn');
+            const btnText = document.getElementById('loadBtnText');
+            const statusText = document.querySelector('.status-text');
+            
+            if (ready) {
+                btnText.textContent = 'Launch Analysis';
+                loadBtn.disabled = false;
+                statusText.textContent = 'System Online';
+            } else {
+                btnText.innerHTML = '<span class="loading"></span> Loading API';
+                loadBtn.disabled = true;
+                statusText.textContent = 'Initializing...';
+            }
+        }
+
+        function extractVideoId(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length === 11) ? match[7] : false;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+        }
+
+        function loadVideos() {
+            const video1Url = document.getElementById('video1Url').value;
+            const video2Url = document.getElementById('video2Url').value;
+            video1StartTime = parseFloat(document.getElementById('video1Start').value) || 0;
+            video2StartTime = parseFloat(document.getElementById('video2Start').value) || 0;
+            
+            const videoId1 = extractVideoId(video1Url);
+            const videoId2 = extractVideoId(video2Url);
+            
+            if (!videoId1 || !videoId2) {
+                alert('Please enter valid YouTube URLs');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            setTimeout(() => {
+                if (apiReady) {
+                    loadWithAPI(videoId1, videoId2);
+                } else {
+                    loadWithIframes(videoId1, videoId2);
+                }
+                
+                // Hide loading and show dashboard
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('emptyDashboard').style.display = 'none';
+                document.getElementById('analysisDashboard').classList.add('active');
+                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                
+                // Update timers
+                document.getElementById('timer1').textContent = formatTime(video1StartTime);
+                document.getElementById('timer2').textContent = formatTime(video2StartTime);
+            }, 1000);
+        }
+
+        function loadWithAPI(videoId1, videoId2) {
+            console.log('Loading with YouTube API');
+            
+            document.getElementById('iframe1').style.display = 'none';
+            document.getElementById('iframe2').style.display = 'none';
+            document.getElementById('player1').style.display = 'block';
+            document.getElementById('player2').style.display = 'block';
+            
+            if (player1) player1.destroy();
+            if (player2) player2.destroy();
+
+            player1 = new YT.Player('player1', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId1,
+                playerVars: {
+                    'start': Math.floor(video1StartTime),
+                    'controls': 1,
+                    'rel': 0,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+            
+            player2 = new YT.Player('player2', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId2,
+                playerVars: {
+                    'start': Math.floor(video2StartTime),
+                    'controls': 1,
+                    'rel': 0,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+            
+            players = [player1, player2];
+            enableSyncControls(true);
+        }
+
+        function loadWithIframes(videoId1, videoId2) {
+            console.log('Loading with iframe fallback');
+            
+            document.getElementById('player1').style.display = 'none';
+            document.getElementById('player2').style.display = 'none';
+            document.getElementById('iframe1').style.display = 'block';
+            document.getElementById('iframe2').style.display = 'block';
+            
+            const embedUrl1 = `https://www.youtube.com/embed/${videoId1}?start=${Math.floor(video1StartTime)}&autoplay=0&controls=1&rel=0`;
+            const embedUrl2 = `https://www.youtube.com/embed/${videoId2}?start=${Math.floor(video2StartTime)}&autoplay=0&controls=1&rel=0`;
+            
+            document.getElementById('iframe1').src = embedUrl1;
+            document.getElementById('iframe2').src = embedUrl2;
+            
+            document.getElementById('status1').textContent = 'IFRAME MODE';
+            document.getElementById('status2').textContent = 'IFRAME MODE';
+            
+            enableSyncControls(false);
+        }
+
+        function enableSyncControls(enable) {
+            const buttons = ['playBtn', 'pauseBtn', 'restartBtn', 'rewindBtn'];
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                btn.disabled = !enable;
+                btn.style.opacity = enable ? '1' : '0.5';
+                btn.title = enable ? '' : 'Sync controls require API';
+            });
+        }
+
+        function onPlayerReady(event) {
+            if (event.target === player1) {
+                player1.seekTo(video1StartTime, true);
+                updateStatus(1, 'READY');
+            } else if (event.target === player2) {
+                player2.seekTo(video2StartTime, true);
+                updateStatus(2, 'READY');
+            }
+            
+            if (!timeUpdateInterval) {
+                timeUpdateInterval = setInterval(updateVideoTimes, 100);
+            }
+        }
+
+        function updateVideoTimes() {
+            if (player1 && player1.getCurrentTime) {
+                const currentTime = player1.getCurrentTime();
+                const elapsedTime = currentTime - video1StartTime;
+                document.getElementById('timer1').textContent = formatTime(currentTime);
+                document.getElementById('elapsed1').textContent = elapsedTime.toFixed(1) + 's';
+            }
+            
+            if (player2 && player2.getCurrentTime) {
+                const currentTime = player2.getCurrentTime();
+                const elapsedTime = currentTime - video2StartTime;
+                document.getElementById('timer2').textContent = formatTime(currentTime);
+                document.getElementById('elapsed2').textContent = elapsedTime.toFixed(1) + 's';
+            }
+        }
+
+        function updateStatus(playerNum, status) {
+            document.getElementById(`status${playerNum}`).textContent = status;
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                updateStatus(event.target === player1 ? 1 : 2, 'PLAYING');
+                players.forEach(player => {
+                    if (player !== event.target && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        player.playVideo();
+                    }
+                });
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                updateStatus(event.target === player1 ? 1 : 2, 'PAUSED');
+                players.forEach(player => {
+                    if (player !== event.target && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                        player.pauseVideo();
+                    }
+                });
+            }
+        }
+
+        // Playback controls
+        function playBoth() {
+            if (!apiReady) return;
+            players.forEach(player => {
+                if (player && player.playVideo) {
+                    player.playVideo();
+                }
+            });
+        }
+        
+        function pauseBoth() {
+            if (!apiReady) return;
+            players.forEach(player => {
+                if (player && player.pauseVideo) {
+                    player.pauseVideo();
+                }
+            });
+        }
+        
+        function restartBoth() {
+            if (!apiReady) return;
+            if (player1) player1.seekTo(video1StartTime, true);
+            if (player2) player2.seekTo(video2StartTime, true);
+            setTimeout(playBoth, 100);
+        }
+        
+        function rewindBoth() {
+            if (!apiReady) return;
+            players.forEach(player => {
+                if (player && player.getCurrentTime && player.seekTo) {
+                    const currentTime = player.getCurrentTime();
+                    const targetTime = Math.max(currentTime - 5, player === player1 ? video1StartTime : video2StartTime);
+                    player.seekTo(targetTime, true);
+                }
+            });
+        }
+
+        function adjustTime(playerNum, adjustment) {
+            if (playerNum === 1) {
+                video1StartTime = Math.max(0, video1StartTime + adjustment);
+                document.getElementById('video1Start').value = video1StartTime.toFixed(1);
+                if (player1) player1.seekTo(video1StartTime, true);
+            } else {
+                video2StartTime = Math.max(0, video2StartTime + adjustment);
+                document.getElementById('video2Start').value = video2StartTime.toFixed(1);
+                if (player2) player2.seekTo(video2StartTime, true);
+            }
+        }
+
+        function toggleFullscreen() {
+            const dashboard = document.getElementById('analysisDashboard');
+            const btn = document.getElementById('fullscreenBtn');
+            
+            if (isFullscreen) {
+                dashboard.classList.remove('fullscreen-mode');
+                btn.innerHTML = '<span>⛶</span> Fullscreen View';
+                isFullscreen = false;
+            } else {
+                dashboard.classList.add('fullscreen-mode');
+                btn.innerHTML = '<span>⛶</span> Exit Fullscreen';
+                isFullscreen = true;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromURLParams();
+            updateApiStatus(false);
+            initializeSlider();
+            
+            // Event listeners
+            document.getElementById('loadVideosBtn').onclick = loadVideos;
+            document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
+            document.getElementById('playBtn').onclick = playBoth;
+            document.getElementById('pauseBtn').onclick = pauseBoth;
+            document.getElementById('restartBtn').onclick = restartBoth;
+            document.getElementById('rewindBtn').onclick = rewindBoth;
+            
+            // Close modal on background click
+            document.getElementById('shareModal').onclick = function(e) {
+                if (e.target === this) closeShareModal();
+            };
+        });
+    </script>
+</body>
+</html>
