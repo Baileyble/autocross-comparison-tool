@@ -171,11 +171,27 @@
         .compact-mode .control-text { display:none; }
         .exit-compact { position:fixed; top:.5rem; right:.5rem; z-index:1000; background:var(--surface-dark); border:1px solid var(--border-color); padding:.5rem 1rem; border-radius:6px; }
 
-        @media (max-width:768px){ .header-content{flex-direction:column; gap:1rem; text-align:center} .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} 
-.video-grid{grid-template-columns:1fr} 
-.panel-footer{flex-direction:column; align-items:stretch; gap:0.75rem;} 
-.sync-wrap{align-items:stretch} .sync-buttons{flex-wrap:wrap} 
-.start-offset .form-input{width:100px} } .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} }
+        @media (max-width:768px){
+  .header-content{flex-direction:column; gap:1rem; text-align:center}
+  .logo{font-size:2.5rem}
+  .control-actions{flex-direction:column}
+  .btn{width:100%}
+  .video-grid{grid-template-columns:1fr}
+  .panel-footer{flex-direction:column; align-items:stretch; gap:0.75rem;}
+  .sync-wrap{align-items:stretch}
+  .sync-buttons{flex-wrap:wrap}
+  .start-offset .form-input{width:100px}
+}
+.logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} }
+            /* Desktop-only hotkey help */
+        .hotkey-toggle { position:fixed; right:1.25rem; bottom:1.25rem; z-index:10001; padding:.6rem .8rem; border:1px solid var(--border-color); border-radius:999px; background:var(--surface-mid); color:var(--text-primary); font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.35); }
+        .hotkey-toggle:hover { background:var(--surface-light); }
+        .hotkey-panel { position:fixed; right:1.25rem; bottom:4.25rem; width:320px; max-width:85vw; z-index:10001; background:var(--surface-dark); border:1px solid var(--border-color); border-radius:12px; padding:1rem 1rem 1.25rem; box-shadow:0 16px 40px rgba(0,0,0,.5); opacity:0; transform:translateY(10px); transition:.2s ease; pointer-events:none; }
+        .hotkey-panel.show { opacity:1; transform:translateY(0); pointer-events:auto; }
+        .hotkey-panel h4 { margin:.25rem 0 .5rem; font-family:'Bebas Neue',sans-serif; letter-spacing:.04em; font-size:1.25rem; }
+        .hotkey-grid { display:grid; grid-template-columns:auto 1fr; gap:.35rem .75rem; font-family:'Share Tech Mono',monospace; font-size:.9rem; }
+        .keycap { display:inline-block; padding:.1rem .45rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); }
+        @media (max-width:768px){ .hotkey-toggle, .hotkey-panel { display:none !important; } }
     </style>
 </head>
 <body>
@@ -341,6 +357,22 @@
 
     <!-- Floating Exit Fullscreen Button -->
     <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen">⤢ Exit Fullscreen</button>
+    <!-- Desktop-only Hotkey Help -->
+    <button id="hotkeyToggle" class="hotkey-toggle" title="Keyboard Shortcuts">?</button>
+    <div id="hotkeyPanel" class="hotkey-panel" aria-hidden="true">
+        <h4>Keyboard Shortcuts</h4>
+        <div class="hotkey-grid">
+            <span class="keycap">Space</span><span>Play / Pause</span>
+            <span class="keycap">R</span><span>Restart</span>
+            <span class="keycap">J</span><span>Rewind 5s</span>
+            <span class="keycap">L</span><span>Forward 5s</span>
+            <span class="keycap">F</span><span>Toggle Fullscreen</span>
+            <span class="keycap">[</span><span>Run A −0.1s (Shift −1.0s)</span>
+            <span class="keycap">]</span><span>Run A +0.1s (Shift +1.0s)</span>
+            <span class="keycap">;</span><span>Run B −0.1s (Shift −1.0s)</span>
+            <span class="keycap">'</span><span>Run B +0.1s (Shift +1.0s)</span>
+        </div>
+    </div>
 
     <script>
         // Globals
@@ -473,20 +505,20 @@
         function playBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.playVideo) p.playVideo(); }); }
         function pauseBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.pauseVideo) p.pauseVideo(); }); }
         function restartBoth(){ if(!apiReady) return; if(player1) player1.seekTo(video1StartTime,true); if(player2) player2.seekTo(video2StartTime,true); setTimeout(playBoth,100); }
-        function rewindBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const base = (p===player1?video1StartTime:video2StartTime); const ct=p.getCurrentTime(); const target=Math.max(ct-5, base); p.seekTo(target,true); } }); }
-function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const ct=p.getCurrentTime(); p.seekTo(ct+5,true); } }); } }); }
+        function rewindBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const base=(p===player1?video1StartTime:video2StartTime); const ct=p.getCurrentTime(); const target=Math.max(ct-5, base); p.seekTo(target,true); } }); }
+        function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const ct=p.getCurrentTime(); p.seekTo(ct+5,true); } }); }
         function adjustTime(playerNum, adj){
-    if(playerNum===1){
-        video1StartTime = Math.max(0, +(video1StartTime + adj).toFixed(1));
-        const i1 = document.getElementById('offsetInput1'); if(i1) i1.value = video1StartTime.toFixed(1);
-        if(player1) player1.seekTo(video1StartTime,true);
-    } else {
-        video2StartTime = Math.max(0, +(video2StartTime + adj).toFixed(1));
-        const i2 = document.getElementById('offsetInput2'); if(i2) i2.value = video2StartTime.toFixed(1);
-        if(player2) player2.seekTo(video2StartTime,true);
-    }
-    updateOffsetDisplays();
-} else { video2StartTime=Math.max(0, video2StartTime + adj); if(player2) player2.seekTo(video2StartTime,true); } updateOffsetDisplays(); }
+            if(playerNum===1){
+                video1StartTime = Math.max(0, +(video1StartTime + adj).toFixed(1));
+                const i1 = document.getElementById('offsetInput1'); if(i1) i1.value = video1StartTime.toFixed(1);
+                if(player1) player1.seekTo(video1StartTime,true);
+            } else {
+                video2StartTime = Math.max(0, +(video2StartTime + adj).toFixed(1));
+                const i2 = document.getElementById('offsetInput2'); if(i2) i2.value = video2StartTime.toFixed(1);
+                if(player2) player2.seekTo(video2StartTime,true);
+            }
+            updateOffsetDisplays();
+        }
 
         function toggleFullscreen(){
     const dashboard=document.getElementById('analysisDashboard');
@@ -501,13 +533,13 @@ function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCu
         isFullscreen=false;
     } else {
         dashboard.classList.add('fullscreen-mode');
-        // On mobile, fullscreen also applies compact UI
         if(window.innerWidth <= 768){ container.classList.add('compact-mode'); }
         btn.innerHTML='<span>⛶</span>Exit Fullscreen';
         exitBtn.classList.add('show');
         isFullscreen=true;
     }
-} else {
+}
+ else {
                 dashboard.classList.add('fullscreen-mode');
                 btn.innerHTML='<span>⛶</span>Exit Fullscreen';
                 exitBtn.classList.add('show');
@@ -527,8 +559,7 @@ function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCu
             document.getElementById('analysisDashboard').classList.remove('active');
             document.getElementById('emptyDashboard').style.display='block';
             document.getElementById('fullscreenBtn').style.display='none';
-            document.getElementById('compactBtn').style.display='none';
-            document.getElementById('resetBtn').style.display='none';
+                        document.getElementById('resetBtn').style.display='none';
             // Exit fullscreen/compact if needed
             if(isFullscreen){ toggleFullscreen(); }
             
@@ -581,18 +612,19 @@ function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCu
         // Offsets: Run B ; / ' (shift for ±1.0)
         else if(e.key===';'){ adjustTime(2, e.shiftKey ? -1.0 : -0.1); }
         else if(e.key==="'"){ adjustTime(2, e.shiftKey ? +1.0 : +0.1); }
+        // Toggle hotkey panel with ?
+        else if(e.key==='?' || (e.shiftKey && e.key==='/' )){ const t=document.getElementById('hotkeyToggle'); if(t) t.click(); }
+        else if(e.key==='Escape'){ const p=document.getElementById('hotkeyPanel'); if(p) p.classList.remove('show'); }
     });
-}); updateApiStatus(false); initializeSlider(); updateOffsetDisplays();
-            document.getElementById('loadVideosBtn').onclick = loadVideos;
-            document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
-            document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
-                        document.getElementById('playBtn').onclick = playBoth;
-            document.getElementById('pauseBtn').onclick = pauseBoth;
-            document.getElementById('restartBtn').onclick = restartBoth;
-            document.getElementById('rewindBtn').onclick = rewindBoth;
-            document.getElementById('resetBtn').onclick = resetAll;
-            document.getElementById('shareModal').onclick = (e)=>{ if(e.target===e.currentTarget) closeShareModal(); };
-        });
-    </script>
+    // Hotkey help wiring (desktop only)
+    const hkToggle = document.getElementById('hotkeyToggle');
+    const hkPanel = document.getElementById('hotkeyPanel');
+    if(hkToggle && hkPanel){
+        const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); };
+        hkToggle.addEventListener('click', togglePanel);
+        document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } });
+    }
+});
+</script>
 </body>
 </html>
