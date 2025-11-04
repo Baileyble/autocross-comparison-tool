@@ -38,8 +38,8 @@
         .mesh-gradient {
             position: absolute; width: 300%; height: 300%; top: -100%; left: -100%;
             background: radial-gradient(circle at 20% 80%, rgba(255,107,53,.1) 0%, transparent 55%),
-                        radial-gradient(circle at 80% 20%, rgba(0,217,255,.1) 0%, transparent 55%),
-                        radial-gradient(circle at 40% 40%, rgba(168,255,0,.06) 0%, transparent 60%);
+            radial-gradient(circle at 80% 20%, rgba(0,217,255,.1) 0%, transparent 55%),
+            radial-gradient(circle at 40% 40%, rgba(168,255,0,.06) 0%, transparent 60%);
             animation: meshRotate 30s linear infinite;
             will-change: transform;
         }
@@ -146,7 +146,7 @@
         .fullscreen-mode .video-grid { flex:1; }
         .fullscreen-mode .video-frame { height:calc(50vh - 120px); }
         .exit-fullscreen { padding:.5rem 1rem; }
-        
+
 
         /* Share modal */
         .modal { position:fixed; inset:0; background:rgba(0,0,0,.95); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; z-index:10000; }
@@ -173,182 +173,182 @@
         .exit-compact { position:fixed; top:.5rem; right:.5rem; z-index:1000; background:var(--surface-dark); border:1px solid var(--border-color); padding:.5rem 1rem; border-radius:6px; }
 
         @media (max-width:768px){
-  .header-content{flex-direction:column; gap:1rem; text-align:center}
-  .logo{font-size:2.5rem}
-  .control-actions{flex-direction:column}
-  .btn{width:100%}
-  .video-grid{grid-template-columns:1fr}
-  .panel-footer{flex-direction:column; align-items:stretch; gap:0.75rem;}
-  .sync-wrap{align-items:stretch}
-  .sync-buttons{flex-wrap:wrap}
-  .start-offset .form-input{width:100px}
-}
-.logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} }
-            /* Desktop-only hotkey help */
+            .header-content{flex-direction:column; gap:1rem; text-align:center}
+            .logo{font-size:2.5rem}
+            .control-actions{flex-direction:column}
+            .btn{width:100%}
+            .video-grid{grid-template-columns:1fr}
+            .panel-footer{flex-direction:column; align-items:stretch; gap:0.75rem;}
+            .sync-wrap{align-items:stretch}
+            .sync-buttons{flex-wrap:wrap}
+            .start-offset .form-input{width:100px}
+        }
+        .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%}
+        /* Desktop-only hotkey help */
         .hotkey-toggle, .hotkey-panel { display:none !important; }
         .hotkey-footer{ margin:2rem auto; max-width:1000px; border-top:1px solid var(--border-color); padding:1.25rem 2rem; color:var(--text-secondary); }
         .hotkey-footer h3{ font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; font-size:1.5rem; color:var(--text-primary); margin-bottom:.75rem; }
         .hotkey-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.5rem 1rem; }
-        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; } }
+        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; }
     </style>
 </head>
 <body>
-    <div class="bg-mesh"><div class="mesh-gradient"></div></div>
-    <div class="data-streams"><div class="stream"></div><div class="stream"></div><div class="stream"></div><div class="stream"></div><div class="stream"></div></div>
+<div class="bg-mesh"><div class="mesh-gradient"></div></div>
+<div class="data-streams"><div class="stream"></div><div class="stream"></div><div class="stream"></div><div class="stream"></div><div class="stream"></div></div>
 
-    <header class="dashboard-header">
-        <div class="header-content">
-            <div class="logo-section">
-                <h1 class="logo">RaceCompare</h1>
-            </div>
-            <div class="status-indicator"><span class="status-dot"></span><span class="status-text">System Online</span></div>
+<header class="dashboard-header">
+    <div class="header-content">
+        <div class="logo-section">
+            <h1 class="logo">RaceCompare</h1>
         </div>
-    </header>
+        <div class="status-indicator"><span class="status-dot"></span><span class="status-text">System Online</span></div>
+    </div>
+</header>
 
-    <div class="dashboard-container">
-        <!-- Configuration Section -->
-        <div class="config-section">
-            <div class="config-card">
-                <div class="card-header">
-                    <div class="card-label">
-                        <div class="run-badge">A</div>
-                        <div>
-                            <h3 class="card-title">Run A Configuration</h3>
-                            <p class="card-subtitle">First Performance Run</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label class="form-label">YouTube Video URL</label>
-                        <input type="text" class="form-input" id="video1Url" placeholder="https://www.youtube.com/watch?v=..." value="" />
+<div class="dashboard-container">
+    <!-- Configuration Section -->
+    <div class="config-section">
+        <div class="config-card">
+            <div class="card-header">
+                <div class="card-label">
+                    <div class="run-badge">A</div>
+                    <div>
+                        <h3 class="card-title">Run A Configuration</h3>
+                        <p class="card-subtitle">First Performance Run</p>
                     </div>
                 </div>
             </div>
-            <div class="config-card">
-                <div class="card-header">
-                    <div class="card-label">
-                        <div class="run-badge">B</div>
-                        <div>
-                            <h3 class="card-title">Run B Configuration</h3>
-                            <p class="card-subtitle">Second Performance Run</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label class="form-label">YouTube Video URL</label>
-                        <input type="text" class="form-input" id="video2Url" placeholder="https://www.youtube.com/watch?v=..." value="" />
-                    </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">YouTube Video URL</label>
+                    <input type="text" class="form-input" id="video1Url" placeholder="https://www.youtube.com/watch?v=..." value="" />
                 </div>
             </div>
         </div>
-
-        <!-- Control Center -->
-        <div class="control-center">
-            <div class="control-actions">
-                <button id="loadVideosBtn" class="btn btn-primary"><span>🚀</span><span id="loadBtnText">Launch Analysis</span></button>
-                <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()"><span>🔗</span>Share Configuration</button>
-                <button id="fullscreenBtn" class="btn btn-secondary" style="display:none;"><span>⛶</span>Fullscreen View</button>
-                <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen" style="display:none;">⤢ Exit Fullscreen</button>
-                <button id="resetBtn" class="btn btn-secondary" style="display:none;">↺ Reset</button>
-            </div>
-        </div>
-
-        <div id="emptyDashboard" class="empty-dashboard">
-            <div class="empty-icon">📊</div>
-            <h2 class="empty-title">NO DATA LOADED</h2>
-            <p class="empty-desc">Paste two YouTube links and launch analysis to begin side‑by‑side comparison.</p>
-        </div>
-
-        <div id="analysisDashboard" class="analysis-dashboard">
-            <div class="video-grid">
-                <div class="video-panel">
-                    <div class="panel-header">
-                        <div class="panel-title"><span class="run-chip">RUN A</span><span>Performance Analysis</span></div>
-                        <div class="timer" id="timer1">00:00.00</div>
-                    </div>
-                    <iframe id="iframe1" class="video-frame" style="display:none;" allowfullscreen></iframe>
-                    <div id="player1" class="video-frame"></div>
-                    <div class="panel-footer">
-                        <div class="metrics">
-                            <div class="metric"><span class="metric-label">Status</span><span class="metric-value" id="status1">READY</span></div>
-                            <div class="metric"><span class="metric-label">Elapsed</span><span class="metric-value" id="elapsed1">0.0s</span></div>
-                        </div>
-                        <div class="sync-wrap">
-                            <div class="sync-buttons">
-                                <button class="btn-sync" onclick="adjustTime(1,-1)">-1s</button>
-                                <button class="btn-sync" onclick="adjustTime(1,-0.1)">-0.1s</button>
-                                <button class="btn-sync" onclick="adjustTime(1,0.1)">+0.1s</button>
-                                <button class="btn-sync" onclick="adjustTime(1,1)">+1s</button>
-                            </div>
-                            <label class="start-offset">Start Offset:
-    <input type="number" step="0.1" min="0" id="offsetInput1" class="form-input" style="width:120px;display:inline-block;margin-left:.5rem;" value="0.0" /> s
-</label>
-                        </div>
+        <div class="config-card">
+            <div class="card-header">
+                <div class="card-label">
+                    <div class="run-badge">B</div>
+                    <div>
+                        <h3 class="card-title">Run B Configuration</h3>
+                        <p class="card-subtitle">Second Performance Run</p>
                     </div>
                 </div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">YouTube Video URL</label>
+                    <input type="text" class="form-input" id="video2Url" placeholder="https://www.youtube.com/watch?v=..." value="" />
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="video-panel">
-                    <div class="panel-header">
-                        <div class="panel-title"><span class="run-chip">RUN B</span><span>Performance Analysis</span></div>
-                        <div class="timer" id="timer2">00:00.00</div>
+    <!-- Control Center -->
+    <div class="control-center">
+        <div class="control-actions">
+            <button id="loadVideosBtn" class="btn btn-primary"><span>🚀</span><span id="loadBtnText">Launch Analysis</span></button>
+            <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()"><span>🔗</span>Share Configuration</button>
+            <button id="fullscreenBtn" class="btn btn-secondary" style="display:none;"><span>⛶</span>Fullscreen View</button>
+            <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen" style="display:none;">⤢ Exit Fullscreen</button>
+            <button id="resetBtn" class="btn btn-secondary" style="display:none;">↺ Reset</button>
+        </div>
+    </div>
+
+    <div id="emptyDashboard" class="empty-dashboard">
+        <div class="empty-icon">📊</div>
+        <h2 class="empty-title">NO DATA LOADED</h2>
+        <p class="empty-desc">Paste two YouTube links and launch analysis to begin side‑by‑side comparison.</p>
+    </div>
+
+    <div id="analysisDashboard" class="analysis-dashboard">
+        <div class="video-grid">
+            <div class="video-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><span class="run-chip">RUN A</span><span>Performance Analysis</span></div>
+                    <div class="timer" id="timer1">00:00.00</div>
+                </div>
+                <iframe id="iframe1" class="video-frame" style="display:none;" allowfullscreen></iframe>
+                <div id="player1" class="video-frame"></div>
+                <div class="panel-footer">
+                    <div class="metrics">
+                        <div class="metric"><span class="metric-label">Status</span><span class="metric-value" id="status1">READY</span></div>
+                        <div class="metric"><span class="metric-label">Elapsed</span><span class="metric-value" id="elapsed1">0.0s</span></div>
                     </div>
-                    <iframe id="iframe2" class="video-frame" style="display:none;" allowfullscreen></iframe>
-                    <div id="player2" class="video-frame"></div>
-                    <div class="panel-footer">
-                        <div class="metrics">
-                            <div class="metric"><span class="metric-label">Status</span><span class="metric-value" id="status2">READY</span></div>
-                            <div class="metric"><span class="metric-label">Elapsed</span><span class="metric-value" id="elapsed2">0.0s</span></div>
+                    <div class="sync-wrap">
+                        <div class="sync-buttons">
+                            <button class="btn-sync" onclick="adjustTime(1,-1)">-1s</button>
+                            <button class="btn-sync" onclick="adjustTime(1,-0.1)">-0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(1,0.1)">+0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(1,1)">+1s</button>
                         </div>
-                        <div class="sync-wrap">
-                            <div class="sync-buttons">
-                                <button class="btn-sync" onclick="adjustTime(2,-1)">-1s</button>
-                                <button class="btn-sync" onclick="adjustTime(2,-0.1)">-0.1s</button>
-                                <button class="btn-sync" onclick="adjustTime(2,0.1)">+0.1s</button>
-                                <button class="btn-sync" onclick="adjustTime(2,1)">+1s</button>
-                            </div>
-                            <label class="start-offset">Start Offset:
-    <input type="number" step="0.1" min="0" id="offsetInput2" class="form-input" style="width:120px;display:inline-block;margin-left:.5rem;" value="0.0" /> s
-</label>
-                        </div>
+                        <label class="start-offset">Start Offset:
+                            <input type="number" step="0.1" min="0" id="offsetInput1" class="form-input" style="width:120px;display:inline-block;margin-left:.5rem;" value="0.0" /> s
+                        </label>
                     </div>
                 </div>
             </div>
 
-            <div class="playback-controls">
-                <div class="controls-grid">
-                    <button class="control-btn" id="playBtn"><span class="control-icon">▶</span><span class="control-text">Play</span></button>
-                    <button class="control-btn" id="pauseBtn"><span class="control-icon">⏸</span><span class="control-text">Pause</span></button>
-                    <button class="control-btn" id="restartBtn"><span class="control-icon">↺</span><span class="control-text">Restart</span></button>
-                    <button class="control-btn" id="rewindBtn"><span class="control-icon">⏪</span><span class="control-text">-5 Sec</span></button>
+            <div class="video-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><span class="run-chip">RUN B</span><span>Performance Analysis</span></div>
+                    <div class="timer" id="timer2">00:00.00</div>
                 </div>
-                <div class="size-adjuster">
-                    <span class="adjuster-label">View Size</span>
-                    <div class="slider-track" id="sliderTrack">
-                        <div class="slider-fill" id="sliderFill"></div>
-                        <div class="slider-thumb" id="sliderThumb"></div>
+                <iframe id="iframe2" class="video-frame" style="display:none;" allowfullscreen></iframe>
+                <div id="player2" class="video-frame"></div>
+                <div class="panel-footer">
+                    <div class="metrics">
+                        <div class="metric"><span class="metric-label">Status</span><span class="metric-value" id="status2">READY</span></div>
+                        <div class="metric"><span class="metric-label">Elapsed</span><span class="metric-value" id="elapsed2">0.0s</span></div>
                     </div>
-                    <span class="size-value" id="sizeValue">100%</span>
+                    <div class="sync-wrap">
+                        <div class="sync-buttons">
+                            <button class="btn-sync" onclick="adjustTime(2,-1)">-1s</button>
+                            <button class="btn-sync" onclick="adjustTime(2,-0.1)">-0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(2,0.1)">+0.1s</button>
+                            <button class="btn-sync" onclick="adjustTime(2,1)">+1s</button>
+                        </div>
+                        <label class="start-offset">Start Offset:
+                            <input type="number" step="0.1" min="0" id="offsetInput2" class="form-input" style="width:120px;display:inline-block;margin-left:.5rem;" value="0.0" /> s
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Keyboard Shortcuts (Footer) -->
-        <section class="hotkey-footer" aria-label="Keyboard Shortcuts">
-            <h3>Keyboard Shortcuts</h3>
-            <div class="hotkey-list">
-                <div><code>Space</code> Play / Pause</div>
-                <div><code>R</code> Restart</div>
-                <div><code>J</code> Rewind 5s</div>
-                <div><code>L</code> Forward 5s</div>
-                <div><code>F</code> Toggle Fullscreen</div>
-                <div><code>[</code> Run A −0.1s (Shift −1.0s)</div>
-                <div><code>]</code> Run A +0.1s (Shift +1.0s)</div>
-                <div><code>;</code> Run B −0.1s (Shift −1.0s)</div>
-                <div><code>'</code> Run B +0.1s (Shift +1.0s)</div>
+        <div class="playback-controls">
+            <div class="controls-grid">
+                <button class="control-btn" id="playBtn"><span class="control-icon">▶</span><span class="control-text">Play</span></button>
+                <button class="control-btn" id="pauseBtn"><span class="control-icon">⏸</span><span class="control-text">Pause</span></button>
+                <button class="control-btn" id="restartBtn"><span class="control-icon">↺</span><span class="control-text">Restart</span></button>
+                <button class="control-btn" id="rewindBtn"><span class="control-icon">⏪</span><span class="control-text">-5 Sec</span></button>
             </div>
-        </section>
+            <div class="size-adjuster">
+                <span class="adjuster-label">View Size</span>
+                <div class="slider-track" id="sliderTrack">
+                    <div class="slider-fill" id="sliderFill"></div>
+                    <div class="slider-thumb" id="sliderThumb"></div>
+                </div>
+                <span class="size-value" id="sizeValue">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts (Footer) -->
+    <section class="hotkey-footer" aria-label="Keyboard Shortcuts">
+        <h3>Keyboard Shortcuts</h3>
+        <div class="hotkey-list">
+            <div><code>Space</code> Play / Pause</div>
+            <div><code>R</code> Restart</div>
+            <div><code>J</code> Rewind 5s</div>
+            <div><code>L</code> Forward 5s</div>
+            <div><code>F</code> Toggle Fullscreen</div>
+            <div><code>[</code> Run A −0.1s (Shift −1.0s)</div>
+            <div><code>]</code> Run A +0.1s (Shift +1.0s)</div>
+            <div><code>;</code> Run B −0.1s (Shift −1.0s)</div>
+            <div><code>'</code> Run B +0.1s (Shift +1.0s)</div>
+        </div>
+    </section>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay"><div class="loader"></div></div>
@@ -386,6 +386,7 @@
             <span class="keycap">'</span><span>Run B +0.1s (Shift +1.0s)</span>
         </div>
     </div>
+</div>
 
     <script>
         // Globals
@@ -399,35 +400,35 @@
         let timeUpdateInterval;
         let sliderValue = 100;
         let requestFullscreenOnLoad = false;
-// Robust YT API loader
-let apiInjected = false; // ensure single injection
-let apiFallback = false; // remember if we fell back to iframes
-function ensureYouTubeAPI(){
-    return new Promise((resolve)=>{
-        // Already available
-        if (window.YT && window.YT.Player){ apiReady = true; resolve(true); return; }
-        // Make sure the script is present once
-        if(!apiInjected){
-            const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
-            if(existing){ apiInjected = true; }
-            else {
-                const s = document.createElement('script');
-                s.src = 'https://www.youtube.com/iframe_api';
-                s.async = true;
-                s.onerror = () => { apiReady = false; apiFallback = true; resolve(false); };
-                document.head.appendChild(s);
-                apiInjected = true;
-            }
+        // Robust YT API loader
+        let apiInjected = false; // ensure single injection
+        let apiFallback = false; // remember if we fell back to iframes
+        function ensureYouTubeAPI(){
+            return new Promise((resolve)=>{
+                // Already available
+                if (window.YT && window.YT.Player){ apiReady = true; resolve(true); return; }
+                // Make sure the script is present once
+                if(!apiInjected){
+                    const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
+                    if(existing){ apiInjected = true; }
+                    else {
+                        const s = document.createElement('script');
+                        s.src = 'https://www.youtube.com/iframe_api';
+                        s.async = true;
+                        s.onerror = () => { apiReady = false; apiFallback = true; resolve(false); };
+                        document.head.appendChild(s);
+                        apiInjected = true;
+                    }
+                }
+                // Poll up to ~4s for YT to appear; otherwise fall back
+                const start = Date.now();
+                (function poll(){
+                    if (window.YT && window.YT.Player){ apiReady = true; resolve(true); }
+                    else if (Date.now() - start > 4000){ apiFallback = true; resolve(false); }
+                    else { setTimeout(poll, 100); }
+                })();
+            });
         }
-        // Poll up to ~4s for YT to appear; otherwise fall back
-        const start = Date.now();
-        (function poll(){
-            if (window.YT && window.YT.Player){ apiReady = true; resolve(true); }
-            else if (Date.now() - start > 4000){ apiFallback = true; resolve(false); }
-            else { setTimeout(poll, 100); }
-        })();
-    });
-}
 
 
         // Custom slider
@@ -487,63 +488,83 @@ function ensureYouTubeAPI(){
         function extractVideoId(url){ const regExp=/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/; const m=url.match(regExp); return (m && m[7].length===11) ? m[7] : false; }
         function formatTime(seconds){ const mins=Math.floor(seconds/60); const secs=Math.floor(seconds%60); const ms=Math.floor((seconds%1)*100); return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(ms).padStart(2,'0')}`; }
 
-        function loadVideos(){
-    const video1Url = document.getElementById('video1Url').value.trim();
-    const video2Url = document.getElementById('video2Url').value.trim();
-    const videoId1 = extractVideoId(video1Url);
-    const videoId2 = extractVideoId(video2Url);
-    if(!videoId1 || !videoId2){ alert('Please enter valid YouTube URLs'); return; }
+        function loadVideos() {
+            const video1Url = document.getElementById('video1Url').value.trim();
+            const video2Url = document.getElementById('video2Url').value.trim();
+            const videoId1 = extractVideoId(video1Url);
+            const videoId2 = extractVideoId(video2Url);
+            if (!videoId1 || !videoId2) {
+                alert('Please enter valid YouTube URLs');
+                return;
+            }
 
-    const overlay = document.getElementById('loadingOverlay');
-    overlay.style.display = 'flex';
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
 
-    ensureYouTubeAPI().then((ready)=>{
-        // Clean old players if any before loading
-        try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
-        try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
-        player1 = player2 = null; players = [];
+            ensureYouTubeAPI().then((ready) => {
+                // Clean old players if any before loading
+                try {
+                    if (player1 && player1.destroy) player1.destroy();
+                } catch {
+                }
+                try {
+                    if (player2 && player2.destroy) player2.destroy();
+                } catch {
+                }
+                player1 = player2 = null;
+                players = [];
 
-        if(ready){
-            loadWithAPI(videoId1, videoId2);
-        } else {
-            loadWithIframes(videoId1, videoId2);
-        }
+                if (ready) {
+                    loadWithAPI(videoId1, videoId2);
+                } else {
+                    loadWithIframes(videoId1, videoId2);
+                }
 
-        // Reveal UI once embeds are set
-        document.getElementById('emptyDashboard').style.display='none';
-        document.getElementById('analysisDashboard').classList.add('active');
-        document.getElementById('fullscreenBtn').style.display='inline-flex';
-        document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
-        document.getElementById('resetBtn').style.display='inline-flex';
-        document.getElementById('timer1').textContent = formatTime(video1StartTime);
-        document.getElementById('timer2').textContent = formatTime(video2StartTime);
-    }).catch(()=>{
-        // Hard fallback: if anything throws, use iframes
-        loadWithIframes(videoId1, videoId2);
-        document.getElementById('emptyDashboard').style.display='none';
-        document.getElementById('analysisDashboard').classList.add('active');
-        document.getElementById('fullscreenBtn').style.display='inline-flex';
-        document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
-        document.getElementById('resetBtn').style.display='inline-flex';
-        document.getElementById('timer1').textContent = formatTime(video1StartTime);
-        document.getElementById('timer2').textContent = formatTime(video2StartTime);
-    }).finally(()=>{
-        overlay.style.display = 'none';
-        if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
-    });
-}
-            document.getElementById('loadingOverlay').style.display='flex';
-            setTimeout(()=>{
-                if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
-                document.getElementById('loadingOverlay').style.display='none';
-                document.getElementById('emptyDashboard').style.display='none';
+                // Reveal UI once embeds are set
+                document.getElementById('emptyDashboard').style.display = 'none';
                 document.getElementById('analysisDashboard').classList.add('active');
-                document.getElementById('fullscreenBtn').style.display='inline-flex';
-                                document.getElementById('resetBtn').style.display='inline-flex';
-                document.getElementById('timer1').textContent=formatTime(video1StartTime);
-                document.getElementById('timer2').textContent=formatTime(video2StartTime);
-                if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
-            }, 600);
+                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
+                document.getElementById('resetBtn').style.display = 'inline-flex';
+                document.getElementById('timer1').textContent = formatTime(video1StartTime);
+                document.getElementById('timer2').textContent = formatTime(video2StartTime);
+            }).catch(() => {
+                // Hard fallback: if anything throws, use iframes
+                loadWithIframes(videoId1, videoId2);
+                document.getElementById('emptyDashboard').style.display = 'none';
+                document.getElementById('analysisDashboard').classList.add('active');
+                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
+                document.getElementById('resetBtn').style.display = 'inline-flex';
+                document.getElementById('timer1').textContent = formatTime(video1StartTime);
+                document.getElementById('timer2').textContent = formatTime(video2StartTime);
+            }).finally(() => {
+                overlay.style.display = 'none';
+                if (requestFullscreenOnLoad) {
+                    requestFullscreenOnLoad = false;
+                    if (!isFullscreen) toggleFullscreen();
+                }
+            });
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            setTimeout(() => {
+                if (apiReady) {
+                    loadWithAPI(videoId1, videoId2);
+                } else {
+                    loadWithIframes(videoId1, videoId2);
+                }
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('emptyDashboard').style.display = 'none';
+                document.getElementById('analysisDashboard').classList.add('active');
+                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('resetBtn').style.display = 'inline-flex';
+                document.getElementById('timer1').textContent = formatTime(video1StartTime);
+                document.getElementById('timer2').textContent = formatTime(video2StartTime);
+                if (requestFullscreenOnLoad) {
+                    requestFullscreenOnLoad = false;
+                    if (!isFullscreen) toggleFullscreen();
+                }
+            }, 600)
         }
 
         function loadWithAPI(videoId1, videoId2){
@@ -572,11 +593,11 @@ function ensureYouTubeAPI(){
         function onPlayerReady(e){ if(e.target===player1){ player1.seekTo(video1StartTime,true); updateStatus(1,'READY'); } else { player2.seekTo(video2StartTime,true); updateStatus(2,'READY'); } if(!timeUpdateInterval){ timeUpdateInterval=setInterval(updateVideoTimes,100); } }
         function formatOffset(v){ return (Math.round(v*10)/10).toFixed(1)+'s'; }
         function updateOffsetDisplays(){
-    const i1 = document.getElementById('offsetInput1');
-    const i2 = document.getElementById('offsetInput2');
-    if(i1) i1.value = (Math.round(video1StartTime*10)/10).toFixed(1);
-    if(i2) i2.value = (Math.round(video2StartTime*10)/10).toFixed(1);
-}
+            const i1 = document.getElementById('offsetInput1');
+            const i2 = document.getElementById('offsetInput2');
+            if(i1) i1.value = (Math.round(video1StartTime*10)/10).toFixed(1);
+            if(i2) i2.value = (Math.round(video2StartTime*10)/10).toFixed(1);
+        }
         function updateVideoTimes(){
             if(player1 && player1.getCurrentTime){ const ct=player1.getCurrentTime(); const el=ct - video1StartTime; document.getElementById('timer1').textContent=formatTime(ct); document.getElementById('elapsed1').textContent=(Math.max(0,el)).toFixed(1)+'s'; }
             if(player2 && player2.getCurrentTime){ const ct=player2.getCurrentTime(); const el=ct - video2StartTime; document.getElementById('timer2').textContent=formatTime(ct); document.getElementById('elapsed2').textContent=(Math.max(0,el)).toFixed(1)+'s'; }
@@ -604,184 +625,183 @@ function ensureYouTubeAPI(){
         }
 
         function toggleFullscreen(){
-    const dashboard = document.getElementById('analysisDashboard');
-    const btn = document.getElementById('fullscreenBtn');
-    const exitBtn = document.getElementById('exitFullscreenBtn');
-    const container = document.querySelector('.dashboard-container');
+            const dashboard = document.getElementById('analysisDashboard');
+            const btn = document.getElementById('fullscreenBtn');
+            const exitBtn = document.getElementById('exitFullscreenBtn');
+            const container = document.querySelector('.dashboard-container');
 
-    if (isFullscreen) {
-        // EXIT fullscreen
-        dashboard.classList.remove('fullscreen-mode');
-        container.classList.remove('compact-mode');
-        if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
-        if (exitBtn) exitBtn.style.display = 'none';
-        isFullscreen = false;
-    } else {
-        // ENTER fullscreen (mobile also gets compact UI)
-        dashboard.classList.add('fullscreen-mode');
-        if (window.innerWidth <= 768) { container.classList.add('compact-mode'); }
-        if (btn) btn.innerHTML = '<span>⛶</span>Exit Fullscreen';
-        if (exitBtn) exitBtn.style.display = 'inline-flex';
-        isFullscreen = true;
-    }
-}
+            if (isFullscreen) {
+                // EXIT fullscreen
+                dashboard.classList.remove('fullscreen-mode');
+                container.classList.remove('compact-mode');
+                if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
+                if (exitBtn) exitBtn.style.display = 'none';
+                isFullscreen = false;
+            } else {
+                // ENTER fullscreen (mobile also gets compact UI)
+                dashboard.classList.add('fullscreen-mode');
+                if (window.innerWidth <= 768) { container.classList.add('compact-mode'); }
+                if (btn) btn.innerHTML = '<span>⛶</span>Exit Fullscreen';
+                if (exitBtn) exitBtn.style.display = 'inline-flex';
+                isFullscreen = true;
+            }
+        }
 
-function resetAll(){
-    try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
-    try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
-    player1 = player2 = null; players = [];
-    clearInterval(timeUpdateInterval); timeUpdateInterval = null;
-    document.getElementById('iframe1').src = ''; document.getElementById('iframe2').src='';
-    document.getElementById('analysisDashboard').classList.remove('active');
-    document.getElementById('emptyDashboard').style.display='block';
-    document.getElementById('fullscreenBtn').style.display='none';
-    document.getElementById('exitFullscreenBtn').style.display='none';
-    document.getElementById('resetBtn').style.display='none';
-    if(isFullscreen){ toggleFullscreen(); }
-    video1StartTime = 0; video2StartTime = 0; updateOffsetDisplays();
-    document.getElementById('timer1').textContent='00:00.00';
-    document.getElementById('timer2').textContent='00:00.00';
-    document.getElementById('elapsed1').textContent='0.0s';
-    document.getElementById('elapsed2').textContent='0.0s';
-    document.getElementById('status1').textContent='READY';
-    document.getElementById('status2').textContent='READY';
-    document.getElementById('video1Url').value='';
-    document.getElementById('video2Url').value='';
-    document.getElementById('player1').style.display='block';
-    document.getElementById('player2').style.display='block';
-    document.getElementById('iframe1').style.display='none';
-    document.getElementById('iframe2').style.display='none';
-    // Clear URL params
-    if(window.history && window.history.replaceState){ window.history.replaceState(null, '', window.location.pathname); }
-    requestFullscreenOnLoad = false;
-}
+        function resetAll(){
+            try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
+            try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
+            player1 = player2 = null; players = [];
+            clearInterval(timeUpdateInterval); timeUpdateInterval = null;
+            document.getElementById('iframe1').src = ''; document.getElementById('iframe2').src='';
+            document.getElementById('analysisDashboard').classList.remove('active');
+            document.getElementById('emptyDashboard').style.display='block';
+            document.getElementById('fullscreenBtn').style.display='none';
+            document.getElementById('exitFullscreenBtn').style.display='none';
+            document.getElementById('resetBtn').style.display='none';
+            if(isFullscreen){ toggleFullscreen(); }
+            video1StartTime = 0; video2StartTime = 0; updateOffsetDisplays();
+            document.getElementById('timer1').textContent='00:00.00';
+            document.getElementById('timer2').textContent='00:00.00';
+            document.getElementById('elapsed1').textContent='0.0s';
+            document.getElementById('elapsed2').textContent='0.0s';
+            document.getElementById('status1').textContent='READY';
+            document.getElementById('status2').textContent='READY';
+            document.getElementById('video1Url').value='';
+            document.getElementById('video2Url').value='';
+            document.getElementById('player1').style.display='block';
+            document.getElementById('player2').style.display='block';
+            document.getElementById('iframe1').style.display='none';
+            document.getElementById('iframe2').style.display='none';
+            // Clear URL params
+            if(window.history && window.history.replaceState){ window.history.replaceState(null, '', window.location.pathname); }
+            requestFullscreenOnLoad = false;
+        }
 
         // Init
         document.addEventListener('DOMContentLoaded', ()=>{
-    loadFromURLParams(); updateApiStatus(false); /* initializeSlider(); */ updateOffsetDisplays();
-    document.getElementById('loadVideosBtn').onclick = loadVideos;
-    document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
-    document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
-    document.getElementById('playBtn').onclick = playBoth;
-    document.getElementById('pauseBtn').onclick = pauseBoth;
-    document.getElementById('restartBtn').onclick = restartBoth;
-    document.getElementById('rewindBtn').onclick = rewindBoth;
-    document.getElementById('resetBtn').onclick = resetAll;
-    document.getElementById('shareModal').onclick = (e)=>{ if(e.target===e.currentTarget) closeShareModal(); };
-    const i1=document.getElementById('offsetInput1'); const i2=document.getElementById('offsetInput2');
-    if(i1){ i1.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i1.value)||0); video1StartTime=+v.toFixed(1); if(player1) player1.seekTo(video1StartTime,true); updateOffsetDisplays(); }); }
-    if(i2){ i2.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i2.value)||0); video2StartTime=+v.toFixed(1); if(player2) player2.seekTo(video2StartTime,true); updateOffsetDisplays(); }); }
-    document.addEventListener('keydown', (e)=>{
-        const tag=(e.target && e.target.tagName)||''; if(tag==='INPUT' || tag==='TEXTAREA') return;
-        if(e.key===' '){ e.preventDefault(); if(player1 && player1.getPlayerState && player1.getPlayerState()===YT.PlayerState.PLAYING){ pauseBoth(); } else { playBoth(); } return; }
-        if(e.key==='j'||e.key==='J'){ rewindBoth(); return; }
-        if(e.key==='l'||e.key==='L'){ forwardBoth(); return; }
-        if(e.key==='r'||e.key==='R'){ restartBoth(); return; }
-        if(e.key==='f'||e.key==='F'){ toggleFullscreen(); return; }
-        if(e.key==='['){ adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
-        if(e.key===']'){ adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
-        if(e.key===';'){ adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
-        if(e.key==="'"){ adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
-        if(e.key==='?' || (e.shiftKey && e.key==='/' )){ const t=document.getElementById('hotkeyToggle'); if(t) t.click(); return; }
-        if(e.key==='Escape'){ const p=document.getElementById('hotkeyPanel'); if(p) p.classList.remove('show'); return; }
-    });
-    const hkToggle = document.getElementById('hotkeyToggle'); const hkPanel = document.getElementById('hotkeyPanel');
-    if(hkToggle && hkPanel){ const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); }; hkToggle.addEventListener('click', togglePanel); document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } }); }
-});
-    updateApiStatus(false);
-    initializeSlider();
-    updateOffsetDisplays();
-
-    // Button wiring
-    const byId = (id) => document.getElementById(id);
-    byId('loadVideosBtn').onclick = loadVideos;
-    byId('fullscreenBtn').onclick = toggleFullscreen;
-    byId('exitFullscreenBtn').onclick = toggleFullscreen;
-    byId('playBtn').onclick = playBoth;
-    byId('pauseBtn').onclick = pauseBoth;
-    byId('restartBtn').onclick = restartBoth;
-    byId('rewindBtn').onclick = rewindBoth;
-    byId('resetBtn').onclick = resetAll;
-
-    // Share modal backdrop click
-    byId('shareModal').onclick = (e) => { if (e.target === e.currentTarget) closeShareModal(); };
-
-    // Offset input listeners
-    const i1 = byId('offsetInput1');
-    const i2 = byId('offsetInput2');
-    if (i1) {
-        i1.addEventListener('change', () => {
-            const v = Math.max(0, parseFloat(i1.value) || 0);
-            video1StartTime = +v.toFixed(1);
-            if (player1) player1.seekTo(video1StartTime, true);
-            updateOffsetDisplays();
+            loadFromURLParams(); updateApiStatus(false); /* initializeSlider(); */ updateOffsetDisplays();
+            document.getElementById('loadVideosBtn').onclick = loadVideos;
+            document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
+            document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
+            document.getElementById('playBtn').onclick = playBoth;
+            document.getElementById('pauseBtn').onclick = pauseBoth;
+            document.getElementById('restartBtn').onclick = restartBoth;
+            document.getElementById('rewindBtn').onclick = rewindBoth;
+            document.getElementById('resetBtn').onclick = resetAll;
+            document.getElementById('shareModal').onclick = (e)=>{ if(e.target===e.currentTarget) closeShareModal(); };
+            const i1=document.getElementById('offsetInput1'); const i2=document.getElementById('offsetInput2');
+            if(i1){ i1.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i1.value)||0); video1StartTime=+v.toFixed(1); if(player1) player1.seekTo(video1StartTime,true); updateOffsetDisplays(); }); }
+            if(i2){ i2.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i2.value)||0); video2StartTime=+v.toFixed(1); if(player2) player2.seekTo(video2StartTime,true); updateOffsetDisplays(); }); }
+            document.addEventListener('keydown', (e)=>{
+                const tag=(e.target && e.target.tagName)||''; if(tag==='INPUT' || tag==='TEXTAREA') return;
+                if(e.key===' '){ e.preventDefault(); if(player1 && player1.getPlayerState && player1.getPlayerState()===YT.PlayerState.PLAYING){ pauseBoth(); } else { playBoth(); } return; }
+                if(e.key==='j'||e.key==='J'){ rewindBoth(); return; }
+                if(e.key==='l'||e.key==='L'){ forwardBoth(); return; }
+                if(e.key==='r'||e.key==='R'){ restartBoth(); return; }
+                if(e.key==='f'||e.key==='F'){ toggleFullscreen(); return; }
+                if(e.key==='['){ adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
+                if(e.key===']'){ adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
+                if(e.key===';'){ adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
+                if(e.key==="'"){ adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
+                if(e.key==='?' || (e.shiftKey && e.key==='/' )){ const t=document.getElementById('hotkeyToggle'); if(t) t.click(); return; }
+                if(e.key==='Escape'){ const p=document.getElementById('hotkeyPanel'); if(p) p.classList.remove('show'); return; }
+            });
+            const hkToggle = document.getElementById('hotkeyToggle'); const hkPanel = document.getElementById('hotkeyPanel');
+            if(hkToggle && hkPanel){ const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); }; hkToggle.addEventListener('click', togglePanel); document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } }); }
         });
-    }
-    if (i2) {
-        i2.addEventListener('change', () => {
-            const v = Math.max(0, parseFloat(i2.value) || 0);
-            video2StartTime = +v.toFixed(1);
-            if (player2) player2.seekTo(video2StartTime, true);
-            updateOffsetDisplays();
-        });
-    }
+        updateApiStatus(false);
+        initializeSlider();
+        updateOffsetDisplays();
 
-    // Keyboard shortcuts (ignored while typing in inputs/textareas)
-    document.addEventListener('keydown', (e) => {
-        const tag = (e.target && e.target.tagName) || '';
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        // Button wiring
+        const byId = (id) => document.getElementById(id);
+        byId('loadVideosBtn').onclick = loadVideos;
+        byId('fullscreenBtn').onclick = toggleFullscreen;
+        byId('exitFullscreenBtn').onclick = toggleFullscreen;
+        byId('playBtn').onclick = playBoth;
+        byId('pauseBtn').onclick = pauseBoth;
+        byId('restartBtn').onclick = restartBoth;
+        byId('rewindBtn').onclick = rewindBoth;
+        byId('resetBtn').onclick = resetAll;
 
-        // Space toggles play/pause
-        if (e.key === ' ') {
-            e.preventDefault();
-            if (player1 && player1.getPlayerState && player1.getPlayerState() === YT.PlayerState.PLAYING) {
-                pauseBoth();
-            } else {
-                playBoth();
+        // Share modal backdrop click
+        byId('shareModal').onclick = (e) => { if (e.target === e.currentTarget) closeShareModal(); };
+
+        // Offset input listeners
+        const i1 = byId('offsetInput1');
+        const i2 = byId('offsetInput2');
+        if (i1) {
+            i1.addEventListener('change', () => {
+                const v = Math.max(0, parseFloat(i1.value) || 0);
+                video1StartTime = +v.toFixed(1);
+                if (player1) player1.seekTo(video1StartTime, true);
+                updateOffsetDisplays();
+            });
+        }
+        if (i2) {
+            i2.addEventListener('change', () => {
+                const v = Math.max(0, parseFloat(i2.value) || 0);
+                video2StartTime = +v.toFixed(1);
+                if (player2) player2.seekTo(video2StartTime, true);
+                updateOffsetDisplays();
+            });
+        }
+
+        // Keyboard shortcuts (ignored while typing in inputs/textareas)
+        document.addEventListener('keydown', (e) => {
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+            // Space toggles play/pause
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (player1 && player1.getPlayerState && player1.getPlayerState() === YT.PlayerState.PLAYING) {
+                    pauseBoth();
+                } else {
+                    playBoth();
+                }
+                return;
             }
-            return;
-        }
 
-        if (e.key === 'j' || e.key === 'J') { rewindBoth(); return; }
-        if (e.key === 'l' || e.key === 'L') { forwardBoth(); return; }
-        if (e.key === 'r' || e.key === 'R') { restartBoth(); return; }
-        if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
+            if (e.key === 'j' || e.key === 'J') { rewindBoth(); return; }
+            if (e.key === 'l' || e.key === 'L') { forwardBoth(); return; }
+            if (e.key === 'r' || e.key === 'R') { restartBoth(); return; }
+            if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
 
-        // Offsets
-        if (e.key === '[') { adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
-        if (e.key === ']') { adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
-        if (e.key === ';') { adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
-        if (e.key === "'") { adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
+            // Offsets
+            if (e.key === '[') { adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
+            if (e.key === ']') { adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
+            if (e.key === ';') { adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
+            if (e.key === "'") { adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
 
-        // Toggle hotkey panel with ? (Shift+/)
-        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
-            const t = byId('hotkeyToggle');
-            if (t) t.click();
-            return;
-        }
+            // Toggle hotkey panel with ? (Shift+/)
+            if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                const t = byId('hotkeyToggle');
+                if (t) t.click();
+                return;
+            }
 
-        if (e.key === 'Escape') {
-            const p = byId('hotkeyPanel');
-            if (p) p.classList.remove('show');
-            return;
-        }
-    });
-
-    // Hotkey help wiring (desktop only)
-    const hkToggle = byId('hotkeyToggle');
-    const hkPanel = byId('hotkeyPanel');
-    if (hkToggle && hkPanel) {
-        const togglePanel = () => {
-            hkPanel.classList.toggle('show');
-            hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false' : 'true');
-        };
-        hkToggle.addEventListener('click', togglePanel);
-        document.addEventListener('click', (e) => {
-            if (!hkPanel.classList.contains('show')) return;
-            if (!hkPanel.contains(e.target) && e.target !== hkToggle) hkPanel.classList.remove('show');
+            if (e.key === 'Escape') {
+                const p = byId('hotkeyPanel');
+                if (p) p.classList.remove('show');
+                return;
+            }
         });
-    }
-});
-</script>
+
+        // Hotkey help wiring (desktop only)
+        const hkToggle = byId('hotkeyToggle');
+        const hkPanel = byId('hotkeyPanel');
+        if (hkToggle && hkPanel) {
+            const togglePanel = () => {
+                hkPanel.classList.toggle('show');
+                hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false' : 'true');
+            };
+            hkToggle.addEventListener('click', togglePanel);
+            document.addEventListener('click', (e) => {
+                if (!hkPanel.classList.contains('show')) return;
+                if (!hkPanel.contains(e.target) && e.target !== hkToggle) hkPanel.classList.remove('show');
+            });
+        }
+    </script>
 </body>
 </html>
