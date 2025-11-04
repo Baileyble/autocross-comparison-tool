@@ -105,7 +105,7 @@
         .timer { font-family:'Share Tech Mono',monospace; font-size:1.125rem; color:var(--accent-lime); background:var(--surface-dark); padding:.5rem 1rem; border-radius:6px; border:1px solid var(--accent-lime); letter-spacing:.05em; position:relative; overflow:hidden; }
         .timer::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(168,255,0,.3),transparent); animation:timerSweep 2s linear infinite; }
         @keyframes timerSweep { 0%{left:-100%} 100%{left:100%} }
-        .video-frame { width:100%; height:400px; background:#000; border:none; }
+        .video-frame { width:100%; height:45vh; max-height:600px; background:#000; border:none; }
         .panel-footer { background:var(--surface-mid); padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); }
         .metrics { display:flex; gap:2rem; }
         .metric { display:flex; flex-direction:column; gap:.25rem; }
@@ -124,7 +124,7 @@
         .control-icon { font-size:1.5rem; }
         .control-text { font-size:.875rem; text-transform:uppercase; letter-spacing:.05em; }
 
-        .size-adjuster { background:var(--surface-mid); border:1px solid var(--border-color); border-radius:8px; padding:1rem 1.5rem; display:flex; align-items:center; gap:1.5rem; }
+        .size-adjuster { display:none !important; }
         .adjuster-label { font-weight:600; text-transform:uppercase; letter-spacing:.05em; min-width:80px; }
         .slider-track { flex:1; height:6px; background:var(--surface-dark); border-radius:3px; position:relative; cursor:pointer; }
         .slider-fill { position:absolute; top:0; left:0; height:100%; background:var(--gradient-3); border-radius:3px; width:50%; transition:width .3s ease; }
@@ -145,8 +145,8 @@
         .fullscreen-mode { position:fixed; inset:0; background:var(--deep-black); z-index:9999; padding:2rem; display:flex; flex-direction:column; height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
         .fullscreen-mode .video-grid { flex:1; }
         .fullscreen-mode .video-frame { height:calc(50vh - 120px); }
-        .exit-fullscreen { position:fixed; top:2rem; right:2rem; z-index:10000; display:none; }
-        .exit-fullscreen.show { display:inline-flex; }
+        .exit-fullscreen { display:none; }
+        
 
         /* Share modal */
         .modal { position:fixed; inset:0; background:rgba(0,0,0,.95); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; z-index:10000; }
@@ -185,7 +185,7 @@
 }
 .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} }
             /* Desktop-only hotkey help */
-        .hotkey-toggle { position:fixed; right:1.25rem; bottom:1.25rem; z-index:10001; padding:.6rem .8rem; border:1px solid var(--border-color); border-radius:999px; background:var(--surface-mid); color:var(--text-primary); font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.35); }
+        .hotkey-toggle { position:fixed; right:1.25rem; bottom:1.25rem; z-index:10001; padding:.7rem .9rem; border:1px solid var(--border-color); border-radius:9999px; background:var(--surface-mid); color:var(--text-primary); font-weight:800; font-size:1.1rem; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.45); backdrop-filter: blur(4px); }
         .hotkey-toggle:hover { background:var(--surface-light); }
         .hotkey-panel { position:fixed; right:1.25rem; bottom:4.25rem; width:320px; max-width:85vw; z-index:10001; background:var(--surface-dark); border:1px solid var(--border-color); border-radius:12px; padding:1rem 1rem 1.25rem; box-shadow:0 16px 40px rgba(0,0,0,.5); opacity:0; transform:translateY(10px); transition:.2s ease; pointer-events:none; }
         .hotkey-panel.show { opacity:1; transform:translateY(0); pointer-events:auto; }
@@ -253,7 +253,7 @@
                 <button id="loadVideosBtn" class="btn btn-primary"><span>🚀</span><span id="loadBtnText">Launch Analysis</span></button>
                 <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()"><span>🔗</span>Share Configuration</button>
                 <button id="fullscreenBtn" class="btn btn-secondary" style="display:none;"><span>⛶</span>Fullscreen View</button>
-                
+                <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen" style="display:none;">⤢ Exit Fullscreen</button>
                 <button id="resetBtn" class="btn btn-secondary" style="display:none;">↺ Reset</button>
             </div>
         </div>
@@ -356,8 +356,6 @@
         </div>
     </div>
 
-    <!-- Floating Exit Fullscreen Button -->
-    <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen">⤢ Exit Fullscreen</button>
     <!-- Desktop-only Hotkey Help -->
     <button id="hotkeyToggle" class="hotkey-toggle" title="Keyboard Shortcuts">?</button>
     <div id="hotkeyPanel" class="hotkey-panel" aria-hidden="true">
@@ -522,19 +520,24 @@
         }
 
         function toggleFullscreen(){
-    const dashboard = document.getElementById('analysisDashboard');
-    const btn = document.getElementById('fullscreenBtn');
-    const exitBtn = document.getElementById('exitFullscreenBtn');
-    const container = document.querySelector('.dashboard-container');
-
-    if (isFullscreen) {
-        // EXIT fullscreen
+    const dashboard=document.getElementById('analysisDashboard');
+    const btn=document.getElementById('fullscreenBtn');
+    const exitBtn=document.getElementById('exitFullscreenBtn');
+    const container=document.querySelector('.dashboard-container');
+    if(isFullscreen){
         dashboard.classList.remove('fullscreen-mode');
         container.classList.remove('compact-mode');
-        if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
-        if (exitBtn) exitBtn.classList.remove('show');
-        isFullscreen = false;
+        if(btn) btn.innerHTML='<span>⛶</span>Fullscreen View';
+        if(exitBtn) exitBtn.style.display='none';
+        isFullscreen=false;
     } else {
+        dashboard.classList.add('fullscreen-mode');
+        if(window.innerWidth <= 768){ container.classList.add('compact-mode'); }
+        if(btn) btn.innerHTML='<span>⛶</span>Exit Fullscreen';
+        if(exitBtn) exitBtn.style.display='inline-flex';
+        isFullscreen=true;
+    }
+} else {
         // ENTER fullscreen (mobile also gets compact UI)
         dashboard.classList.add('fullscreen-mode');
         if (window.innerWidth <= 768) { container.classList.add('compact-mode'); }
@@ -545,42 +548,67 @@
 }
 
 function resetAll(){
-            // Destroy players
-            try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
-            try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
-            player1 = player2 = null; players = [];
-            clearInterval(timeUpdateInterval); timeUpdateInterval = null;
-            // Clear iframes
-            document.getElementById('iframe1').src = ''; document.getElementById('iframe2').src='';
-            // Reset UI
-            document.getElementById('analysisDashboard').classList.remove('active');
-            document.getElementById('emptyDashboard').style.display='block';
-            document.getElementById('fullscreenBtn').style.display='none';
-                        document.getElementById('resetBtn').style.display='none';
-            // Exit fullscreen/compact if needed
-            if(isFullscreen){ toggleFullscreen(); }
-            
-            // Reset times and displays
-            video1StartTime = 0; video2StartTime = 0; updateOffsetDisplays();
-            document.getElementById('timer1').textContent='00:00.00';
-            document.getElementById('timer2').textContent='00:00.00';
-            document.getElementById('elapsed1').textContent='0.0s';
-            document.getElementById('elapsed2').textContent='0.0s';
-            document.getElementById('status1').textContent='READY';
-            document.getElementById('status2').textContent='READY';
-            // Clear URLs
-            document.getElementById('video1Url').value='';
-            document.getElementById('video2Url').value='';
-            // Show players containers again for next load
-            document.getElementById('player1').style.display='block';
-            document.getElementById('player2').style.display='block';
-            document.getElementById('iframe1').style.display='none';
-            document.getElementById('iframe2').style.display='none';
-        }
+    try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
+    try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
+    player1 = player2 = null; players = [];
+    clearInterval(timeUpdateInterval); timeUpdateInterval = null;
+    document.getElementById('iframe1').src = ''; document.getElementById('iframe2').src='';
+    document.getElementById('analysisDashboard').classList.remove('active');
+    document.getElementById('emptyDashboard').style.display='block';
+    document.getElementById('fullscreenBtn').style.display='none';
+    document.getElementById('exitFullscreenBtn').style.display='none';
+    document.getElementById('resetBtn').style.display='none';
+    if(isFullscreen){ toggleFullscreen(); }
+    video1StartTime = 0; video2StartTime = 0; updateOffsetDisplays();
+    document.getElementById('timer1').textContent='00:00.00';
+    document.getElementById('timer2').textContent='00:00.00';
+    document.getElementById('elapsed1').textContent='0.0s';
+    document.getElementById('elapsed2').textContent='0.0s';
+    document.getElementById('status1').textContent='READY';
+    document.getElementById('status2').textContent='READY';
+    document.getElementById('video1Url').value='';
+    document.getElementById('video2Url').value='';
+    document.getElementById('player1').style.display='block';
+    document.getElementById('player2').style.display='block';
+    document.getElementById('iframe1').style.display='none';
+    document.getElementById('iframe2').style.display='none';
+    // Clear URL params
+    if(window.history && window.history.replaceState){ window.history.replaceState(null, '', window.location.pathname); }
+    requestFullscreenOnLoad = false;
+}
 
         // Init
-        document.addEventListener('DOMContentLoaded', () => {
-    loadFromURLParams();
+        document.addEventListener('DOMContentLoaded', ()=>{
+    loadFromURLParams(); updateApiStatus(false); /* initializeSlider(); */ updateOffsetDisplays();
+    document.getElementById('loadVideosBtn').onclick = loadVideos;
+    document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
+    document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
+    document.getElementById('playBtn').onclick = playBoth;
+    document.getElementById('pauseBtn').onclick = pauseBoth;
+    document.getElementById('restartBtn').onclick = restartBoth;
+    document.getElementById('rewindBtn').onclick = rewindBoth;
+    document.getElementById('resetBtn').onclick = resetAll;
+    document.getElementById('shareModal').onclick = (e)=>{ if(e.target===e.currentTarget) closeShareModal(); };
+    const i1=document.getElementById('offsetInput1'); const i2=document.getElementById('offsetInput2');
+    if(i1){ i1.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i1.value)||0); video1StartTime=+v.toFixed(1); if(player1) player1.seekTo(video1StartTime,true); updateOffsetDisplays(); }); }
+    if(i2){ i2.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i2.value)||0); video2StartTime=+v.toFixed(1); if(player2) player2.seekTo(video2StartTime,true); updateOffsetDisplays(); }); }
+    document.addEventListener('keydown', (e)=>{
+        const tag=(e.target && e.target.tagName)||''; if(tag==='INPUT' || tag==='TEXTAREA') return;
+        if(e.key===' '){ e.preventDefault(); if(player1 && player1.getPlayerState && player1.getPlayerState()===YT.PlayerState.PLAYING){ pauseBoth(); } else { playBoth(); } return; }
+        if(e.key==='j'||e.key==='J'){ rewindBoth(); return; }
+        if(e.key==='l'||e.key==='L'){ forwardBoth(); return; }
+        if(e.key==='r'||e.key==='R'){ restartBoth(); return; }
+        if(e.key==='f'||e.key==='F'){ toggleFullscreen(); return; }
+        if(e.key==='['){ adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
+        if(e.key===']'){ adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
+        if(e.key===';'){ adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
+        if(e.key==="'"){ adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
+        if(e.key==='?' || (e.shiftKey && e.key==='/' )){ const t=document.getElementById('hotkeyToggle'); if(t) t.click(); return; }
+        if(e.key==='Escape'){ const p=document.getElementById('hotkeyPanel'); if(p) p.classList.remove('show'); return; }
+    });
+    const hkToggle = document.getElementById('hotkeyToggle'); const hkPanel = document.getElementById('hotkeyPanel');
+    if(hkToggle && hkPanel){ const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); }; hkToggle.addEventListener('click', togglePanel); document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } }); }
+});
     updateApiStatus(false);
     initializeSlider();
     updateOffsetDisplays();
