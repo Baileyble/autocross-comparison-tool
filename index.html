@@ -582,47 +582,100 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', ()=>{
-    loadFromURLParams(); updateApiStatus(false); initializeSlider(); updateOffsetDisplays();
-    document.getElementById('loadVideosBtn').onclick = loadVideos;
-    document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
-    document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
-    document.getElementById('playBtn').onclick = playBoth;
-    document.getElementById('pauseBtn').onclick = pauseBoth;
-    document.getElementById('restartBtn').onclick = restartBoth;
-    document.getElementById('rewindBtn').onclick = rewindBoth;
-    document.getElementById('resetBtn').onclick = resetAll;
-    document.getElementById('shareModal').onclick = (e)=>{ if(e.target===e.currentTarget) closeShareModal(); };
+        document.addEventListener('DOMContentLoaded', () => {
+    loadFromURLParams();
+    updateApiStatus(false);
+    initializeSlider();
+    updateOffsetDisplays();
+
+    // Button wiring
+    const byId = (id) => document.getElementById(id);
+    byId('loadVideosBtn').onclick = loadVideos;
+    byId('fullscreenBtn').onclick = toggleFullscreen;
+    byId('exitFullscreenBtn').onclick = toggleFullscreen;
+    byId('playBtn').onclick = playBoth;
+    byId('pauseBtn').onclick = pauseBoth;
+    byId('restartBtn').onclick = restartBoth;
+    byId('rewindBtn').onclick = rewindBoth;
+    byId('resetBtn').onclick = resetAll;
+
+    // Share modal backdrop click
+    byId('shareModal').onclick = (e) => { if (e.target === e.currentTarget) closeShareModal(); };
+
     // Offset input listeners
-    const i1=document.getElementById('offsetInput1'); const i2=document.getElementById('offsetInput2');
-    if(i1){ i1.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i1.value)||0); video1StartTime=+v.toFixed(1); if(player1) player1.seekTo(video1StartTime,true); updateOffsetDisplays(); }); }
-    if(i2){ i2.addEventListener('change', ()=>{ const v=Math.max(0, parseFloat(i2.value)||0); video2StartTime=+v.toFixed(1); if(player2) player2.seekTo(video2StartTime,true); updateOffsetDisplays(); }); }
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e)=>{
-        const tag=(e.target && e.target.tagName)||''; if(tag==='INPUT' || tag==='TEXTAREA') return; // don't hijack typing
-        if(e.key===' '){ e.preventDefault(); // space toggle
-            if(player1 && player1.getPlayerState && player1.getPlayerState()===YT.PlayerState.PLAYING){ pauseBoth(); } else { playBoth(); }
-        } else if(e.key==='j' || e.key==='J'){ rewindBoth(); }
-        else if(e.key==='l' || e.key==='L'){ forwardBoth(); }
-        else if(e.key==='r' || e.key==='R'){ restartBoth(); }
-        else if(e.key==='f' || e.key==='F'){ toggleFullscreen(); }
-        // Offsets: Run A [ / ] (shift for ±1.0)
-        else if(e.key==='['){ adjustTime(1, e.shiftKey ? -1.0 : -0.1); }
-        else if(e.key===']'){ adjustTime(1, e.shiftKey ? +1.0 : +0.1); }
-        // Offsets: Run B ; / ' (shift for ±1.0)
-        else if(e.key===';'){ adjustTime(2, e.shiftKey ? -1.0 : -0.1); }
-        else if(e.key==="'"){ adjustTime(2, e.shiftKey ? +1.0 : +0.1); }
-        // Toggle hotkey panel with ?
-        else if(e.key==='?' || (e.shiftKey && e.key==='/' )){ const t=document.getElementById('hotkeyToggle'); if(t) t.click(); }
-        else if(e.key==='Escape'){ const p=document.getElementById('hotkeyPanel'); if(p) p.classList.remove('show'); }
+    const i1 = byId('offsetInput1');
+    const i2 = byId('offsetInput2');
+    if (i1) {
+        i1.addEventListener('change', () => {
+            const v = Math.max(0, parseFloat(i1.value) || 0);
+            video1StartTime = +v.toFixed(1);
+            if (player1) player1.seekTo(video1StartTime, true);
+            updateOffsetDisplays();
+        });
+    }
+    if (i2) {
+        i2.addEventListener('change', () => {
+            const v = Math.max(0, parseFloat(i2.value) || 0);
+            video2StartTime = +v.toFixed(1);
+            if (player2) player2.seekTo(video2StartTime, true);
+            updateOffsetDisplays();
+        });
+    }
+
+    // Keyboard shortcuts (ignored while typing in inputs/textareas)
+    document.addEventListener('keydown', (e) => {
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        // Space toggles play/pause
+        if (e.key === ' ') {
+            e.preventDefault();
+            if (player1 && player1.getPlayerState && player1.getPlayerState() === YT.PlayerState.PLAYING) {
+                pauseBoth();
+            } else {
+                playBoth();
+            }
+            return;
+        }
+
+        if (e.key === 'j' || e.key === 'J') { rewindBoth(); return; }
+        if (e.key === 'l' || e.key === 'L') { forwardBoth(); return; }
+        if (e.key === 'r' || e.key === 'R') { restartBoth(); return; }
+        if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
+
+        // Offsets
+        if (e.key === '[') { adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
+        if (e.key === ']') { adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
+        if (e.key === ';') { adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
+        if (e.key === "'") { adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
+
+        // Toggle hotkey panel with ? (Shift+/)
+        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+            const t = byId('hotkeyToggle');
+            if (t) t.click();
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            const p = byId('hotkeyPanel');
+            if (p) p.classList.remove('show');
+            return;
+        }
     });
+
     // Hotkey help wiring (desktop only)
-    const hkToggle = document.getElementById('hotkeyToggle');
-    const hkPanel = document.getElementById('hotkeyPanel');
-    if(hkToggle && hkPanel){
-        const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); };
+    const hkToggle = byId('hotkeyToggle');
+    const hkPanel = byId('hotkeyPanel');
+    if (hkToggle && hkPanel) {
+        const togglePanel = () => {
+            hkPanel.classList.toggle('show');
+            hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false' : 'true');
+        };
         hkToggle.addEventListener('click', togglePanel);
-        document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } });
+        document.addEventListener('click', (e) => {
+            if (!hkPanel.classList.contains('show')) return;
+            if (!hkPanel.contains(e.target) && e.target !== hkToggle) hkPanel.classList.remove('show');
+        });
     }
 });
 </script>
