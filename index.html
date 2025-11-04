@@ -521,33 +521,29 @@
         }
 
         function toggleFullscreen(){
-    const dashboard=document.getElementById('analysisDashboard');
-    const btn=document.getElementById('fullscreenBtn');
-    const exitBtn=document.getElementById('exitFullscreenBtn');
-    const container=document.querySelector('.dashboard-container');
-    if(isFullscreen){
+    const dashboard = document.getElementById('analysisDashboard');
+    const btn = document.getElementById('fullscreenBtn');
+    const exitBtn = document.getElementById('exitFullscreenBtn');
+    const container = document.querySelector('.dashboard-container');
+
+    if (isFullscreen) {
+        // EXIT fullscreen
         dashboard.classList.remove('fullscreen-mode');
         container.classList.remove('compact-mode');
-        btn.innerHTML='<span>⛶</span>Fullscreen View';
-        exitBtn.classList.remove('show');
-        isFullscreen=false;
+        if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
+        if (exitBtn) exitBtn.classList.remove('show');
+        isFullscreen = false;
     } else {
+        // ENTER fullscreen (mobile also gets compact UI)
         dashboard.classList.add('fullscreen-mode');
-        if(window.innerWidth <= 768){ container.classList.add('compact-mode'); }
-        btn.innerHTML='<span>⛶</span>Exit Fullscreen';
-        exitBtn.classList.add('show');
-        isFullscreen=true;
+        if (window.innerWidth <= 768) { container.classList.add('compact-mode'); }
+        if (btn) btn.innerHTML = '<span>⛶</span>Exit Fullscreen';
+        if (exitBtn) exitBtn.classList.add('show');
+        isFullscreen = true;
     }
 }
- else {
-                dashboard.classList.add('fullscreen-mode');
-                btn.innerHTML='<span>⛶</span>Exit Fullscreen';
-                exitBtn.classList.add('show');
-                isFullscreen=true;
-            }
-        }
 
-                function resetAll(){
+function resetAll(){
             // Destroy players
             try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
             try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
