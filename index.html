@@ -145,7 +145,7 @@
         .fullscreen-mode { position:fixed; inset:0; background:var(--deep-black); z-index:9999; padding:2rem; display:flex; flex-direction:column; height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
         .fullscreen-mode .video-grid { flex:1; }
         .fullscreen-mode .video-frame { height:calc(50vh - 120px); }
-        .exit-fullscreen { display:none; }
+        .exit-fullscreen { padding:.5rem 1rem; }
         
 
         /* Share modal */
@@ -185,15 +185,11 @@
 }
 .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} }
             /* Desktop-only hotkey help */
-        .hotkey-toggle { position:fixed; right:1.25rem; bottom:1.25rem; z-index:10001; padding:.65rem 1rem; border:1px solid var(--border-color); border-radius:9999px; background:var(--surface-mid); color:var(--text-primary); font-weight:800; font-size:1.05rem; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.45); backdrop-filter: blur(6px); line-height:1; letter-spacing:.02em; }
-.hotkey-toggle:hover { background:var(--surface-light); }
-        .hotkey-toggle:hover { background:var(--surface-light); }
-        .hotkey-panel { position:fixed; right:1.25rem; bottom:4.25rem; width:340px; max-width:85vw; z-index:10001; background:var(--surface-dark); border:1px solid var(--border-color); border-radius:12px; padding:1rem 1rem 1.25rem; box-shadow:0 16px 40px rgba(0,0,0,.5); opacity:0; transform:translateY(12px); transition:.22s ease; pointer-events:none; }
-        .hotkey-panel.show { opacity:1; transform:translateY(0); pointer-events:auto; }
-        .hotkey-panel h4 { margin:.25rem 0 .5rem; font-family:'Bebas Neue',sans-serif; letter-spacing:.04em; font-size:1.25rem; }
-        .hotkey-grid { display:grid; grid-template-columns:auto 1fr; gap:.35rem .75rem; font-family:'Share Tech Mono',monospace; font-size:.9rem; }
-        .keycap { display:inline-block; padding:.1rem .45rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); }
-        @media (max-width:768px){ .hotkey-toggle, .hotkey-panel { display:none !important; } }
+        .hotkey-toggle, .hotkey-panel { display:none !important; }
+        .hotkey-footer{ margin:2rem auto; max-width:1000px; border-top:1px solid var(--border-color); padding:1.25rem 2rem; color:var(--text-secondary); }
+        .hotkey-footer h3{ font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; font-size:1.5rem; color:var(--text-primary); margin-bottom:.75rem; }
+        .hotkey-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.5rem 1rem; }
+        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; } }
     </style>
 </head>
 <body>
@@ -337,27 +333,27 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Keyboard Shortcuts (Footer) -->
+        <section class="hotkey-footer" aria-label="Keyboard Shortcuts">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="hotkey-list">
+                <div><code>Space</code> Play / Pause</div>
+                <div><code>R</code> Restart</div>
+                <div><code>J</code> Rewind 5s</div>
+                <div><code>L</code> Forward 5s</div>
+                <div><code>F</code> Toggle Fullscreen</div>
+                <div><code>[</code> Run A −0.1s (Shift −1.0s)</div>
+                <div><code>]</code> Run A +0.1s (Shift +1.0s)</div>
+                <div><code>;</code> Run B −0.1s (Shift −1.0s)</div>
+                <div><code>'</code> Run B +0.1s (Shift +1.0s)</div>
+            </div>
+        </section>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay"><div class="loader"></div></div>
 
-    <!-- Desktop-only Hotkey Help -->
-    <button id="hotkeyToggle" class="hotkey-toggle" title="Keyboard Shortcuts">?</button>
-    <div id="hotkeyPanel" class="hotkey-panel" aria-hidden="true">
-        <h4>Keyboard Shortcuts</h4>
-        <div class="hotkey-grid">
-            <span class="keycap">Space</span><span>Play / Pause</span>
-            <span class="keycap">R</span><span>Restart</span>
-            <span class="keycap">J</span><span>Rewind 5s</span>
-            <span class="keycap">L</span><span>Forward 5s</span>
-            <span class="keycap">F</span><span>Toggle Fullscreen</span>
-            <span class="keycap">[</span><span>Run A −0.1s (Shift −1.0s)</span>
-            <span class="keycap">]</span><span>Run A +0.1s (Shift +1.0s)</span>
-            <span class="keycap">;</span><span>Run B −0.1s (Shift −1.0s)</span>
-            <span class="keycap">'</span><span>Run B +0.1s (Shift +1.0s)</span>
-        </div>
-    </div>
+    <!-- Hotkeys (moved to footer) -->
 
     <!-- Share Modal -->
     <div class="modal" id="shareModal">
@@ -403,6 +399,36 @@
         let timeUpdateInterval;
         let sliderValue = 100;
         let requestFullscreenOnLoad = false;
+// Robust YT API loader
+let apiInjected = false; // ensure single injection
+let apiFallback = false; // remember if we fell back to iframes
+function ensureYouTubeAPI(){
+    return new Promise((resolve)=>{
+        // Already available
+        if (window.YT && window.YT.Player){ apiReady = true; resolve(true); return; }
+        // Make sure the script is present once
+        if(!apiInjected){
+            const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
+            if(existing){ apiInjected = true; }
+            else {
+                const s = document.createElement('script');
+                s.src = 'https://www.youtube.com/iframe_api';
+                s.async = true;
+                s.onerror = () => { apiReady = false; apiFallback = true; resolve(false); };
+                document.head.appendChild(s);
+                apiInjected = true;
+            }
+        }
+        // Poll up to ~4s for YT to appear; otherwise fall back
+        const start = Date.now();
+        (function poll(){
+            if (window.YT && window.YT.Player){ apiReady = true; resolve(true); }
+            else if (Date.now() - start > 4000){ apiFallback = true; resolve(false); }
+            else { setTimeout(poll, 100); }
+        })();
+    });
+}
+
 
         // Custom slider
         function initializeSlider(){
@@ -456,16 +482,56 @@
         function copyShareUrl(e){ const input = document.getElementById('shareUrl'); input.select(); document.execCommand('copy'); const btn = e.target; const original = btn.textContent; btn.textContent='Copied!'; btn.style.background='var(--gradient-3)'; setTimeout(()=>{ btn.textContent=original; btn.style.background=''; }, 1500); }
 
         // YouTube API
-        function onYouTubeIframeAPIReady(){ apiReady = true; updateApiStatus(true); }
+        function onYouTubeIframeAPIReady(){ apiReady = true; apiFallback = false; updateApiStatus(true); }
         function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
         function extractVideoId(url){ const regExp=/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/; const m=url.match(regExp); return (m && m[7].length===11) ? m[7] : false; }
         function formatTime(seconds){ const mins=Math.floor(seconds/60); const secs=Math.floor(seconds%60); const ms=Math.floor((seconds%1)*100); return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(ms).padStart(2,'0')}`; }
 
         function loadVideos(){
-            const video1Url=document.getElementById('video1Url').value.trim();
-            const video2Url=document.getElementById('video2Url').value.trim();
-            const videoId1=extractVideoId(video1Url); const videoId2=extractVideoId(video2Url);
-            if(!videoId1 || !videoId2){ alert('Please enter valid YouTube URLs'); return; }
+    const video1Url = document.getElementById('video1Url').value.trim();
+    const video2Url = document.getElementById('video2Url').value.trim();
+    const videoId1 = extractVideoId(video1Url);
+    const videoId2 = extractVideoId(video2Url);
+    if(!videoId1 || !videoId2){ alert('Please enter valid YouTube URLs'); return; }
+
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.style.display = 'flex';
+
+    ensureYouTubeAPI().then((ready)=>{
+        // Clean old players if any before loading
+        try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
+        try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
+        player1 = player2 = null; players = [];
+
+        if(ready){
+            loadWithAPI(videoId1, videoId2);
+        } else {
+            loadWithIframes(videoId1, videoId2);
+        }
+
+        // Reveal UI once embeds are set
+        document.getElementById('emptyDashboard').style.display='none';
+        document.getElementById('analysisDashboard').classList.add('active');
+        document.getElementById('fullscreenBtn').style.display='inline-flex';
+        document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
+        document.getElementById('resetBtn').style.display='inline-flex';
+        document.getElementById('timer1').textContent = formatTime(video1StartTime);
+        document.getElementById('timer2').textContent = formatTime(video2StartTime);
+    }).catch(()=>{
+        // Hard fallback: if anything throws, use iframes
+        loadWithIframes(videoId1, videoId2);
+        document.getElementById('emptyDashboard').style.display='none';
+        document.getElementById('analysisDashboard').classList.add('active');
+        document.getElementById('fullscreenBtn').style.display='inline-flex';
+        document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
+        document.getElementById('resetBtn').style.display='inline-flex';
+        document.getElementById('timer1').textContent = formatTime(video1StartTime);
+        document.getElementById('timer2').textContent = formatTime(video2StartTime);
+    }).finally(()=>{
+        overlay.style.display = 'none';
+        if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
+    });
+}
             document.getElementById('loadingOverlay').style.display='flex';
             setTimeout(()=>{
                 if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
@@ -715,6 +781,7 @@ function resetAll(){
             if (!hkPanel.contains(e.target) && e.target !== hkToggle) hkPanel.classList.remove('show');
         });
     }
+});
 </script>
 </body>
 </html>
