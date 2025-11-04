@@ -520,29 +520,24 @@
         }
 
         function toggleFullscreen(){
-    const dashboard=document.getElementById('analysisDashboard');
-    const btn=document.getElementById('fullscreenBtn');
-    const exitBtn=document.getElementById('exitFullscreenBtn');
-    const container=document.querySelector('.dashboard-container');
-    if(isFullscreen){
+    const dashboard = document.getElementById('analysisDashboard');
+    const btn = document.getElementById('fullscreenBtn');
+    const exitBtn = document.getElementById('exitFullscreenBtn');
+    const container = document.querySelector('.dashboard-container');
+
+    if (isFullscreen) {
+        // EXIT fullscreen
         dashboard.classList.remove('fullscreen-mode');
         container.classList.remove('compact-mode');
-        if(btn) btn.innerHTML='<span>⛶</span>Fullscreen View';
-        if(exitBtn) exitBtn.style.display='none';
-        isFullscreen=false;
+        if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
+        if (exitBtn) exitBtn.style.display = 'none';
+        isFullscreen = false;
     } else {
-        dashboard.classList.add('fullscreen-mode');
-        if(window.innerWidth <= 768){ container.classList.add('compact-mode'); }
-        if(btn) btn.innerHTML='<span>⛶</span>Exit Fullscreen';
-        if(exitBtn) exitBtn.style.display='inline-flex';
-        isFullscreen=true;
-    }
-} else {
         // ENTER fullscreen (mobile also gets compact UI)
         dashboard.classList.add('fullscreen-mode');
         if (window.innerWidth <= 768) { container.classList.add('compact-mode'); }
         if (btn) btn.innerHTML = '<span>⛶</span>Exit Fullscreen';
-        if (exitBtn) exitBtn.classList.add('show');
+        if (exitBtn) exitBtn.style.display = 'inline-flex';
         isFullscreen = true;
     }
 }
