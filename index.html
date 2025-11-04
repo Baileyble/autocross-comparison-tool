@@ -191,6 +191,11 @@
         .hotkey-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.5rem 1rem; }
         .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; } 
         @media (max-width:768px){ .hotkey-footer{ display:none !important; } }
+        /* Fullscreen toolbar */
+        .fs-toolbar{ display:none; padding:.5rem 0 1rem; }
+        .fs-toolbar .btn{ padding:.6rem 1.2rem; }
+        .fullscreen-mode .fs-toolbar{ display:flex; justify-content:flex-end; }
+        @media (max-width:768px){ .hotkey-footer{ display:none !important; } }
     </style>
 </head>
 <body>
@@ -251,7 +256,7 @@
             <button id="loadVideosBtn" class="btn btn-primary"><span>🚀</span><span id="loadBtnText">Launch Analysis</span></button>
             <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()"><span>🔗</span>Share Configuration</button>
             <button id="fullscreenBtn" class="btn btn-secondary" style="display:none;"><span>⛶</span>Fullscreen View</button>
-            <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen" style="display:none;">⤢ Exit Fullscreen</button>
+
             <button id="resetBtn" class="btn btn-secondary" style="display:none;">↺ Reset</button>
         </div>
     </div>
@@ -263,6 +268,10 @@
     </div>
 
     <div id="analysisDashboard" class="analysis-dashboard">
+        <!-- Fullscreen toolbar (visible only in fullscreen) -->
+        <div class="fs-toolbar">
+            <button id="exitFullscreenBtn" class="btn btn-secondary">⤢ Exit Fullscreen</button>
+        </div>
         <div class="video-grid">
             <div class="video-panel">
                 <div class="panel-header">
@@ -616,7 +625,7 @@
                 dashboard.classList.remove('fullscreen-mode');
                 container.classList.remove('compact-mode');
                 if (btn) btn.innerHTML = '<span>⛶</span>Fullscreen View';
-                if (exitBtn) exitBtn.style.display = 'none';
+                if (exitBtn) exitBtn.style.display = 'inline-flex'; // remains in toolbar but page not fullscreen so toolbar hidden
                 isFullscreen = false;
             } else {
                 // ENTER fullscreen (mobile also gets compact UI)
@@ -626,8 +635,8 @@
                 if (exitBtn) exitBtn.style.display = 'inline-flex';
                 isFullscreen = true;
             }
-        }
-
+        } 
+        
         function resetAll(){
             try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
             try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
