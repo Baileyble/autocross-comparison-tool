@@ -493,8 +493,10 @@
         function copyShareUrl(e){ const input = document.getElementById('shareUrl'); input.select(); document.execCommand('copy'); const btn = e.target; const original = btn.textContent; btn.textContent='Copied!'; btn.style.background='var(--gradient-3)'; setTimeout(()=>{ btn.textContent=original; btn.style.background=''; }, 1500); }
 
         // YouTube API
-        function onYouTubeIframeAPIReady(){ apiReady = true; apiFallback = false; updateApiStatus(true); }
-        // function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
+        function onYouTubeIframeAPIReady(){ apiReady = true; apiFallback = false; 
+                                           // updateApiStatus(true);
+                                          }
+        function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
         function extractVideoId(url){ const regExp=/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/; const m=url.match(regExp); return (m && m[7].length===11) ? m[7] : false; }
         function formatTime(seconds){ const mins=Math.floor(seconds/60); const secs=Math.floor(seconds%60); const ms=Math.floor((seconds%1)*100); return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(ms).padStart(2,'0')}`; }
 
@@ -669,7 +671,9 @@
 
         // Init
         document.addEventListener('DOMContentLoaded', ()=>{
-            loadFromURLParams(); updateApiStatus(false); /* initializeSlider(); */ updateOffsetDisplays();
+            loadFromURLParams(); 
+            // updateApiStatus(false);
+            /* initializeSlider(); */ updateOffsetDisplays();
             document.getElementById('loadVideosBtn').onclick = loadVideos;
             document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
             document.getElementById('exitFullscreenBtn').onclick = toggleFullscreen;
@@ -699,7 +703,7 @@
             const hkToggle = document.getElementById('hotkeyToggle'); const hkPanel = document.getElementById('hotkeyPanel');
             if(hkToggle && hkPanel){ const togglePanel = ()=>{ hkPanel.classList.toggle('show'); hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false':'true'); }; hkToggle.addEventListener('click', togglePanel); document.addEventListener('click', (e)=>{ if(hkPanel.classList.contains('show')){ if(!hkPanel.contains(e.target) && e.target!==hkToggle) hkPanel.classList.remove('show'); } }); }
         });
-        updateApiStatus(false);
+        // updateApiStatus(false);
         initializeSlider();
         updateOffsetDisplays();
     </script>
