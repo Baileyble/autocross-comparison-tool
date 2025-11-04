@@ -36,11 +36,12 @@
         }
         .bg-mesh { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
         .mesh-gradient {
-            position: absolute; width: 150%; height: 150%; top: -25%; left: -25%;
-            background: radial-gradient(circle at 20% 80%, rgba(255,107,53,.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(0,217,255,.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(168,255,0,.05) 0%, transparent 50%);
+            position: absolute; width: 300%; height: 300%; top: -100%; left: -100%;
+            background: radial-gradient(circle at 20% 80%, rgba(255,107,53,.1) 0%, transparent 55%),
+                        radial-gradient(circle at 80% 20%, rgba(0,217,255,.1) 0%, transparent 55%),
+                        radial-gradient(circle at 40% 40%, rgba(168,255,0,.06) 0%, transparent 60%);
             animation: meshRotate 30s linear infinite;
+            will-change: transform;
         }
         @keyframes meshRotate { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
         .data-streams { position: fixed; inset: 0; z-index: -1; opacity:.3; }
@@ -141,7 +142,7 @@
         @keyframes spin { to{ transform:rotate(360deg) } }
 
         /* Fullscreen mode */
-        .fullscreen-mode { position:fixed; inset:0; background:var(--deep-black); z-index:9999; padding:2rem; display:flex; flex-direction:column; }
+        .fullscreen-mode { position:fixed; inset:0; background:var(--deep-black); z-index:9999; padding:2rem; display:flex; flex-direction:column; height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
         .fullscreen-mode .video-grid { flex:1; }
         .fullscreen-mode .video-frame { height:calc(50vh - 120px); }
         .exit-fullscreen { position:fixed; top:2rem; right:2rem; z-index:10000; display:none; }
