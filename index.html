@@ -183,20 +183,19 @@
             .sync-buttons{flex-wrap:wrap}
             .start-offset .form-input{width:100px}
         }
-        .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%}
+        .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} 
         /* Desktop-only hotkey help */
         .hotkey-toggle, .hotkey-panel { display:none !important; }
         .hotkey-footer{ margin:2rem auto; max-width:1000px; border-top:1px solid var(--border-color); padding:1.25rem 2rem; color:var(--text-secondary); }
         .hotkey-footer h3{ font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; font-size:1.5rem; color:var(--text-primary); margin-bottom:.75rem; }
         .hotkey-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.5rem 1rem; }
-        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; }
+        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; } 
         @media (max-width:768px){ .hotkey-footer{ display:none !important; } }
         /* Fullscreen toolbar */
         .fs-toolbar{ display:none; padding:.5rem 0 1rem; }
         .fs-toolbar .btn{ padding:.6rem 1.2rem; }
         .fullscreen-mode .fs-toolbar{ display:flex; justify-content:flex-end; }
         @media (max-width:768px){ .hotkey-footer{ display:none !important; } }
-        
     </style>
 </head>
 <body>
@@ -495,9 +494,7 @@
 
         // YouTube API
         function onYouTubeIframeAPIReady(){ apiReady = true; apiFallback = false; updateApiStatus(true); }
-        function updateApiStatus(ready){
-            // const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false;
-        }
+        // function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
         function extractVideoId(url){ const regExp=/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/; const m=url.match(regExp); return (m && m[7].length===11) ? m[7] : false; }
         function formatTime(seconds){ const mins=Math.floor(seconds/60); const secs=Math.floor(seconds%60); const ms=Math.floor((seconds%1)*100); return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(ms).padStart(2,'0')}`; }
 
@@ -545,7 +542,7 @@
                 overlay.style.display = 'none';
                 if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
             });
-
+        
         document.getElementById('loadingOverlay').style.display='flex';
         setTimeout(()=>{
             if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
@@ -583,19 +580,7 @@
             enableSyncControls(false);
         }
         function enableSyncControls(enable){ ['playBtn','pauseBtn','restartBtn','rewindBtn'].forEach(id=>{ const b=document.getElementById(id); b.disabled=!enable; b.style.opacity= enable ? '1' : '.5'; b.title = enable ? '' : 'Sync controls require API'; }); }
-        function onPlayerReady(e){
-            // Seek to configured start and PAUSE to avoid any autoplay
-            if (e.target === player1) {
-                try { player1.seekTo(video1StartTime, true); } catch {}
-                setTimeout(() => { try { player1.pauseVideo(); } catch {} }, 0);
-                updateStatus(1, 'READY');
-            } else {
-                try { player2.seekTo(video2StartTime, true); } catch {}
-                setTimeout(() => { try { player2.pauseVideo(); } catch {} }, 0);
-                updateStatus(2, 'READY');
-            }
-            if (!timeUpdateInterval) { timeUpdateInterval = setInterval(updateVideoTimes, 100); }
-        }
+        function onPlayerReady(e){ if(e.target===player1){ player1.seekTo(video1StartTime,true); updateStatus(1,'READY'); } else { player2.seekTo(video2StartTime,true); updateStatus(2,'READY'); } if(!timeUpdateInterval){ timeUpdateInterval=setInterval(updateVideoTimes,100); } }
         function formatOffset(v){ return (Math.round(v*10)/10).toFixed(1)+'s'; }
         function updateOffsetDisplays(){
             const i1 = document.getElementById('offsetInput1');
@@ -608,26 +593,12 @@
             if(player2 && player2.getCurrentTime){ const ct=player2.getCurrentTime(); const el=ct - video2StartTime; document.getElementById('timer2').textContent=formatTime(ct); document.getElementById('elapsed2').textContent=(Math.max(0,el)).toFixed(1)+'s'; }
         }
         function updateStatus(n, status){ document.getElementById(`status${n}`).textContent = status; }
-        function onPlayerStateChange(e){
-            // Mirror play/pause only when initiated by our controls
-            if (e.data === YT.PlayerState.PLAYING) {
-                updateStatus(e.target === player1 ? 1 : 2, 'PLAYING');
-                if (userPlayRequested) {
-                    players.forEach(p => { if (p !== e.target && p.getPlayerState() !== YT.PlayerState.PLAYING) p.playVideo(); });
-                }
-            } else if (e.data === YT.PlayerState.PAUSED) {
-                updateStatus(e.target === player1 ? 1 : 2, 'PAUSED');
-                if (userPlayRequested) {
-                    players.forEach(p => { if (p !== e.target && p.getPlayerState() === YT.PlayerState.PLAYING) p.pauseVideo(); });
-                }
-            }
-        }
-        // Controls
-        let userPlayRequested = false;
+        function onPlayerStateChange(e){ if(e.data===YT.PlayerState.PLAYING){ updateStatus(e.target===player1?1:2,'PLAYING'); players.forEach(p=>{ if(p!==e.target && p.getPlayerState()!==YT.PlayerState.PLAYING) p.playVideo(); }); } else if(e.data===YT.PlayerState.PAUSED){ updateStatus(e.target===player1?1:2,'PAUSED'); players.forEach(p=>{ if(p!==e.target && p.getPlayerState()===YT.PlayerState.PLAYING) p.pauseVideo(); }); } }
 
-        function playBoth(){ if(!apiReady) return; userPlayRequested = true; players.forEach(p=>{ if(p&&p.playVideo) p.playVideo(); }); }
-        function pauseBoth(){ if(!apiReady) return; userPlayRequested = true; players.forEach(p=>{ if(p&&p.pauseVideo) p.pauseVideo(); }); }
-        function restartBoth(){ if(!apiReady) return; userPlayRequested = true; if(player1) player1.seekTo(video1StartTime,true); if(player2) player2.seekTo(video2StartTime,true); setTimeout(playBoth,100); }
+        // Controls
+        function playBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.playVideo) p.playVideo(); }); }
+        function pauseBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.pauseVideo) p.pauseVideo(); }); }
+        function restartBoth(){ if(!apiReady) return; if(player1) player1.seekTo(video1StartTime,true); if(player2) player2.seekTo(video2StartTime,true); setTimeout(playBoth,100); }
         function rewindBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const base=(p===player1?video1StartTime:video2StartTime); const ct=p.getCurrentTime(); const target=Math.max(ct-5, base); p.seekTo(target,true); } }); }
         function forwardBoth(){ if(!apiReady) return; players.forEach(p=>{ if(p&&p.getCurrentTime&&p.seekTo){ const ct=p.getCurrentTime(); p.seekTo(ct+5,true); } }); }
         function adjustTime(playerNum, adj){
@@ -664,8 +635,8 @@
                 if (exitBtn) exitBtn.style.display = 'inline-flex';
                 isFullscreen = true;
             }
-        }
-
+        } 
+        
         function resetAll(){
             try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
             try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
