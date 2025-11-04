@@ -547,17 +547,17 @@
             });
 
         document.getElementById('loadingOverlay').style.display='flex';
-        // setTimeout(()=>{
-        //     if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
-        //     document.getElementById('loadingOverlay').style.display='none';
-        //     document.getElementById('emptyDashboard').style.display='none';
-        //     document.getElementById('analysisDashboard').classList.add('active');
-        //     document.getElementById('fullscreenBtn').style.display='inline-flex';
-        //     document.getElementById('resetBtn').style.display='inline-flex';
-        //     document.getElementById('timer1').textContent=formatTime(video1StartTime);
-        //     document.getElementById('timer2').textContent=formatTime(video2StartTime);
-        //     if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
-        // }, 600);
+        setTimeout(()=>{
+            if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
+            document.getElementById('loadingOverlay').style.display='none';
+            document.getElementById('emptyDashboard').style.display='none';
+            document.getElementById('analysisDashboard').classList.add('active');
+            document.getElementById('fullscreenBtn').style.display='inline-flex';
+            document.getElementById('resetBtn').style.display='inline-flex';
+            document.getElementById('timer1').textContent=formatTime(video1StartTime);
+            document.getElementById('timer2').textContent=formatTime(video2StartTime);
+            if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
+        }, 600);
         }
 
         function loadWithAPI(videoId1, videoId2){
