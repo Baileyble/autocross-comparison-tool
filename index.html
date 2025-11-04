@@ -183,13 +183,14 @@
             .sync-buttons{flex-wrap:wrap}
             .start-offset .form-input{width:100px}
         }
-        .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%}
+        .logo{font-size:2.5rem} .control-actions{flex-direction:column} .btn{width:100%} 
         /* Desktop-only hotkey help */
         .hotkey-toggle, .hotkey-panel { display:none !important; }
         .hotkey-footer{ margin:2rem auto; max-width:1000px; border-top:1px solid var(--border-color); padding:1.25rem 2rem; color:var(--text-secondary); }
         .hotkey-footer h3{ font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; font-size:1.5rem; color:var(--text-primary); margin-bottom:.75rem; }
         .hotkey-list{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.5rem 1rem; }
-        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; }
+        .hotkey-list code{ display:inline-block; padding:.1rem .4rem; border:1px solid var(--border-color); border-radius:6px; background:var(--surface-mid); margin-right:.35rem; } 
+        @media (max-width:768px){ .hotkey-footer{ display:none !important; } }
     </style>
 </head>
 <body>
@@ -247,7 +248,7 @@
     <!-- Control Center -->
     <div class="control-center">
         <div class="control-actions">
-            <button id="loadVideosBtn" class="btn btn-primary"><span id="loadBtnText">Load Comparison</span></button>
+            <button id="loadVideosBtn" class="btn btn-primary"><span>🚀</span><span id="loadBtnText">Launch Analysis</span></button>
             <button id="shareBtn" class="btn btn-secondary" onclick="showShareModal()"><span>🔗</span>Share Configuration</button>
             <button id="fullscreenBtn" class="btn btn-secondary" style="display:none;"><span>⛶</span>Fullscreen View</button>
             <button id="exitFullscreenBtn" class="btn btn-secondary exit-fullscreen" style="display:none;">⤢ Exit Fullscreen</button>
@@ -484,87 +485,67 @@
 
         // YouTube API
         function onYouTubeIframeAPIReady(){ apiReady = true; apiFallback = false; updateApiStatus(true); }
-        // function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
+        function updateApiStatus(ready){ const loadBtn=document.getElementById('loadVideosBtn'); const btnText=document.getElementById('loadBtnText'); const statusText=document.querySelector('.status-text'); if(ready){ btnText.textContent='Launch Analysis'; statusText.textContent='System Online'; } else { btnText.textContent='Launch Analysis (API Loading)'; statusText.textContent='System Online'; } loadBtn.disabled=false; }
         function extractVideoId(url){ const regExp=/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/; const m=url.match(regExp); return (m && m[7].length===11) ? m[7] : false; }
         function formatTime(seconds){ const mins=Math.floor(seconds/60); const secs=Math.floor(seconds%60); const ms=Math.floor((seconds%1)*100); return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(ms).padStart(2,'0')}`; }
 
-        function loadVideos() {
+        function loadVideos(){
             const video1Url = document.getElementById('video1Url').value.trim();
             const video2Url = document.getElementById('video2Url').value.trim();
             const videoId1 = extractVideoId(video1Url);
             const videoId2 = extractVideoId(video2Url);
-            if (!videoId1 || !videoId2) {
-                alert('Please enter valid YouTube URLs');
-                return;
-            }
+            if(!videoId1 || !videoId2){ alert('Please enter valid YouTube URLs'); return; }
 
             const overlay = document.getElementById('loadingOverlay');
             overlay.style.display = 'flex';
 
-            ensureYouTubeAPI().then((ready) => {
+            ensureYouTubeAPI().then((ready)=>{
                 // Clean old players if any before loading
-                try {
-                    if (player1 && player1.destroy) player1.destroy();
-                } catch {
-                }
-                try {
-                    if (player2 && player2.destroy) player2.destroy();
-                } catch {
-                }
-                player1 = player2 = null;
-                players = [];
+                try{ if(player1 && player1.destroy) player1.destroy(); }catch{}
+                try{ if(player2 && player2.destroy) player2.destroy(); }catch{}
+                player1 = player2 = null; players = [];
 
-                if (ready) {
+                if(ready){
                     loadWithAPI(videoId1, videoId2);
                 } else {
                     loadWithIframes(videoId1, videoId2);
                 }
 
                 // Reveal UI once embeds are set
-                document.getElementById('emptyDashboard').style.display = 'none';
+                document.getElementById('emptyDashboard').style.display='none';
                 document.getElementById('analysisDashboard').classList.add('active');
-                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('fullscreenBtn').style.display='inline-flex';
                 document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
-                document.getElementById('resetBtn').style.display = 'inline-flex';
+                document.getElementById('resetBtn').style.display='inline-flex';
                 document.getElementById('timer1').textContent = formatTime(video1StartTime);
                 document.getElementById('timer2').textContent = formatTime(video2StartTime);
-            }).catch(() => {
+            }).catch(()=>{
                 // Hard fallback: if anything throws, use iframes
                 loadWithIframes(videoId1, videoId2);
-                document.getElementById('emptyDashboard').style.display = 'none';
+                document.getElementById('emptyDashboard').style.display='none';
                 document.getElementById('analysisDashboard').classList.add('active');
-                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
+                document.getElementById('fullscreenBtn').style.display='inline-flex';
                 document.getElementById('exitFullscreenBtn').style.display = isFullscreen ? 'inline-flex' : 'none';
-                document.getElementById('resetBtn').style.display = 'inline-flex';
+                document.getElementById('resetBtn').style.display='inline-flex';
                 document.getElementById('timer1').textContent = formatTime(video1StartTime);
                 document.getElementById('timer2').textContent = formatTime(video2StartTime);
-            }).finally(() => {
+            }).finally(()=>{
                 overlay.style.display = 'none';
-                if (requestFullscreenOnLoad) {
-                    requestFullscreenOnLoad = false;
-                    if (!isFullscreen) toggleFullscreen();
-                }
+                if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
             });
-
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            setTimeout(() => {
-                if (apiReady) {
-                    loadWithAPI(videoId1, videoId2);
-                } else {
-                    loadWithIframes(videoId1, videoId2);
-                }
-                document.getElementById('loadingOverlay').style.display = 'none';
-                document.getElementById('emptyDashboard').style.display = 'none';
-                document.getElementById('analysisDashboard').classList.add('active');
-                document.getElementById('fullscreenBtn').style.display = 'inline-flex';
-                document.getElementById('resetBtn').style.display = 'inline-flex';
-                document.getElementById('timer1').textContent = formatTime(video1StartTime);
-                document.getElementById('timer2').textContent = formatTime(video2StartTime);
-                if (requestFullscreenOnLoad) {
-                    requestFullscreenOnLoad = false;
-                    if (!isFullscreen) toggleFullscreen();
-                }
-            }, 600)
+        
+        document.getElementById('loadingOverlay').style.display='flex';
+        setTimeout(()=>{
+            if(apiReady){ loadWithAPI(videoId1, videoId2); } else { loadWithIframes(videoId1, videoId2); }
+            document.getElementById('loadingOverlay').style.display='none';
+            document.getElementById('emptyDashboard').style.display='none';
+            document.getElementById('analysisDashboard').classList.add('active');
+            document.getElementById('fullscreenBtn').style.display='inline-flex';
+            document.getElementById('resetBtn').style.display='inline-flex';
+            document.getElementById('timer1').textContent=formatTime(video1StartTime);
+            document.getElementById('timer2').textContent=formatTime(video2StartTime);
+            if(requestFullscreenOnLoad){ requestFullscreenOnLoad=false; if(!isFullscreen) toggleFullscreen(); }
+        }, 600);
         }
 
         function loadWithAPI(videoId1, videoId2){
@@ -712,96 +693,6 @@
         updateApiStatus(false);
         initializeSlider();
         updateOffsetDisplays();
-
-        // Button wiring
-        const byId = (id) => document.getElementById(id);
-        byId('loadVideosBtn').onclick = loadVideos;
-        byId('fullscreenBtn').onclick = toggleFullscreen;
-        byId('exitFullscreenBtn').onclick = toggleFullscreen;
-        byId('playBtn').onclick = playBoth;
-        byId('pauseBtn').onclick = pauseBoth;
-        byId('restartBtn').onclick = restartBoth;
-        byId('rewindBtn').onclick = rewindBoth;
-        byId('resetBtn').onclick = resetAll;
-
-        // Share modal backdrop click
-        byId('shareModal').onclick = (e) => { if (e.target === e.currentTarget) closeShareModal(); };
-
-        // Offset input listeners
-        const i1 = byId('offsetInput1');
-        const i2 = byId('offsetInput2');
-        if (i1) {
-            i1.addEventListener('change', () => {
-                const v = Math.max(0, parseFloat(i1.value) || 0);
-                video1StartTime = +v.toFixed(1);
-                if (player1) player1.seekTo(video1StartTime, true);
-                updateOffsetDisplays();
-            });
-        }
-        if (i2) {
-            i2.addEventListener('change', () => {
-                const v = Math.max(0, parseFloat(i2.value) || 0);
-                video2StartTime = +v.toFixed(1);
-                if (player2) player2.seekTo(video2StartTime, true);
-                updateOffsetDisplays();
-            });
-        }
-
-        // Keyboard shortcuts (ignored while typing in inputs/textareas)
-        document.addEventListener('keydown', (e) => {
-            const tag = (e.target && e.target.tagName) || '';
-            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
-            // Space toggles play/pause
-            if (e.key === ' ') {
-                e.preventDefault();
-                if (player1 && player1.getPlayerState && player1.getPlayerState() === YT.PlayerState.PLAYING) {
-                    pauseBoth();
-                } else {
-                    playBoth();
-                }
-                return;
-            }
-
-            if (e.key === 'j' || e.key === 'J') { rewindBoth(); return; }
-            if (e.key === 'l' || e.key === 'L') { forwardBoth(); return; }
-            if (e.key === 'r' || e.key === 'R') { restartBoth(); return; }
-            if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
-
-            // Offsets
-            if (e.key === '[') { adjustTime(1, e.shiftKey ? -1.0 : -0.1); return; }
-            if (e.key === ']') { adjustTime(1, e.shiftKey ? +1.0 : +0.1); return; }
-            if (e.key === ';') { adjustTime(2, e.shiftKey ? -1.0 : -0.1); return; }
-            if (e.key === "'") { adjustTime(2, e.shiftKey ? +1.0 : +0.1); return; }
-
-            // Toggle hotkey panel with ? (Shift+/)
-            if (e.key === '?' || (e.shiftKey && e.key === '/')) {
-                const t = byId('hotkeyToggle');
-                if (t) t.click();
-                return;
-            }
-
-            if (e.key === 'Escape') {
-                const p = byId('hotkeyPanel');
-                if (p) p.classList.remove('show');
-                return;
-            }
-        });
-
-        // Hotkey help wiring (desktop only)
-        const hkToggle = byId('hotkeyToggle');
-        const hkPanel = byId('hotkeyPanel');
-        if (hkToggle && hkPanel) {
-            const togglePanel = () => {
-                hkPanel.classList.toggle('show');
-                hkPanel.setAttribute('aria-hidden', hkPanel.classList.contains('show') ? 'false' : 'true');
-            };
-            hkToggle.addEventListener('click', togglePanel);
-            document.addEventListener('click', (e) => {
-                if (!hkPanel.classList.contains('show')) return;
-                if (!hkPanel.contains(e.target) && e.target !== hkToggle) hkPanel.classList.remove('show');
-            });
-        }
     </script>
 </body>
 </html>
