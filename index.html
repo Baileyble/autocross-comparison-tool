@@ -820,17 +820,33 @@
 
         .fullscreen-mode .video-grid {
             flex: 1;
+            margin-top: 3.5rem;
+        }
+
+        .fullscreen-mode .panel-header,
+        .fullscreen-mode .panel-footer {
+            display: none;
+        }
+
+        .fullscreen-mode .video-panel {
+            border: none;
+            border-radius: 0;
         }
 
         .fullscreen-mode .video-frame {
-            height: calc(50vh - 120px);
+            height: calc(50vh - 60px);
+            border-radius: 8px;
         }
 
         .exit-fullscreen {
             position: fixed;
-            top: 2rem;
-            right: 2rem;
+            top: 1rem;
+            right: 1rem;
             z-index: 10000;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         /* Share modal */
@@ -912,13 +928,12 @@
                 padding: 0.5rem;
             }
 
-            .fullscreen-mode .panel-header,
-            .fullscreen-mode .panel-footer {
-                padding: 0.75rem 1rem;
+            .fullscreen-mode .video-grid {
+                margin-top: 3rem;
             }
 
             .fullscreen-mode .video-frame {
-                height: calc(50vh - 80px) !important;
+                height: calc(50vh - 40px) !important;
             }
 
             .fullscreen-mode .playback-controls {
@@ -948,6 +963,7 @@
             .exit-fullscreen {
                 top: 0.5rem;
                 right: 0.5rem;
+                padding: 0.5rem 1rem;
             }
         }
 
