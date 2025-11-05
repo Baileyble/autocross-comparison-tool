@@ -675,9 +675,12 @@
 
         .controls-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
             margin-bottom: 1.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .control-btn {
@@ -730,6 +733,111 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             min-width: 80px;
+        }
+
+        /* Playback speed control */
+        .speed-control {
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .speed-label {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 120px;
+        }
+
+        .speed-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .speed-btn {
+            padding: 0.5rem 1rem;
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .speed-btn:hover {
+            border-color: var(--accent-teal);
+            color: var(--accent-teal);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .speed-btn.active {
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+            background: rgba(168, 255, 0, 0.15);
+        }
+
+        /* Keyboard shortcuts info */
+        .keyboard-shortcuts {
+            background: var(--surface-mid);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .keyboard-shortcuts summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            user-select: none;
+        }
+
+        .keyboard-shortcuts summary:hover {
+            color: var(--accent-teal);
+        }
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .shortcut-key {
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-orange);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .shortcut-desc {
+            color: var(--text-secondary);
         }
 
         .slider-track {
@@ -871,6 +979,10 @@
             border-radius: 8px;
         }
 
+        .fullscreen-mode .keyboard-shortcuts {
+            display: none;
+        }
+
         .exit-fullscreen {
             position: fixed;
             top: 1rem;
@@ -970,15 +1082,19 @@
             }
 
             .fullscreen-mode .playback-controls {
+                display: block !important;
                 padding: 0.75rem;
+                margin-bottom: 0;
             }
 
             .fullscreen-mode .controls-grid {
-                grid-template-columns: repeat(4, 1fr);
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr);
+                margin-bottom: 0;
             }
 
             .fullscreen-mode .control-btn {
-                padding: 0.75rem;
+                padding: 0.75rem 0.5rem;
             }
 
             .fullscreen-mode .control-icon {
@@ -986,10 +1102,12 @@
             }
 
             .fullscreen-mode .control-text {
-                font-size: 0.75rem;
+                font-size: 0.7rem;
             }
 
-            .fullscreen-mode .size-adjuster {
+            .fullscreen-mode .size-adjuster,
+            .fullscreen-mode .speed-control,
+            .fullscreen-mode .keyboard-shortcuts {
                 display: none;
             }
 
@@ -1032,6 +1150,41 @@
 
             .offset-display {
                 width: 100%;
+            }
+
+            .speed-control {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .speed-label {
+                min-width: auto;
+            }
+
+            .speed-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            /* Hide keyboard shortcuts on mobile - not applicable for touchscreens */
+            .keyboard-shortcuts {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
+
+            .control-btn {
+                padding: 1.25rem;
+            }
+
+            .speed-btn {
+                flex: 1;
+                min-width: 50px;
             }
         }
     </style>
@@ -1166,7 +1319,7 @@
                             <div class="offset-display">
                                 <span class="offset-label">Offset:</span>
                                 <input type="number" class="offset-input" id="offset1" 
-                                       value="0.0" step="0.1" 
+                                       value="0.0" step="0.1" inputmode="decimal"
                                        onchange="updateOffsetFromInput(1, this.value)"
                                        onkeypress="if(event.key==='Enter') updateOffsetFromInput(1, this.value)">
                                 <span class="offset-label">s</span>
@@ -1206,7 +1359,7 @@
                             <div class="offset-display">
                                 <span class="offset-label">Offset:</span>
                                 <input type="number" class="offset-input" id="offset2" 
-                                       value="0.0" step="0.1" 
+                                       value="0.0" step="0.1" inputmode="decimal"
                                        onchange="updateOffsetFromInput(2, this.value)"
                                        onkeypress="if(event.key==='Enter') updateOffsetFromInput(2, this.value)">
                                 <span class="offset-label">s</span>
@@ -1218,22 +1371,31 @@
 
             <div class="playback-controls">
                 <div class="controls-grid">
-                    <button class="control-btn" id="playBtn">
-                        <span class="control-icon">▶</span>
-                        <span class="control-text">Play</span>
-                    </button>
-                    <button class="control-btn" id="pauseBtn">
-                        <span class="control-icon">⏸</span>
-                        <span class="control-text">Pause</span>
+                    <button class="control-btn" id="playPauseBtn">
+                        <span class="control-icon" id="playPauseIcon">▶</span>
+                        <span class="control-text" id="playPauseText">Play</span>
                     </button>
                     <button class="control-btn" id="restartBtn">
                         <span class="control-icon">↺</span>
-                        <span class="control-text">Restart</span>
+                        <span class="control-text">Restart Both</span>
                     </button>
                     <button class="control-btn" id="rewindBtn">
                         <span class="control-icon">⏪</span>
                         <span class="control-text">-5 Sec</span>
                     </button>
+                </div>
+
+                <div class="speed-control">
+                    <span class="speed-label">Playback Speed</span>
+                    <div class="speed-buttons">
+                        <button class="speed-btn" onclick="setPlaybackSpeed(0.25)">0.25x</button>
+                        <button class="speed-btn" onclick="setPlaybackSpeed(0.5)">0.5x</button>
+                        <button class="speed-btn" onclick="setPlaybackSpeed(0.75)">0.75x</button>
+                        <button class="speed-btn active" onclick="setPlaybackSpeed(1)">1x</button>
+                        <button class="speed-btn" onclick="setPlaybackSpeed(1.25)">1.25x</button>
+                        <button class="speed-btn" onclick="setPlaybackSpeed(1.5)">1.5x</button>
+                        <button class="speed-btn" onclick="setPlaybackSpeed(2)">2x</button>
+                    </div>
                 </div>
 
                 <div class="size-adjuster">
@@ -1244,6 +1406,52 @@
                     </div>
                     <span class="size-value" id="sizeValue">100%</span>
                 </div>
+
+                <details class="keyboard-shortcuts">
+                    <summary>⌨️ Keyboard Shortcuts</summary>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Space</span>
+                            <span class="shortcut-desc">Play/Pause</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">R</span>
+                            <span class="shortcut-desc">Restart Both</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">←</span>
+                            <span class="shortcut-desc">Rewind 5s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">→</span>
+                            <span class="shortcut-desc">Forward 5s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">[</span>
+                            <span class="shortcut-desc">Video A -0.1s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">]</span>
+                            <span class="shortcut-desc">Video A +0.1s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Shift+[</span>
+                            <span class="shortcut-desc">Video B -0.1s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Shift+]</span>
+                            <span class="shortcut-desc">Video B +0.1s</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">F</span>
+                            <span class="shortcut-desc">Fullscreen</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">0</span>
+                            <span class="shortcut-desc">Jump to Start</span>
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
     </div>
@@ -1282,6 +1490,8 @@
         let sliderValue = 100;
         let apiReadyPromise = null;
         let apiLoadTimeout = null;
+        let isPlaying = false;
+        let currentPlaybackSpeed = 1;
 
         // Initialize custom slider
         function initializeSlider() {
@@ -1504,6 +1714,9 @@
             }
             
             try {
+                // Pause both videos when adjusting
+                pauseBoth();
+                
                 if (playerNum === 1) {
                     video1StartTime = Math.max(0, offsetValue);
                     updateOffsetDisplay(1, video1StartTime);
@@ -1688,12 +1901,18 @@
         }
 
         function enableSyncControls(enable) {
-            const buttons = ['playBtn', 'pauseBtn', 'restartBtn', 'rewindBtn'];
+            const buttons = ['playPauseBtn', 'restartBtn', 'rewindBtn'];
             buttons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 btn.disabled = !enable;
                 btn.style.opacity = enable ? '1' : '0.5';
                 btn.title = enable ? '' : 'Sync controls require API';
+            });
+            
+            // Enable/disable speed buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.disabled = !enable;
+                btn.style.opacity = enable ? '1' : '0.5';
             });
         }
 
@@ -1701,9 +1920,15 @@
             try {
                 if (event.target === player1) {
                     player1.seekTo(video1StartTime, true);
+                    if (currentPlaybackSpeed !== 1) {
+                        player1.setPlaybackRate(currentPlaybackSpeed);
+                    }
                     updateStatus(1, 'READY');
                 } else if (event.target === player2) {
                     player2.seekTo(video2StartTime, true);
+                    if (currentPlaybackSpeed !== 1) {
+                        player2.setPlaybackRate(currentPlaybackSpeed);
+                    }
                     updateStatus(2, 'READY');
                 }
                 
@@ -1747,6 +1972,7 @@
             try {
                 if (event.data === YT.PlayerState.PLAYING) {
                     updateStatus(event.target === player1 ? 1 : 2, 'PLAYING');
+                    updatePlayPauseButton(true);
                     players.forEach(player => {
                         if (player !== event.target && player.getPlayerState && player.getPlayerState() !== YT.PlayerState.PLAYING) {
                             try {
@@ -1758,6 +1984,7 @@
                     });
                 } else if (event.data === YT.PlayerState.PAUSED) {
                     updateStatus(event.target === player1 ? 1 : 2, 'PAUSED');
+                    updatePlayPauseButton(false);
                     players.forEach(player => {
                         if (player !== event.target && player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING) {
                             try {
@@ -1767,6 +1994,8 @@
                             }
                         }
                     });
+                } else if (event.data === YT.PlayerState.ENDED) {
+                    updatePlayPauseButton(false);
                 }
             } catch (error) {
                 // Only log unexpected errors
@@ -1777,6 +2006,28 @@
         }
 
         // Playback controls
+        function togglePlayPause() {
+            if (isPlaying) {
+                pauseBoth();
+            } else {
+                playBoth();
+            }
+        }
+
+        function updatePlayPauseButton(playing) {
+            isPlaying = playing;
+            const icon = document.getElementById('playPauseIcon');
+            const text = document.getElementById('playPauseText');
+            
+            if (playing) {
+                icon.textContent = '⏸';
+                text.textContent = 'Pause';
+            } else {
+                icon.textContent = '▶';
+                text.textContent = 'Play';
+            }
+        }
+
         function playBoth() {
             if (!apiReady) return;
             players.forEach(player => {
@@ -1788,6 +2039,7 @@
                     // Silently handle playback issues
                 }
             });
+            updatePlayPauseButton(true);
         }
         
         function pauseBoth() {
@@ -1801,6 +2053,7 @@
                     // Silently handle playback issues
                 }
             });
+            updatePlayPauseButton(false);
         }
         
         function restartBoth() {
@@ -1829,8 +2082,62 @@
             });
         }
 
+        function forwardBoth() {
+            if (!apiReady) return;
+            players.forEach(player => {
+                try {
+                    if (player && player.getCurrentTime && player.seekTo) {
+                        const currentTime = player.getCurrentTime();
+                        player.seekTo(currentTime + 5, true);
+                    }
+                } catch (error) {
+                    // Silently handle seek issues
+                }
+            });
+        }
+
+        function jumpToStart() {
+            if (!apiReady) return;
+            pauseBoth();
+            try {
+                if (player1 && player1.seekTo) player1.seekTo(video1StartTime, true);
+                if (player2 && player2.seekTo) player2.seekTo(video2StartTime, true);
+            } catch (error) {
+                console.error('Error jumping to start:', error);
+            }
+        }
+
+        function setPlaybackSpeed(speed) {
+            if (!apiReady) return;
+            
+            currentPlaybackSpeed = speed;
+            
+            // Update active button
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+                // Check if this button's onclick calls this speed
+                if (btn.textContent === speed + 'x') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Set speed for both players
+            players.forEach(player => {
+                try {
+                    if (player && player.setPlaybackRate && typeof player.setPlaybackRate === 'function') {
+                        player.setPlaybackRate(speed);
+                    }
+                } catch (error) {
+                    console.error('Error setting playback speed:', error);
+                }
+            });
+        }
+
         function adjustTime(playerNum, adjustment) {
             try {
+                // Pause both videos when adjusting
+                pauseBoth();
+                
                 if (playerNum === 1) {
                     video1StartTime = Math.max(0, video1StartTime + adjustment);
                     updateOffsetDisplay(1, video1StartTime);
@@ -1897,6 +2204,9 @@
                     video1StartTime = 0;
                     video2StartTime = 0;
                     
+                    // Reset playback state
+                    updatePlayPauseButton(false);
+                    
                     // Destroy players
                     if (player1) {
                         try { player1.destroy(); } catch(e) { /* Ignore cleanup errors */ }
@@ -1947,8 +2257,7 @@
             document.getElementById('loadVideosBtn').onclick = loadVideos;
             document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
             document.getElementById('resetBtn').onclick = resetVideos;
-            document.getElementById('playBtn').onclick = playBoth;
-            document.getElementById('pauseBtn').onclick = pauseBoth;
+            document.getElementById('playPauseBtn').onclick = togglePlayPause;
             document.getElementById('restartBtn').onclick = restartBoth;
             document.getElementById('rewindBtn').onclick = rewindBoth;
             
@@ -1956,6 +2265,64 @@
             document.getElementById('shareModal').onclick = function(e) {
                 if (e.target === this) closeShareModal();
             };
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Don't trigger shortcuts if user is typing in an input
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+
+                // Check if videos are loaded
+                const videosLoaded = apiReady && players.length > 0;
+
+                switch(e.key.toLowerCase()) {
+                    case ' ':
+                        e.preventDefault();
+                        if (videosLoaded) togglePlayPause();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        if (videosLoaded) restartBoth();
+                        break;
+                    case 'arrowleft':
+                        e.preventDefault();
+                        if (videosLoaded) rewindBoth();
+                        break;
+                    case 'arrowright':
+                        e.preventDefault();
+                        if (videosLoaded) forwardBoth();
+                        break;
+                    case '[':
+                        e.preventDefault();
+                        if (videosLoaded) {
+                            if (e.shiftKey) {
+                                adjustTime(2, -0.1); // Video B
+                            } else {
+                                adjustTime(1, -0.1); // Video A
+                            }
+                        }
+                        break;
+                    case ']':
+                        e.preventDefault();
+                        if (videosLoaded) {
+                            if (e.shiftKey) {
+                                adjustTime(2, 0.1); // Video B
+                            } else {
+                                adjustTime(1, 0.1); // Video A
+                            }
+                        }
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        if (videosLoaded) toggleFullscreen();
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        if (videosLoaded) jumpToStart();
+                        break;
+                }
+            });
         });
     </script>
 </body>
