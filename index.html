@@ -617,18 +617,51 @@
         }
 
         .offset-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.875rem;
             color: var(--text-muted);
-            padding: 0.25rem 0.5rem;
-            background: var(--surface-dark);
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
         }
 
-        .offset-value {
+        .offset-label {
+            color: var(--text-muted);
+        }
+
+        .offset-input {
+            width: 80px;
+            padding: 0.25rem 0.5rem;
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
             color: var(--accent-orange);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.875rem;
             font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Hide number input spinners */
+        .offset-input::-webkit-outer-spin-button,
+        .offset-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .offset-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .offset-input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .offset-input:hover {
+            border-color: var(--accent-orange);
         }
 
         /* Playback controls */
@@ -1045,8 +1078,7 @@
                     <div class="form-group">
                         <label class="form-label">YouTube Video URL</label>
                         <input type="text" class="form-input" id="video1Url" 
-                               placeholder="https://www.youtube.com/watch?v=..." 
-                               value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                               placeholder="https://www.youtube.com/watch?v=...">
                     </div>
                 </div>
             </div>
@@ -1065,8 +1097,7 @@
                     <div class="form-group">
                         <label class="form-label">YouTube Video URL</label>
                         <input type="text" class="form-input" id="video2Url" 
-                               placeholder="https://www.youtube.com/watch?v=..." 
-                               value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                               placeholder="https://www.youtube.com/watch?v=...">
                     </div>
                 </div>
             </div>
@@ -1133,7 +1164,12 @@
                                 <button class="btn-sync" onclick="adjustTime(1, 1)">+1s</button>
                             </div>
                             <div class="offset-display">
-                                Offset: <span class="offset-value" id="offset1">0.0s</span>
+                                <span class="offset-label">Offset:</span>
+                                <input type="number" class="offset-input" id="offset1" 
+                                       value="0.0" step="0.1" 
+                                       onchange="updateOffsetFromInput(1, this.value)"
+                                       onkeypress="if(event.key==='Enter') updateOffsetFromInput(1, this.value)">
+                                <span class="offset-label">s</span>
                             </div>
                         </div>
                     </div>
@@ -1168,7 +1204,12 @@
                                 <button class="btn-sync" onclick="adjustTime(2, 1)">+1s</button>
                             </div>
                             <div class="offset-display">
-                                Offset: <span class="offset-value" id="offset2">0.0s</span>
+                                <span class="offset-label">Offset:</span>
+                                <input type="number" class="offset-input" id="offset2" 
+                                       value="0.0" step="0.1" 
+                                       onchange="updateOffsetFromInput(2, this.value)"
+                                       onkeypress="if(event.key==='Enter') updateOffsetFromInput(2, this.value)">
+                                <span class="offset-label">s</span>
                             </div>
                         </div>
                     </div>
@@ -1292,8 +1333,14 @@
             
             if (video1) document.getElementById('video1Url').value = video1;
             if (video2) document.getElementById('video2Url').value = video2;
-            if (start1) video1StartTime = parseFloat(start1);
-            if (start2) video2StartTime = parseFloat(start2);
+            if (start1) {
+                video1StartTime = parseFloat(start1);
+                updateOffsetDisplay(1, video1StartTime);
+            }
+            if (start2) {
+                video2StartTime = parseFloat(start2);
+                updateOffsetDisplay(2, video2StartTime);
+            }
             
             if (autoload === 'true' && video1 && video2) {
                 // Wait for API to be ready before autoloading
@@ -1360,6 +1407,31 @@
             }, 2000);
         }
 
+        // Filter out noise from browser extensions and non-critical YouTube errors
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.error = function(...args) {
+            const message = args.join(' ');
+            // Suppress known browser extension interference and non-critical YouTube API errors
+            if (message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                message.includes('chrome-extension://') ||
+                message.includes('getYouTubeTitleNode') ||
+                message.includes('Failed to load resource')) {
+                return; // Silently ignore these
+            }
+            originalConsoleError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                message.includes('chrome-extension://')) {
+                return;
+            }
+            originalConsoleWarn.apply(console, args);
+        };
+
         // YouTube API ready promise
         apiReadyPromise = new Promise((resolve) => {
             window.onYouTubeIframeAPIReady = function() {
@@ -1418,7 +1490,36 @@
         }
 
         function updateOffsetDisplay(playerNum, offset) {
-            document.getElementById(`offset${playerNum}`).textContent = offset.toFixed(1) + 's';
+            const input = document.getElementById(`offset${playerNum}`);
+            if (input) {
+                input.value = offset.toFixed(1);
+            }
+        }
+
+        function updateOffsetFromInput(playerNum, value) {
+            const offsetValue = parseFloat(value);
+            if (isNaN(offsetValue)) {
+                alert('Please enter a valid number');
+                return;
+            }
+            
+            try {
+                if (playerNum === 1) {
+                    video1StartTime = Math.max(0, offsetValue);
+                    updateOffsetDisplay(1, video1StartTime);
+                    if (player1 && player1.seekTo && typeof player1.seekTo === 'function') {
+                        player1.seekTo(video1StartTime, true);
+                    }
+                } else {
+                    video2StartTime = Math.max(0, offsetValue);
+                    updateOffsetDisplay(2, video2StartTime);
+                    if (player2 && player2.seekTo && typeof player2.seekTo === 'function') {
+                        player2.seekTo(video2StartTime, true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating offset:', error);
+            }
         }
 
         function loadVideos() {
@@ -1438,7 +1539,8 @@
             }
 
             // Show loading
-            document.getElementById('loadingOverlay').style.display = 'flex';
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
 
             // Wait for API to be ready (or timeout)
             apiReadyPromise.then((ready) => {
@@ -1451,8 +1553,10 @@
                     loadWithIframes(videoId1, videoId2);
                 }
                 
-                // Hide loading and show dashboard
-                document.getElementById('loadingOverlay').style.display = 'none';
+                // Hide loading immediately after starting video load
+                loadingOverlay.style.display = 'none';
+                
+                // Show dashboard
                 document.getElementById('emptyDashboard').style.display = 'none';
                 document.getElementById('analysisDashboard').classList.add('active');
                 document.getElementById('fullscreenBtn').style.display = 'inline-flex';
@@ -1465,7 +1569,7 @@
                 updateOffsetDisplay(2, video2StartTime);
             }).catch((error) => {
                 console.error('Error loading videos:', error);
-                document.getElementById('loadingOverlay').style.display = 'none';
+                loadingOverlay.style.display = 'none';
                 alert('Error loading videos. Please try again.');
             });
         }
@@ -1479,10 +1583,10 @@
             document.getElementById('player2').style.display = 'block';
             
             if (player1) {
-                try { player1.destroy(); } catch(e) { console.warn('Error destroying player1:', e); }
+                try { player1.destroy(); } catch(e) { /* Ignore cleanup errors */ }
             }
             if (player2) {
-                try { player2.destroy(); } catch(e) { console.warn('Error destroying player2:', e); }
+                try { player2.destroy(); } catch(e) { /* Ignore cleanup errors */ }
             }
 
             try {
@@ -1506,8 +1610,16 @@
                         'onReady': onPlayerReady,
                         'onStateChange': onPlayerStateChange,
                         'onError': function(event) {
-                            console.error('Player 1 error:', event.data);
-                            updateStatus(1, 'ERROR');
+                            // Only log genuine player errors (not extension blocks)
+                            if (event.data === 2) {
+                                console.log('Invalid video ID for Player 1');
+                                updateStatus(1, 'ERROR');
+                            } else if (event.data === 5) {
+                                console.log('HTML5 player error for Player 1');
+                            } else if (event.data === 100 || event.data === 101 || event.data === 150) {
+                                console.log('Video unavailable for Player 1');
+                                updateStatus(1, 'UNAVAILABLE');
+                            }
                         }
                     }
                 });
@@ -1532,8 +1644,16 @@
                         'onReady': onPlayerReady,
                         'onStateChange': onPlayerStateChange,
                         'onError': function(event) {
-                            console.error('Player 2 error:', event.data);
-                            updateStatus(2, 'ERROR');
+                            // Only log genuine player errors (not extension blocks)
+                            if (event.data === 2) {
+                                console.log('Invalid video ID for Player 2');
+                                updateStatus(2, 'ERROR');
+                            } else if (event.data === 5) {
+                                console.log('HTML5 player error for Player 2');
+                            } else if (event.data === 100 || event.data === 101 || event.data === 150) {
+                                console.log('Video unavailable for Player 2');
+                                updateStatus(2, 'UNAVAILABLE');
+                            }
                         }
                     }
                 });
@@ -1604,7 +1724,7 @@
                     document.getElementById('elapsed1').textContent = elapsedTime.toFixed(1) + 's';
                 }
             } catch (error) {
-                console.warn('Error updating player1 time:', error);
+                // Silently handle player state issues
             }
             
             try {
@@ -1615,7 +1735,7 @@
                     document.getElementById('elapsed2').textContent = elapsedTime.toFixed(1) + 's';
                 }
             } catch (error) {
-                console.warn('Error updating player2 time:', error);
+                // Silently handle player state issues
             }
         }
 
@@ -1632,7 +1752,7 @@
                             try {
                                 player.playVideo();
                             } catch (e) {
-                                console.warn('Error syncing play:', e);
+                                // Silently handle sync issues
                             }
                         }
                     });
@@ -1643,13 +1763,16 @@
                             try {
                                 player.pauseVideo();
                             } catch (e) {
-                                console.warn('Error syncing pause:', e);
+                                // Silently handle sync issues
                             }
                         }
                     });
                 }
             } catch (error) {
-                console.error('Error in onPlayerStateChange:', error);
+                // Only log unexpected errors
+                if (!error.message.includes('blocked') && !error.message.includes('extension')) {
+                    console.error('Error in onPlayerStateChange:', error);
+                }
             }
         }
 
@@ -1662,7 +1785,7 @@
                         player.playVideo();
                     }
                 } catch (error) {
-                    console.warn('Error playing video:', error);
+                    // Silently handle playback issues
                 }
             });
         }
@@ -1675,7 +1798,7 @@
                         player.pauseVideo();
                     }
                 } catch (error) {
-                    console.warn('Error pausing video:', error);
+                    // Silently handle playback issues
                 }
             });
         }
@@ -1701,7 +1824,7 @@
                         player.seekTo(targetTime, true);
                     }
                 } catch (error) {
-                    console.warn('Error rewinding video:', error);
+                    // Silently handle seek issues
                 }
             });
         }
@@ -1776,11 +1899,11 @@
                     
                     // Destroy players
                     if (player1) {
-                        try { player1.destroy(); } catch(e) { console.warn('Error destroying player1:', e); }
+                        try { player1.destroy(); } catch(e) { /* Ignore cleanup errors */ }
                         player1 = null;
                     }
                     if (player2) {
-                        try { player2.destroy(); } catch(e) { console.warn('Error destroying player2:', e); }
+                        try { player2.destroy(); } catch(e) { /* Ignore cleanup errors */ }
                         player2 = null;
                     }
                     players = [];
@@ -1813,6 +1936,9 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // Ensure loading overlay is hidden on page load
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
             loadFromURLParams();
             updateApiStatus(false);
             initializeSlider();
