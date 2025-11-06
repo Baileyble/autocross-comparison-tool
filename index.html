@@ -717,24 +717,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* Size adjustment */
-        .size-adjuster {
-            background: var(--surface-mid);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .adjuster-label {
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            min-width: 80px;
-        }
-
         /* Playback speed control */
         .speed-control {
             background: var(--surface-mid);
@@ -838,53 +820,6 @@
 
         .shortcut-desc {
             color: var(--text-secondary);
-        }
-
-        .slider-track {
-            flex: 1;
-            height: 6px;
-            background: var(--surface-dark);
-            border-radius: 3px;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .slider-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background: var(--gradient-3);
-            border-radius: 3px;
-            width: 50%;
-            transition: width 0.3s ease;
-        }
-
-        .slider-thumb {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            background: var(--text-primary);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            cursor: grab;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .slider-thumb:hover {
-            transform: translate(-50%, -50%) scale(1.2);
-            box-shadow: 0 4px 20px rgba(168, 255, 0, 0.4);
-        }
-
-        .size-value {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.25rem;
-            color: var(--accent-lime);
-            min-width: 60px;
-            text-align: right;
         }
 
         /* Empty state */
@@ -1129,7 +1064,6 @@
                 font-size: 0.7rem;
             }
 
-            .fullscreen-mode .size-adjuster,
             .fullscreen-mode .speed-control,
             .fullscreen-mode .keyboard-shortcuts {
                 display: none;
@@ -1422,15 +1356,6 @@
                     </div>
                 </div>
 
-                <!-- <div class="size-adjuster">
-                    <span class="adjuster-label">View Size</span>
-                    <div class="slider-track" id="sliderTrack">
-                        <div class="slider-fill" id="sliderFill"></div>
-                        <div class="slider-thumb" id="sliderThumb"></div>
-                    </div>
-                    <span class="size-value" id="sizeValue">100%</span>
-                </div> -->
-
                 <details class="keyboard-shortcuts">
                     <summary>⌨️ Keyboard Shortcuts</summary>
                     <div class="shortcuts-grid">
@@ -1511,46 +1436,10 @@
         let apiReady = false;
         let isFullscreen = false;
         let timeUpdateInterval;
-        let sliderValue = 100;
         let apiReadyPromise = null;
         let apiLoadTimeout = null;
         let isPlaying = false;
         let currentPlaybackSpeed = 1;
-
-        // Initialize custom slider
-        function initializeSlider() {
-            const track = document.getElementById('sliderTrack');
-            const thumb = document.getElementById('sliderThumb');
-            const fill = document.getElementById('sliderFill');
-            const valueDisplay = document.getElementById('sizeValue');
-            
-            let isDragging = false;
-            
-            function updateSlider(e) {
-                const rect = track.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-                const value = Math.round(50 + (percentage / 100) * 100);
-                
-                sliderValue = value;
-                thumb.style.left = percentage + '%';
-                fill.style.width = percentage + '%';
-                valueDisplay.textContent = value + '%';
-                
-                // Update video sizes
-                const frames = document.querySelectorAll('.video-frame');
-                frames.forEach(frame => {
-                    frame.style.height = (400 * value / 100) + 'px';
-                });
-            }
-            
-            thumb.addEventListener('mousedown', () => { isDragging = true; });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) updateSlider(e);
-            });
-            document.addEventListener('mouseup', () => { isDragging = false; });
-            track.addEventListener('click', updateSlider);
-        }
 
         // URL Parameter handling
         function loadFromURLParams() {
@@ -2272,7 +2161,6 @@
             
             loadFromURLParams();
             updateApiStatus(false);
-            initializeSlider();
             
             // Event listeners
             document.getElementById('loadVideosBtn').onclick = loadVideos;
