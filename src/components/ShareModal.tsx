@@ -34,7 +34,6 @@ export function ShareModal() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const input = document.createElement("input");
       input.value = shareUrl;
       document.body.appendChild(input);
@@ -57,9 +56,9 @@ export function ShareModal() {
       />
 
       {/* Modal */}
-      <div className="relative glass rounded-2xl border border-white/10 p-6 w-full max-w-md animate-slide-up space-y-5">
+      <div className="relative card p-6 w-full max-w-md animate-slide-up space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-wide">Share Comparison</h3>
+          <h3 className="text-lg font-bold tracking-tight">Share Comparison</h3>
           <button
             onClick={() => setShowShare(false)}
             className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
@@ -78,13 +77,13 @@ export function ShareModal() {
               size={200}
               level="M"
               bgColor="#ffffff"
-              fgColor="#0c0c0f"
+              fgColor="#0f1923"
             />
           </div>
         )}
 
         <p className="text-xs text-muted text-center">
-          Scan this QR code or copy the link below to share this comparison
+          Scan the QR code or copy the link below to share this comparison.
         </p>
 
         {/* URL + Copy */}
@@ -93,14 +92,14 @@ export function ShareModal() {
             type="text"
             value={shareUrl}
             readOnly
-            className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono text-muted truncate"
+            className="flex-1 bg-surface-elevated border border-white/8 rounded-lg px-3 py-2.5 text-xs font-mono text-muted truncate"
           />
           <button
             onClick={handleCopy}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`btn px-4 py-2.5 text-sm font-semibold transition-all ${
               copied
-                ? "bg-teal/20 text-teal border border-teal/30"
-                : "bg-accent text-white hover:bg-accent-glow"
+                ? "bg-success/15 text-success border border-success/30"
+                : "btn-primary"
             }`}
           >
             {copied ? "Copied!" : "Copy"}

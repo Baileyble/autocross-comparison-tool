@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/lib/store";
 
 interface PlaybackControlsProps {
@@ -26,15 +27,17 @@ export function PlaybackControls({
   const setOverlayMode = useStore((s) => s.setOverlayMode);
   const setSyncSetupMode = useStore((s) => s.setSyncSetupMode);
 
+  const [showOffsets, setShowOffsets] = useState(false);
+
   const hasComparison = !!session.activeComparison;
 
   return (
-    <div className="glass rounded-xl border border-foreground/5 p-3 space-y-3">
-      {/* Main transport controls */}
+    <div className="card p-4 space-y-4">
+      {/* Transport controls */}
       <div className="flex items-center justify-center gap-2">
         <button
           onClick={() => onSeek(-5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors btn-tactile"
+          className="p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
           aria-label="Rewind 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -44,7 +47,7 @@ export function PlaybackControls({
 
         <button
           onClick={() => onSeek(-1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors btn-tactile"
+          className="p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
           aria-label="Rewind 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -52,21 +55,22 @@ export function PlaybackControls({
           </svg>
         </button>
 
+        {/* Big play/pause button */}
         <button
           onClick={onPlayPause}
-          className={`p-4 rounded-full transition-all btn-tactile ${
+          className={`p-4 rounded-full transition-all ${
             isPlaying
-              ? "bg-gulf-orange text-white glow-accent"
-              : "bg-surface-elevated hover:bg-gulf-orange/20 text-foreground hover:text-gulf-orange"
+              ? "bg-accent text-white shadow-lg shadow-accent/25"
+              : "bg-surface-elevated hover:bg-surface-hover text-foreground"
           }`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
             </svg>
           ) : (
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
@@ -74,7 +78,7 @@ export function PlaybackControls({
 
         <button
           onClick={() => onSeek(1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors btn-tactile"
+          className="p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
           aria-label="Forward 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -84,7 +88,7 @@ export function PlaybackControls({
 
         <button
           onClick={() => onSeek(5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors btn-tactile"
+          className="p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
           aria-label="Forward 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,7 +98,7 @@ export function PlaybackControls({
 
         <button
           onClick={onRestart}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors ml-2 btn-tactile"
+          className="p-2.5 rounded-xl bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors ml-1"
           aria-label="Restart"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -103,31 +107,35 @@ export function PlaybackControls({
         </button>
       </div>
 
-      {/* Secondary controls */}
+      {/* Speed selector + secondary actions */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-muted uppercase tracking-wider mr-1">Speed</span>
-          {SPEEDS.map((speed) => (
-            <button
-              key={speed}
-              onClick={() => setPlaybackSpeed(speed)}
-              className={`px-2 py-1 rounded text-xs font-mono transition-colors ${
-                playbackSpeed === speed
-                  ? "bg-gulf-orange/15 text-gulf-orange border border-gulf-orange/30"
-                  : "text-muted hover:text-foreground hover:bg-surface-hover"
-              }`}
-            >
-              {speed}x
-            </button>
-          ))}
+        {/* Speed */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted font-medium mr-1">Speed</span>
+          <div className="flex bg-surface-elevated rounded-lg p-0.5">
+            {SPEEDS.map((speed) => (
+              <button
+                key={speed}
+                onClick={() => setPlaybackSpeed(speed)}
+                className={`px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
+                  playbackSpeed === speed
+                    ? "bg-accent/15 text-accent"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {speed}x
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Actions */}
+        <div className="flex items-center gap-1">
           {hasComparison && (
             <>
               <button
                 onClick={() => setSyncSetupMode("runA")}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted hover:text-gulf-orange hover:bg-gulf-orange/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672Zm-7.518-.267A8.25 8.25 0 1 1 20.25 10.5M8.288 14.212A5.25 5.25 0 1 1 17.25 10.5" />
@@ -136,9 +144,9 @@ export function PlaybackControls({
               </button>
               <button
                 onClick={() => setOverlayMode(!overlayMode)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   overlayMode
-                    ? "bg-gulf-orange/10 text-gulf-orange border border-gulf-orange/20"
+                    ? "bg-accent/10 text-accent border border-accent/20"
                     : "text-muted hover:text-foreground hover:bg-surface-hover"
                 }`}
               >
@@ -146,39 +154,51 @@ export function PlaybackControls({
               </button>
               <button
                 onClick={swapRuns}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 Swap A/B
+              </button>
+              <button
+                onClick={() => setShowOffsets(!showOffsets)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  showOffsets
+                    ? "bg-surface-hover text-foreground"
+                    : "text-muted hover:text-foreground hover:bg-surface-hover"
+                }`}
+              >
+                Fine-tune
               </button>
             </>
           )}
         </div>
       </div>
 
-      {/* Offset adjustments */}
-      {hasComparison && (
-        <div className="grid grid-cols-2 gap-2">
+      {/* Collapsible offset adjustment */}
+      {hasComparison && showOffsets && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-slide-up">
           {(["A", "B"] as const).map((lbl) => (
             <div
               key={lbl}
-              className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 ${
-                lbl === "A" ? "bg-gulf-blue/5 border border-gulf-blue/10" : "bg-gulf-orange/5 border border-gulf-orange/10"
+              className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${
+                lbl === "A"
+                  ? "bg-run-a/5 border border-run-a/15"
+                  : "bg-accent/5 border border-accent/15"
               }`}
             >
-              <span className={`text-[10px] font-mono font-bold ${lbl === "A" ? "text-gulf-blue" : "text-gulf-orange"}`}>
-                RUN {lbl}
+              <span className={`text-xs font-mono font-bold ${lbl === "A" ? "text-run-a" : "text-accent"}`}>
+                Run {lbl}
               </span>
               <div className="flex items-center gap-1">
                 {[
-                  { label: "-1", delta: -1 },
-                  { label: "-.1", delta: -0.1 },
-                  { label: "+.1", delta: 0.1 },
-                  { label: "+1", delta: 1 },
+                  { label: "-1s", delta: -1 },
+                  { label: "-0.1", delta: -0.1 },
+                  { label: "+0.1", delta: 0.1 },
+                  { label: "+1s", delta: 1 },
                 ].map(({ label: btnLabel, delta }) => (
                   <button
                     key={btnLabel}
                     onClick={() => onAdjustOffset(lbl, delta)}
-                    className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors"
+                    className="px-2 py-1.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors"
                   >
                     {btnLabel}
                   </button>

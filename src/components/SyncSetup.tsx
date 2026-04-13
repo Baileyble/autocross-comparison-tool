@@ -31,7 +31,6 @@ export function SyncSetup() {
         step={step}
         onSetLaunchPoint={(time) => {
           updateRun(activeRun.id, { startOffset: time });
-          // Auto-save to localStorage so sync persists
           setTimeout(() => saveToHistory(), 100);
           if (syncSetupMode === "runA") {
             setSyncSetupMode("runB");
@@ -70,6 +69,7 @@ function SyncSetupInner({
   onSkip: () => void;
   onCancel: () => void;
 }) {
+  // Stable container ID via useRef — does NOT change across renders
   const stableId = useRef(`sync-player-${run.id}-${Math.random().toString(36).slice(2, 8)}`);
   const containerId = stableId.current;
   const playerRef = useRef<YT.Player | null>(null);
@@ -79,9 +79,7 @@ function SyncSetupInner({
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const isBlue = label === "A";
-  const accentColor = isBlue ? "text-gulf-blue" : "text-gulf-orange";
-  const accentBg = isBlue ? "bg-gulf-blue" : "bg-gulf-orange";
+  const isA = label === "A";
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +100,7 @@ function SyncSetupInner({
           videoId: run.videoId,
           playerVars: {
             autoplay: 0,
-            controls: 1, // IMPORTANT: Enable native YouTube controls
+            controls: 1, // Native YouTube controls enabled
             enablejsapi: 1,
             modestbranding: 1,
             rel: 0,
@@ -123,7 +121,6 @@ function SyncSetupInner({
             onStateChange: (event: YT.OnStateChangeEvent) => {
               if (cancelled) return;
               setIsPlaying(event.data === 1);
-              // Update duration once we know it
               try {
                 const dur = player.getDuration();
                 if (dur > 0) setDuration(dur);
@@ -177,7 +174,6 @@ function SyncSetupInner({
   const handleStep = useCallback((delta: number) => {
     const newTime = Math.max(0, currentTime + delta);
     seekTo(newTime);
-    // Pause when stepping for precision
     try { playerRef.current?.pauseVideo(); } catch {}
     setIsPlaying(false);
   }, [currentTime, seekTo]);
@@ -196,38 +192,48 @@ function SyncSetupInner({
   return (
     <>
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5 shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 shrink-0">
         <button
           onClick={onCancel}
-          className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors font-medium"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
           Cancel
         </button>
+
+        {/* Step indicator */}
         <div className="text-center">
-          <div className="text-[10px] text-muted uppercase tracking-widest">Step {step} of 2</div>
-          <div className={`font-display text-xl ${accentColor}`}>
-            SET LAUNCH — RUN {label}
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className={`step-dot ${step === 1 ? "active" : "complete"}`} />
+            <div className="w-6 h-px bg-subtle" />
+            <div className={`step-dot ${step === 2 ? "active" : "inactive"}`} />
           </div>
+          <div className="text-xs text-muted font-medium">Step {step} of 2</div>
         </div>
+
         <button
           onClick={onSkip}
-          className="text-sm text-muted hover:text-foreground transition-colors"
+          className="text-sm text-muted hover:text-foreground transition-colors font-medium"
         >
           Skip
         </button>
       </div>
 
-      {/* Content area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4 overflow-y-auto">
-        {/* Run name */}
-        <div className={`text-sm ${accentColor} font-medium`}>
-          {run.name}
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-5 overflow-y-auto">
+        {/* Title */}
+        <div className="text-center">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
+            Set launch point
+          </h2>
+          <p className={`text-sm font-medium mt-1 ${isA ? "text-run-a" : "text-accent"}`}>
+            Run {label}: {run.name}
+          </p>
         </div>
 
-        {/* Video player — using YouTube native controls */}
+        {/* Video player with native YouTube controls */}
         <div className="sync-video-container w-full">
           <div className="sync-player-wrap">
             <div id={containerId} />
@@ -236,12 +242,12 @@ function SyncSetupInner({
 
         {/* Time display */}
         <div className="text-center">
-          <div className={`font-mono text-4xl sm:text-5xl font-bold tracking-tight ${accentColor}`}>
+          <div className={`font-mono text-4xl sm:text-5xl font-bold tracking-tight ${isA ? "text-run-a" : "text-accent"}`}>
             {formatTime(currentTime)}
           </div>
           {run.startOffset > 0 && (
-            <div className="text-xs text-muted mt-1">
-              Current offset: {run.startOffset.toFixed(1)}s
+            <div className="text-xs text-muted mt-1.5">
+              Current offset: <span className="font-mono">{run.startOffset.toFixed(1)}s</span>
             </div>
           )}
         </div>
@@ -265,25 +271,27 @@ function SyncSetupInner({
           </div>
         )}
 
-        {/* Step buttons + play/pause */}
-        <div className="flex items-center justify-center gap-2 flex-wrap">
+        {/* Step buttons */}
+        <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => handleStep(-1)}
-            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors btn-tactile"
+            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors"
           >
             -1s
           </button>
           <button
             onClick={() => handleStep(-0.1)}
-            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors btn-tactile"
+            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors"
           >
             -0.1s
           </button>
           <button
             onClick={togglePlay}
-            className={`px-5 py-3 rounded-xl font-mono text-sm font-medium transition-colors btn-tactile ${
+            className={`px-6 py-3 rounded-xl font-mono text-sm font-medium transition-colors ${
               isPlaying
-                ? `${isBlue ? "bg-gulf-blue/20 text-gulf-blue border border-gulf-blue/30" : "bg-gulf-orange/20 text-gulf-orange border border-gulf-orange/30"}`
+                ? isA
+                  ? "bg-run-a/15 text-run-a border border-run-a/30"
+                  : "bg-accent/15 text-accent border border-accent/30"
                 : "bg-surface-elevated hover:bg-surface-hover text-foreground"
             }`}
           >
@@ -291,28 +299,32 @@ function SyncSetupInner({
           </button>
           <button
             onClick={() => handleStep(0.1)}
-            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors btn-tactile"
+            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors"
           >
             +0.1s
           </button>
           <button
             onClick={() => handleStep(1)}
-            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors btn-tactile"
+            className="px-4 py-3 rounded-xl bg-surface-elevated hover:bg-surface-hover text-foreground font-mono text-sm font-medium transition-colors"
           >
             +1s
           </button>
         </div>
 
-        {/* Set launch point button */}
+        {/* Mark start point button */}
         <button
           onClick={() => onSetLaunchPoint(currentTime)}
-          className={`w-full max-w-lg py-4 rounded-xl ${accentBg} text-white font-display text-2xl tracking-wide uppercase transition-all btn-tactile glow-accent active:scale-[0.98]`}
+          className={`w-full max-w-lg py-4 rounded-xl text-white font-bold text-lg tracking-tight transition-all active:scale-[0.98] ${
+            isA
+              ? "bg-run-a hover:bg-run-a-hover shadow-lg shadow-run-a/20"
+              : "bg-accent hover:bg-accent-hover shadow-lg shadow-accent/20"
+          }`}
         >
-          SET LAUNCH POINT — {formatTime(currentTime)}
+          Mark Start Point — {formatTime(currentTime)}
         </button>
 
-        <p className="text-xs text-muted text-center max-w-sm">
-          Use YouTube&apos;s controls or the step buttons to find the exact moment the car launches, then set it as the start point.
+        <p className="text-xs text-muted text-center max-w-sm leading-relaxed">
+          Use YouTube&apos;s controls or the step buttons to find the exact moment the car launches, then mark it as the start point.
         </p>
       </div>
     </>

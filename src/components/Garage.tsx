@@ -86,72 +86,65 @@ export function Garage({ isPanel = false }: { isPanel?: boolean }) {
 
   return (
     <div className="animate-slide-up">
-      <div className={`${isPanel ? "" : "max-w-2xl mx-auto"} px-4 py-4 space-y-4`}>
+      <div className={`${isPanel ? "" : "max-w-2xl mx-auto"} px-4 sm:px-6 py-6 space-y-6`}>
         {/* Session header */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {editingSession ? (
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="text"
-                  value={sessionName}
-                  onChange={(e) => setSessionName(e.target.value)}
-                  className="flex-1 min-w-0 bg-surface border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-gulf-orange/50"
-                  onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
-                  autoFocus
-                />
+        {!isPanel && (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              {editingSession ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    value={sessionName}
+                    onChange={(e) => setSessionName(e.target.value)}
+                    className="flex-1 min-w-0 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-run-a/50"
+                    onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSessionRename}
+                    className="px-3 py-2 rounded-lg bg-run-a/10 text-run-a text-xs font-semibold hover:bg-run-a/20 transition-colors shrink-0"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={handleSessionRename}
-                  className="px-3 py-2 rounded-lg bg-gulf-orange/10 text-gulf-orange text-xs font-medium hover:bg-gulf-orange/20 transition-colors shrink-0"
+                  onClick={() => {
+                    setSessionName(session.name);
+                    setEditingSession(true);
+                  }}
+                  className="flex items-center gap-2 text-foreground hover:text-run-a transition-colors group min-w-0"
                 >
-                  Save
+                  <h2 className="text-2xl font-extrabold tracking-tight truncate">
+                    {session.name}
+                  </h2>
+                  <svg className="w-4 h-4 text-subtle group-hover:text-run-a transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                  </svg>
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setSessionName(session.name);
-                  setEditingSession(true);
-                }}
-                className="flex items-center gap-2 text-foreground hover:text-gulf-orange transition-colors group min-w-0"
-              >
-                <h2 className={`font-display tracking-wider truncate ${isPanel ? "text-xl" : "text-3xl"}`}>
-                  {session.name.toUpperCase()}
-                </h2>
-                <svg className="w-3.5 h-3.5 text-muted group-hover:text-gulf-orange transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-                </svg>
-              </button>
-            )}
+              )}
+            </div>
           </div>
-          <button
-            onClick={handleNewSession}
-            className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-            title="New Session"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        )}
+
+        {/* Add run card */}
+        <div className="card p-4 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span className="hidden sm:inline">New</span>
-          </button>
-        </div>
-
-        {/* Add run form — stacked in panel mode */}
-        <div className="glass rounded-xl border border-foreground/5 p-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-gulf-orange" />
-            <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Add Run</span>
+            <span className="text-sm font-semibold text-foreground">Add a run</span>
           </div>
 
           {isPanel ? (
-            // Stacked layout for panel
             <div className="space-y-2">
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Run name (optional)"
-                className="w-full bg-surface border border-foreground/8 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
+                className="w-full bg-surface-elevated border border-white/6 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
               />
               <div className="flex gap-2">
                 <input
@@ -159,73 +152,72 @@ export function Garage({ isPanel = false }: { isPanel?: boolean }) {
                   value={url}
                   onChange={(e) => { setUrl(e.target.value); setError(""); }}
                   placeholder="YouTube URL or video ID"
-                  className="flex-1 min-w-0 bg-surface border border-foreground/8 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
+                  className="flex-1 min-w-0 bg-surface-elevated border border-white/6 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
                   onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
                 />
                 <button
                   onClick={handleAddRun}
                   disabled={!url}
-                  className="px-3 py-2 rounded-lg bg-gulf-orange text-white text-sm font-semibold hover:bg-gulf-orange-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all btn-tactile shrink-0"
+                  className="btn btn-primary px-4 py-2.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                 >
                   Add
                 </button>
               </div>
             </div>
           ) : (
-            // Side-by-side layout for full page
             <div className="flex gap-2">
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Run name"
-                className="w-28 sm:w-36 bg-surface border border-foreground/8 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
+                className="w-28 sm:w-36 bg-surface-elevated border border-white/6 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
               />
               <input
                 type="text"
                 value={url}
                 onChange={(e) => { setUrl(e.target.value); setError(""); }}
-                placeholder="YouTube URL or video ID"
-                className="flex-1 bg-surface border border-foreground/8 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
+                placeholder="Paste a YouTube URL or video ID"
+                className="flex-1 bg-surface-elevated border border-white/6 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
                 onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
               />
               <button
                 onClick={handleAddRun}
                 disabled={!url}
-                className="px-4 py-2.5 rounded-lg bg-gulf-orange text-white text-sm font-semibold hover:bg-gulf-orange-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all btn-tactile"
+                className="btn btn-primary px-5 py-3 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Add
+                Add Run
               </button>
             </div>
           )}
 
           {previewId && (
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50">
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated border border-white/5">
               <img src={getThumbnailUrl(previewId, "default")} alt="Preview" className="w-16 h-10 rounded object-cover" />
               <span className="text-xs font-mono text-muted">{previewId}</span>
             </div>
           )}
 
-          {error && <p className="text-gulf-orange text-xs font-medium">{error}</p>}
+          {error && <p className="text-accent text-xs font-medium">{error}</p>}
         </div>
 
         {/* Runs list */}
         {session.runs.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium text-muted uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider">
                 Runs ({session.runs.length})
               </span>
-              <span className="text-[10px] text-subtle">
+              <span className="text-xs text-subtle font-medium">
                 {selectedRuns.length === 0
                   ? "Select 2 to compare"
                   : selectedRuns.length === 1
                   ? "Select 1 more"
-                  : "Ready"}
+                  : "Ready to compare"}
               </span>
             </div>
 
-            <div className="grid gap-1.5">
+            <div className="space-y-2">
               {session.runs.map((run, index) => (
                 <RunCard
                   key={run.id}
@@ -239,45 +231,47 @@ export function Garage({ isPanel = false }: { isPanel?: boolean }) {
                 />
               ))}
             </div>
-
-            {/* Compare buttons */}
-            <div className="space-y-1.5">
-              <button
-                onClick={() => handleCompare(true)}
-                disabled={selectedRuns.length !== 2}
-                className={`w-full rounded-xl bg-gulf-orange text-white font-display tracking-wider uppercase hover:bg-gulf-orange-glow disabled:opacity-20 disabled:cursor-not-allowed transition-all btn-tactile glow-accent disabled:shadow-none ${
-                  isPanel ? "py-2.5 text-base" : "py-3 text-xl"
-                }`}
-              >
-                {selectedRuns.length === 2 ? "Set Launch & Compare" : "Select 2 Runs"}
-              </button>
-              {selectedRuns.length === 2 && (
-                <button
-                  onClick={() => handleCompare(false)}
-                  className="w-full py-1.5 rounded-lg text-xs text-muted hover:text-foreground transition-colors"
-                >
-                  Skip sync — compare directly
-                </button>
-              )}
-            </div>
           </div>
         )}
 
-        {/* Empty state — only on full page */}
+        {/* Empty state */}
         {session.runs.length === 0 && !isPanel && (
-          <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-elevated mb-4">
-              <svg className="w-8 h-8 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-white/5 mb-4">
+              <svg className="w-8 h-8 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
               </svg>
             </div>
-            <h3 className="font-display text-2xl text-foreground mb-1 tracking-wider">NO RUNS YET</h3>
+            <h3 className="text-xl font-bold text-foreground tracking-tight mb-1">No runs yet</h3>
             <p className="text-sm text-muted max-w-xs mx-auto">
               Add YouTube videos of your autocross runs above to start comparing.
             </p>
           </div>
         )}
+
+        {/* Spacer for bottom action bar */}
+        {selectedRuns.length === 2 && !isPanel && <div className="h-24" />}
       </div>
+
+      {/* Bottom action bar */}
+      {selectedRuns.length === 2 && (
+        <div className={isPanel ? "px-4 pb-4 space-y-2" : "bottom-action-bar"}>
+          <div className={isPanel ? "space-y-2" : "max-w-2xl mx-auto space-y-2"}>
+            <button
+              onClick={() => handleCompare(true)}
+              className="w-full btn btn-primary py-3.5 text-base font-bold tracking-tight"
+            >
+              Sync &amp; Compare
+            </button>
+            <button
+              onClick={() => handleCompare(false)}
+              className="w-full py-2 rounded-lg text-sm text-muted hover:text-foreground transition-colors font-medium"
+            >
+              Skip sync — compare directly
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -300,54 +294,71 @@ function RunCard({
   onRemove: () => void;
 }) {
   const label = selectionOrder === 0 ? "A" : selectionOrder === 1 ? "B" : null;
+  const isA = label === "A";
+  const isB = label === "B";
 
   return (
     <div
       onClick={onSelect}
-      className={`flex items-center gap-2.5 rounded-xl cursor-pointer transition-all ${
-        compact ? "p-2" : "p-3 gap-3"
+      className={`flex items-center gap-3 rounded-xl cursor-pointer transition-all ${
+        compact ? "p-2.5" : "p-3"
       } ${
         selected
-          ? label === "A"
-            ? "bg-gulf-blue/10 border border-gulf-blue/30"
-            : "bg-gulf-orange/10 border border-gulf-orange/30"
-          : "bg-surface border border-foreground/5 hover:border-foreground/10 hover:bg-surface-elevated"
+          ? isA
+            ? "bg-run-a/8 border-2 border-run-a/40"
+            : "bg-accent/8 border-2 border-accent/40"
+          : "card hover:bg-surface-elevated"
       }`}
     >
+      {/* Selection indicator */}
       <div
-        className={`shrink-0 rounded-lg flex items-center justify-center text-xs font-bold font-mono ${
-          compact ? "w-6 h-6 text-[10px]" : "w-8 h-8"
+        className={`shrink-0 rounded-lg flex items-center justify-center font-bold font-mono ${
+          compact ? "w-7 h-7 text-xs" : "w-9 h-9 text-sm"
         } ${
-          label === "A"
-            ? "bg-gulf-blue/20 text-gulf-blue"
-            : label === "B"
-            ? "bg-gulf-orange/20 text-gulf-orange"
+          isA
+            ? "bg-run-a/20 text-run-a"
+            : isB
+            ? "bg-accent/20 text-accent"
             : "bg-surface-elevated text-subtle"
         }`}
       >
         {label || index + 1}
       </div>
 
+      {/* Thumbnail */}
       <img
         src={getThumbnailUrl(run.videoId, "default")}
         alt={run.name}
-        className={`rounded object-cover shrink-0 ${compact ? "w-12 h-8" : "w-16 h-10"}`}
+        className={`rounded-lg object-cover shrink-0 ${compact ? "w-14 h-9" : "w-20 h-12"}`}
       />
 
+      {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className={`font-medium text-foreground truncate ${compact ? "text-xs" : "text-sm"}`}>{run.name}</div>
-        {run.startOffset > 0 && (
-          <div className="text-[10px] font-mono text-subtle">sync: {run.startOffset.toFixed(1)}s</div>
-        )}
+        <div className={`font-semibold text-foreground truncate ${compact ? "text-sm" : "text-base"}`}>
+          {run.name}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs font-mono text-subtle">{run.videoId}</span>
+          {run.startOffset > 0 ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
+              Synced at {run.startOffset.toFixed(1)}s
+            </span>
+          ) : (
+            <span className="inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-surface-elevated text-subtle border border-white/5">
+              Not synced
+            </span>
+          )}
+        </div>
       </div>
 
+      {/* Remove button */}
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        className="p-1 rounded text-subtle hover:text-gulf-orange hover:bg-gulf-orange/10 transition-colors shrink-0"
+        className="p-1.5 rounded-lg text-subtle hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
         aria-label="Remove"
       >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
         </svg>
       </button>
     </div>

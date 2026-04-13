@@ -261,3 +261,37 @@ input[type="range"]::-moz-range-thumb {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Step indicator dots */
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+.step-dot.active {
+  background: var(--color-accent);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.4);
+}
+.step-dot.complete {
+  background: var(--color-success);
+}
+.step-dot.inactive {
+  background: var(--color-subtle);
+}
+
+/* Bottom action bar */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: var(--color-surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: slide-up 0.25s ease-out forwards;
+}

@@ -61,29 +61,33 @@ export default function Home() {
       <Header />
 
       <main className="flex-1 flex flex-col">
-        {/* Main garage — shown on the main screen when no comparison or user navigates back */}
-        {showGarage && <Garage />}
-        {showGarage && <HistoryPanel />}
+        {/* Garage view */}
+        {showGarage && (
+          <div className="flex-1">
+            <Garage />
+            <HistoryPanel />
+          </div>
+        )}
 
         {/* Comparison view */}
         {hasComparison && !showGarage && !showingSyncSetup && <ComparisonView />}
 
-        {/* Empty state */}
+        {/* Empty state — when comparison was cleared but not in garage */}
         {!showGarage && !hasComparison && !showingSyncSetup && (
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-surface-elevated">
-                <svg className="w-10 h-10 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center space-y-6 animate-fade-in">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-surface border border-white/5">
+                <svg className="w-10 h-10 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
                 </svg>
               </div>
               <div>
-                <h2 className="font-display text-3xl text-foreground mb-1 tracking-wider">NO COMPARISON LOADED</h2>
-                <p className="text-sm text-muted">Open the Garage to add runs and start comparing.</p>
+                <h2 className="text-2xl font-extrabold text-foreground tracking-tight">No comparison loaded</h2>
+                <p className="text-sm text-muted mt-1">Head to the garage to add runs and start comparing.</p>
               </div>
               <button
                 onClick={() => setShowGarage(true)}
-                className="px-6 py-2.5 rounded-xl bg-gulf-orange text-white font-semibold hover:bg-gulf-orange-glow transition-all btn-tactile glow-accent"
+                className="btn btn-primary px-8 py-3 text-sm font-semibold"
               >
                 Open Garage
               </button>
@@ -92,7 +96,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Sync Setup — full screen overlay */}
+      {/* Sync Setup overlay */}
       <SyncSetup />
 
       {/* Slide-out run panel for swapping during comparison */}
@@ -100,9 +104,9 @@ export default function Home() {
         className={`slide-panel-backdrop ${showRunPanel ? "open" : ""}`}
         onClick={() => setShowRunPanel(false)}
       />
-      <div className={`slide-panel bg-background border-l border-foreground/5 ${showRunPanel ? "open" : ""}`}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5">
-          <h3 className="font-display text-xl tracking-wider">SWAP RUNS</h3>
+      <div className={`slide-panel bg-background border-l border-white/5 ${showRunPanel ? "open" : ""}`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <h3 className="text-lg font-bold tracking-tight">Swap Runs</h3>
           <button
             onClick={() => setShowRunPanel(false)}
             className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"

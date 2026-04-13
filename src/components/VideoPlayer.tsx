@@ -12,9 +12,9 @@ interface VideoPlayerProps {
 }
 
 const ANNOTATION_DOTS: Record<AnnotationColor, string> = {
-  red: "bg-gulf-orange",
-  amber: "bg-gulf-orange",
-  teal: "bg-gulf-blue",
+  red: "bg-accent",
+  amber: "bg-amber-400",
+  teal: "bg-success",
   white: "bg-foreground",
 };
 
@@ -23,7 +23,7 @@ export function VideoPlayer({ run, label }: VideoPlayerProps) {
   const playerState = useStore((s) => s.playerStates[run.id]);
 
   const containerId = `yt-player-${run.id}`;
-  const isBlue = label === "A";
+  const isA = label === "A";
 
   const onTimeUpdate = useCallback(
     (time: number) => {
@@ -59,37 +59,27 @@ export function VideoPlayer({ run, label }: VideoPlayerProps) {
   );
 
   return (
-    <div className={`relative rounded-xl overflow-hidden border ${isBlue ? "border-gulf-blue/20" : "border-gulf-orange/20"} bg-surface`}>
-      {/* Label badge */}
+    <div className={`relative rounded-xl overflow-hidden border ${isA ? "border-run-a/20" : "border-accent/20"} bg-surface`}>
+      {/* Label badge overlay */}
       <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
         <span
-          className={`text-xs font-bold font-mono px-2 py-0.5 rounded border ${
-            isBlue
-              ? "bg-gulf-blue/15 text-gulf-blue border-gulf-blue/30"
-              : "bg-gulf-orange/15 text-gulf-orange border-gulf-orange/30"
+          className={`text-xs font-bold font-mono px-2.5 py-1 rounded-lg backdrop-blur-sm ${
+            isA
+              ? "bg-run-a/20 text-run-a border border-run-a/30"
+              : "bg-accent/20 text-accent border border-accent/30"
           }`}
         >
-          RUN {label}
+          {label}
         </span>
-        <span className="text-xs text-muted truncate max-w-[120px] sm:max-w-[200px]">
+        <span className="text-xs text-white/80 font-medium truncate max-w-[100px] sm:max-w-[180px] drop-shadow-md">
           {run.name}
         </span>
       </div>
 
-      {/* Status indicator */}
-      <div className="absolute top-3 right-3 z-10">
-        <span
-          className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
-            status === "playing"
-              ? "bg-gulf-blue/20 text-gulf-blue"
-              : status === "loading"
-              ? "bg-gulf-orange/20 text-gulf-orange animate-pulse-live"
-              : status === "error"
-              ? "bg-red-500/20 text-red-400"
-              : "bg-surface-elevated text-muted"
-          }`}
-        >
-          {status === "playing" ? "LIVE" : status.toUpperCase()}
+      {/* Elapsed time overlay */}
+      <div className="absolute bottom-[52px] right-3 z-10">
+        <span className={`font-mono text-lg font-bold tracking-tight drop-shadow-lg ${isA ? "text-run-a" : "text-accent"}`}>
+          {formatTime(elapsed)}
         </span>
       </div>
 
@@ -99,17 +89,20 @@ export function VideoPlayer({ run, label }: VideoPlayerProps) {
       </div>
 
       {/* Bottom info bar */}
-      <div className="px-3 py-2 flex items-center justify-between bg-surface-elevated/50 border-t border-foreground/5">
+      <div className="px-3 py-2.5 flex items-center justify-between bg-surface-elevated/80 border-t border-white/5">
         <div className="flex items-center gap-3">
-          <div className={`font-mono text-lg font-bold tracking-tight ${isBlue ? "text-gulf-blue" : "text-gulf-orange"}`}>
-            {formatTime(elapsed)}
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted uppercase tracking-wider">offset</span>
-            <span className="font-mono text-xs text-subtle">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted uppercase tracking-wider font-medium">Offset</span>
+            <span className="font-mono text-xs text-foreground font-medium">
               {run.startOffset.toFixed(1)}s
             </span>
           </div>
+          {status === "loading" && (
+            <span className="text-[10px] font-mono text-muted animate-pulse">Loading...</span>
+          )}
+          {status === "error" && (
+            <span className="text-[10px] font-mono text-accent">Error</span>
+          )}
         </div>
 
         {sortedAnnotations.length > 0 && (
@@ -122,7 +115,7 @@ export function VideoPlayer({ run, label }: VideoPlayerProps) {
               />
             ))}
             {sortedAnnotations.length > 5 && (
-              <span className="text-[10px] text-muted">+{sortedAnnotations.length - 5}</span>
+              <span className="text-[10px] text-muted ml-0.5">+{sortedAnnotations.length - 5}</span>
             )}
           </div>
         )}
