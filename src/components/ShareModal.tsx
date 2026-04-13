@@ -52,59 +52,62 @@ export function ShareModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={() => setShowShare(false)}
       />
 
-      {/* Modal */}
-      <div className="relative glass rounded-2xl border border-white/10 p-6 w-full max-w-md animate-slide-up space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-wide">Share Comparison</h3>
-          <button
-            onClick={() => setShowShare(false)}
-            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* QR Code */}
-        {shareUrl && (
-          <div className="flex justify-center p-4 bg-white rounded-xl">
-            <QRCodeSVG
-              value={shareUrl}
-              size={200}
-              level="M"
-              bgColor="#ffffff"
-              fgColor="#0c0c0f"
-            />
+      {/* Modal — neon border glow + HUD corners */}
+      <div className="relative glass rounded-2xl neon-border p-6 w-full max-w-md animate-slide-up space-y-5 hud-corners">
+        <div className="hud-corners-inner">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-lg font-bold tracking-[0.1em] text-cyan text-glow-cyan">SHARE COMPARISON</h3>
+            <button
+              onClick={() => setShowShare(false)}
+              className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        )}
 
-        <p className="text-xs text-muted text-center">
-          Scan this QR code or copy the link below to share this comparison
-        </p>
+          {/* QR Code */}
+          {shareUrl && (
+            <div className="flex justify-center p-4 bg-white rounded-xl mt-4">
+              <QRCodeSVG
+                value={shareUrl}
+                size={200}
+                level="M"
+                bgColor="#ffffff"
+                fgColor="#030308"
+              />
+            </div>
+          )}
 
-        {/* URL + Copy */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={shareUrl}
-            readOnly
-            className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono text-muted truncate"
-          />
-          <button
-            onClick={handleCopy}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              copied
-                ? "bg-teal/20 text-teal border border-teal/30"
-                : "bg-accent text-white hover:bg-accent-glow"
-            }`}
-          >
-            {copied ? "Copied!" : "Copy"}
-          </button>
+          <p className="text-xs text-muted text-center font-mono mt-4">
+            Scan QR code or copy the link below to share this comparison
+          </p>
+
+          {/* URL + Copy */}
+          <div className="flex gap-2 mt-4">
+            <input
+              type="text"
+              value={shareUrl}
+              readOnly
+              className="flex-1 bg-surface border border-cyan/15 rounded-lg px-3 py-2.5 text-xs font-mono text-cyan/70 truncate focus:outline-none"
+            />
+            <button
+              onClick={handleCopy}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium font-mono tracking-wider transition-all ${
+                copied
+                  ? "bg-lime/20 text-lime border border-lime/30 glow-lime"
+                  : "bg-cyan text-background hover:bg-cyan-glow"
+              }`}
+              style={!copied ? { boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)' } : {}}
+            >
+              {copied ? "COPIED!" : "COPY"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

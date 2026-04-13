@@ -30,13 +30,13 @@ export function PlaybackControls({
   const hasComparison = !!session.activeComparison;
 
   return (
-    <div className="glass rounded-xl border border-white/5 p-3 space-y-3">
+    <div className="glass rounded-xl border border-cyan/10 p-3 space-y-3">
       {/* Main transport controls */}
       <div className="flex items-center justify-center gap-2">
         {/* Rewind 5s */}
         <button
           onClick={() => onSeek(-5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cyan transition-colors border border-transparent hover:border-cyan/20"
           aria-label="Rewind 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -47,7 +47,7 @@ export function PlaybackControls({
         {/* Rewind 1s */}
         <button
           onClick={() => onSeek(-1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cyan transition-colors border border-transparent hover:border-cyan/20"
           aria-label="Rewind 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -55,13 +55,13 @@ export function PlaybackControls({
           </svg>
         </button>
 
-        {/* Play/Pause — big center button */}
+        {/* Play/Pause — big center button with pulsing glow */}
         <button
           onClick={onPlayPause}
           className={`p-4 rounded-full transition-all ${
             isPlaying
-              ? "bg-accent text-white glow-accent"
-              : "bg-surface-elevated hover:bg-accent/20 text-foreground hover:text-accent"
+              ? "bg-accent text-white animate-pulse-play"
+              : "bg-surface-elevated hover:bg-accent/20 text-foreground hover:text-accent border border-transparent hover:border-accent/30"
           }`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -79,7 +79,7 @@ export function PlaybackControls({
         {/* Forward 1s */}
         <button
           onClick={() => onSeek(1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cyan transition-colors border border-transparent hover:border-cyan/20"
           aria-label="Forward 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -90,7 +90,7 @@ export function PlaybackControls({
         {/* Forward 5s */}
         <button
           onClick={() => onSeek(5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cyan transition-colors border border-transparent hover:border-cyan/20"
           aria-label="Forward 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -101,7 +101,7 @@ export function PlaybackControls({
         {/* Restart */}
         <button
           onClick={onRestart}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors ml-2"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-lime transition-colors ml-2 border border-transparent hover:border-lime/20"
           aria-label="Restart"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -112,18 +112,19 @@ export function PlaybackControls({
 
       {/* Secondary controls row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* Speed selector */}
+        {/* Speed selector — glowing active state */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-muted uppercase tracking-wider mr-1">Speed</span>
+          <span className="text-[10px] text-cyan/50 uppercase tracking-wider mr-1 font-mono">SPD</span>
           {SPEEDS.map((speed) => (
             <button
               key={speed}
               onClick={() => setPlaybackSpeed(speed)}
-              className={`px-2 py-1 rounded text-xs font-mono transition-colors ${
+              className={`px-2 py-1 rounded text-xs font-mono transition-all ${
                 playbackSpeed === speed
-                  ? "bg-accent/15 text-accent border border-accent/30"
-                  : "text-muted hover:text-foreground hover:bg-surface-hover"
+                  ? "bg-cyan/15 text-cyan border border-cyan/40"
+                  : "text-muted hover:text-foreground hover:bg-surface-hover border border-transparent"
               }`}
+              style={playbackSpeed === speed ? { boxShadow: '0 0 10px rgba(0, 240, 255, 0.3)', textShadow: '0 0 6px rgba(0, 240, 255, 0.5)' } : {}}
             >
               {speed}x
             </button>
@@ -136,25 +137,25 @@ export function PlaybackControls({
             <>
               <button
                 onClick={() => setOverlayMode(!overlayMode)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium font-mono transition-all ${
                   overlayMode
-                    ? "bg-amber/10 text-amber border border-amber/20"
-                    : "text-muted hover:text-foreground hover:bg-surface-hover"
+                    ? "bg-lime/10 text-lime border border-lime/20 glow-lime"
+                    : "text-muted hover:text-foreground hover:bg-surface-hover border border-transparent"
                 }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
-                Overlay
+                OVERLAY
               </button>
               <button
                 onClick={swapRuns}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium font-mono text-muted hover:text-cyan hover:bg-surface-hover transition-colors border border-transparent hover:border-cyan/20"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
-                Swap A/B
+                SWAP A/B
               </button>
             </>
           )}
@@ -168,34 +169,37 @@ export function PlaybackControls({
             <div
               key={lbl}
               className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 ${
-                lbl === "A" ? "bg-accent/5 border border-accent/10" : "bg-teal/5 border border-teal/10"
+                lbl === "A" ? "bg-cyan/5 border border-cyan/15" : "bg-accent/5 border border-accent/15"
               }`}
             >
-              <span className={`text-[10px] font-mono font-bold ${lbl === "A" ? "text-accent" : "text-teal"}`}>
+              <span
+                className={`text-[10px] font-mono font-bold ${lbl === "A" ? "text-cyan" : "text-accent"}`}
+                style={lbl === "A" ? { textShadow: '0 0 6px rgba(0, 240, 255, 0.5)' } : { textShadow: '0 0 6px rgba(255, 0, 170, 0.5)' }}
+              >
                 RUN {lbl}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onAdjustOffset(lbl, -1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors border border-transparent hover:border-cyan/20"
                 >
                   -1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, -0.1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors border border-transparent hover:border-cyan/20"
                 >
                   -.1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, 0.1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors border border-transparent hover:border-cyan/20"
                 >
                   +.1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, 1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors border border-transparent hover:border-cyan/20"
                 >
                   +1
                 </button>
@@ -206,12 +210,12 @@ export function PlaybackControls({
                   const mode = lbl === "A" ? "runA" : "runB";
                   setTapSyncMode(tapSyncMode === mode ? "off" : mode);
                 }}
-                className={`ml-1 p-1.5 rounded transition-colors ${
+                className={`ml-1 p-1.5 rounded transition-all ${
                   (tapSyncMode === "runA" && lbl === "A") || (tapSyncMode === "runB" && lbl === "B")
-                    ? "bg-amber/20 text-amber"
+                    ? "bg-lime/20 text-lime glow-lime"
                     : "text-subtle hover:text-muted hover:bg-surface-hover"
                 }`}
-                title="Tap to sync — set start point by tapping"
+                title="Tap to sync -- set start point by tapping"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672Zm-7.518-.267A8.25 8.25 0 1 1 20.25 10.5M8.288 14.212A5.25 5.25 0 1 1 17.25 10.5" />

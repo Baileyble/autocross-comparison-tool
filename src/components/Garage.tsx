@@ -82,15 +82,15 @@ export function Garage() {
                 type="text"
                 value={sessionName}
                 onChange={(e) => setSessionName(e.target.value)}
-                className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                className="flex-1 bg-surface border border-cyan/20 rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:border-cyan/50 focus:shadow-[0_0_10px_rgba(0,240,255,0.2)]"
                 onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
                 autoFocus
               />
               <button
                 onClick={handleSessionRename}
-                className="px-3 py-2 rounded-lg bg-accent/10 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
+                className="px-3 py-2 rounded-lg bg-cyan/10 text-cyan text-sm font-medium font-mono hover:bg-cyan/20 transition-colors border border-cyan/20"
               >
-                Save
+                SAVE
               </button>
             </div>
           ) : (
@@ -99,76 +99,79 @@ export function Garage() {
                 setSessionName(session.name);
                 setEditingSession(true);
               }}
-              className="flex items-center gap-2 text-foreground hover:text-accent transition-colors group"
+              className="flex items-center gap-2 text-foreground hover:text-cyan transition-colors group"
             >
-              <h2 className="font-display text-xl font-bold tracking-wide">{session.name}</h2>
-              <svg className="w-4 h-4 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <h2 className="font-display text-xl font-bold tracking-wide text-glow-subtle">{session.name}</h2>
+              <svg className="w-4 h-4 text-muted group-hover:text-cyan transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
               </svg>
             </button>
           )}
         </div>
 
-        {/* Add run form */}
-        <div className="glass rounded-xl border border-white/5 p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <span className="text-xs font-medium text-muted uppercase tracking-wider">Add Run</span>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Run name (optional)"
-              className="w-32 sm:w-40 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
-            />
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => {
-                setUrl(e.target.value);
-                setError("");
-              }}
-              placeholder="YouTube URL or video ID"
-              className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
-              onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
-            />
-            <button
-              onClick={handleAddRun}
-              disabled={!url}
-              className="px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              Add
-            </button>
-          </div>
-
-          {/* URL preview */}
-          {previewId && (
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50">
-              <img
-                src={getThumbnailUrl(previewId, "default")}
-                alt="Video thumbnail"
-                className="w-20 h-12 rounded object-cover"
-              />
-              <span className="text-xs font-mono text-muted">{previewId}</span>
+        {/* Add run form — with HUD corners */}
+        <div className="hud-corners glass rounded-xl border border-cyan/10 p-4 space-y-3">
+          <div className="hud-corners-inner">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan animate-blink-signal" />
+              <span className="text-xs font-medium text-cyan/70 uppercase tracking-wider font-mono">Add Run</span>
             </div>
-          )}
 
-          {error && (
-            <p className="text-accent text-xs font-medium">{error}</p>
-          )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Run name"
+                className="w-32 sm:w-40 bg-surface border border-cyan/15 rounded-lg px-3 py-2.5 text-sm text-foreground font-mono placeholder:text-subtle focus:outline-none focus:border-cyan/40 focus:shadow-[0_0_10px_rgba(0,240,255,0.15)] transition-all"
+              />
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setError("");
+                }}
+                placeholder="YouTube URL or video ID"
+                className="flex-1 bg-surface border border-cyan/15 rounded-lg px-3 py-2.5 text-sm text-foreground font-mono placeholder:text-subtle focus:outline-none focus:border-cyan/40 focus:shadow-[0_0_10px_rgba(0,240,255,0.15)] transition-all"
+                onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
+              />
+              <button
+                onClick={handleAddRun}
+                disabled={!url}
+                className="px-4 py-2.5 rounded-lg bg-cyan text-background text-sm font-bold font-mono tracking-wider hover:bg-cyan-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                style={{ boxShadow: url ? '0 0 15px rgba(0, 240, 255, 0.4)' : 'none' }}
+              >
+                ADD
+              </button>
+            </div>
+
+            {/* URL preview */}
+            {previewId && (
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50 border border-cyan/10">
+                <img
+                  src={getThumbnailUrl(previewId, "default")}
+                  alt="Video thumbnail"
+                  className="w-20 h-12 rounded object-cover"
+                />
+                <span className="text-xs font-mono text-cyan/70">{previewId}</span>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-accent text-xs font-medium font-mono text-glow-magenta">{error}</p>
+            )}
+          </div>
         </div>
 
         {/* Runs list */}
         {session.runs.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted uppercase tracking-wider">
+              <span className="text-xs font-medium text-cyan/60 uppercase tracking-wider font-mono">
                 Runs ({session.runs.length})
               </span>
-              <span className="text-xs text-subtle">
+              <span className="text-xs text-muted font-mono">
                 {selectedRuns.length === 0
                   ? "Select 2 to compare"
                   : selectedRuns.length === 1
@@ -191,13 +194,17 @@ export function Garage() {
               ))}
             </div>
 
-            {/* Compare button */}
+            {/* Compare button — with shimmer */}
             <button
               onClick={handleCompare}
               disabled={selectedRuns.length !== 2}
-              className="w-full py-3 rounded-xl bg-accent text-white font-display text-lg font-bold tracking-wide uppercase hover:bg-accent-glow disabled:opacity-20 disabled:cursor-not-allowed transition-all glow-accent disabled:shadow-none"
+              className={`w-full py-3 rounded-xl text-white font-display text-lg font-bold tracking-[0.15em] uppercase transition-all disabled:opacity-20 disabled:cursor-not-allowed disabled:shadow-none ${
+                selectedRuns.length === 2
+                  ? "bg-gradient-to-r from-cyan via-accent to-lime shimmer-btn glow-cyan"
+                  : "bg-surface-elevated"
+              }`}
             >
-              {selectedRuns.length === 2 ? "Compare Runs" : "Select 2 Runs to Compare"}
+              {selectedRuns.length === 2 ? "ENGAGE COMPARISON" : "SELECT 2 RUNS TO COMPARE"}
             </button>
           </div>
         )}
@@ -205,13 +212,13 @@ export function Garage() {
         {/* Empty state */}
         {session.runs.length === 0 && (
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-elevated mb-4">
-              <svg className="w-8 h-8 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-elevated border border-cyan/10 mb-4">
+              <svg className="w-8 h-8 text-cyan/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
               </svg>
             </div>
-            <h3 className="font-display text-lg font-bold text-foreground mb-1">No runs yet</h3>
-            <p className="text-sm text-muted max-w-xs mx-auto">
+            <h3 className="font-display text-lg font-bold text-foreground mb-1 text-glow-subtle">No runs yet</h3>
+            <p className="text-sm text-muted max-w-xs mx-auto font-mono">
               Add YouTube videos of your autocross runs to start comparing them side by side.
             </p>
           </div>
@@ -241,23 +248,24 @@ function RunCard({
   return (
     <div
       onClick={onSelect}
-      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover-tilt ${
         selected
           ? label === "A"
-            ? "bg-accent/10 border border-accent/30 glow-accent"
-            : "bg-teal/10 border border-teal/30 glow-teal"
-          : "bg-surface border border-white/5 hover:border-white/10 hover:bg-surface-elevated"
+            ? "bg-cyan/10 border border-cyan/30 glow-cyan"
+            : "bg-accent/10 border border-accent/30 glow-accent"
+          : "bg-surface border border-white/5 hover:border-cyan/20 hover:bg-surface-elevated"
       }`}
     >
       {/* Selection indicator */}
       <div
         className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold font-mono shrink-0 ${
           label === "A"
-            ? "bg-accent/20 text-accent"
+            ? "bg-cyan/20 text-cyan"
             : label === "B"
-            ? "bg-teal/20 text-teal"
+            ? "bg-accent/20 text-accent"
             : "bg-surface-elevated text-subtle"
         }`}
+        style={label === "A" ? { textShadow: '0 0 8px rgba(0, 240, 255, 0.6)' } : label === "B" ? { textShadow: '0 0 8px rgba(255, 0, 170, 0.6)' } : {}}
       >
         {label || index + 1}
       </div>

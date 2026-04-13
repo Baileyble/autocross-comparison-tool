@@ -185,12 +185,12 @@ function ComparisonViewInner({
       {/* Back to garage */}
       <button
         onClick={() => setShowGarage(true)}
-        className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors mb-1"
+        className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-cyan transition-colors mb-1 font-mono"
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
-        Back to Garage
+        BACK TO GARAGE
       </button>
 
       {/* Video grid */}
@@ -219,21 +219,21 @@ function ComparisonViewInner({
 
       {/* Annotation panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="glass rounded-xl border border-accent/10 p-3">
+        <div className="glass rounded-xl border border-cyan/15 p-3">
           <AnnotationPanel run={runA} currentTime={stateA?.currentTime ?? 0} />
         </div>
-        <div className="glass rounded-xl border border-teal/10 p-3">
+        <div className="glass rounded-xl border border-accent/15 p-3">
           <AnnotationPanel run={runB} currentTime={stateB?.currentTime ?? 0} />
         </div>
       </div>
 
-      {/* Keyboard shortcut hints */}
-      <div className="hidden sm:flex items-center justify-center gap-4 text-[10px] text-subtle py-2">
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">Space</kbd> Play/Pause</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">R</kbd> Restart</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">J/L</kbd> Seek ±5s</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">[ ]</kbd> Run A offset</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">; &apos;</kbd> Run B offset</span>
+      {/* Keyboard shortcut hints — HUD style */}
+      <div className="hidden sm:flex items-center justify-center gap-4 text-[10px] text-subtle py-2 font-mono">
+        <span><kbd className="hud-kbd">SPACE</kbd> Play/Pause</span>
+        <span><kbd className="hud-kbd">R</kbd> Restart</span>
+        <span><kbd className="hud-kbd">J/L</kbd> Seek</span>
+        <span><kbd className="hud-kbd">[ ]</kbd> <span className="text-cyan">Run A</span></span>
+        <span><kbd className="hud-kbd">; &apos;</kbd> <span className="text-accent">Run B</span></span>
       </div>
     </div>
   );
