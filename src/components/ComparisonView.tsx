@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { VideoPlayer } from "./VideoPlayer";
 import { PlaybackControls } from "./PlaybackControls";
@@ -15,10 +15,7 @@ export function ComparisonView() {
   const playerStates = useStore((s) => s.playerStates);
   const overlayMode = useStore((s) => s.overlayMode);
   const setShowGarage = useStore((s) => s.setShowGarage);
-
-  // Player refs for direct control
-  const playerARef = useRef<{ play: () => void; pause: () => void; seekTo: (t: number) => void; getCurrentTime: () => number; setPlaybackRate: (r: number) => void } | null>(null);
-  const playerBRef = useRef<{ play: () => void; pause: () => void; seekTo: (t: number) => void; getCurrentTime: () => number; setPlaybackRate: (r: number) => void } | null>(null);
+  const setSyncSetupMode = useStore((s) => s.setSyncSetupMode);
 
   if (!session.activeComparison) return null;
 
@@ -42,11 +39,11 @@ export function ComparisonView() {
       updateRun={updateRun}
       overlayMode={overlayMode}
       setShowGarage={setShowGarage}
+      setSyncSetupMode={setSyncSetupMode}
     />
   );
 }
 
-// Inner component to avoid hooks-after-early-return issues
 function ComparisonViewInner({
   runA,
   runB,
@@ -58,6 +55,7 @@ function ComparisonViewInner({
   updateRun,
   overlayMode,
   setShowGarage,
+  setSyncSetupMode,
 }: {
   runA: NonNullable<ReturnType<typeof useStore.getState>["session"]["runs"][number]>;
   runB: NonNullable<ReturnType<typeof useStore.getState>["session"]["runs"][number]>;
@@ -69,10 +67,9 @@ function ComparisonViewInner({
   updateRun: (id: string, updates: Record<string, unknown>) => void;
   overlayMode: boolean;
   setShowGarage: (s: boolean) => void;
+  setSyncSetupMode: (mode: "off" | "runA" | "runB") => void;
 }) {
-  // We'll use a message-based approach to communicate with YouTube players
-  // through the VideoPlayer component's internal hook
-  // For now, we'll use a global registry approach
+  const [showAnnotations, setShowAnnotations] = useState(false);
 
   const handlePlayPause = useCallback(() => {
     const players = window.__gridlinePlayers;
@@ -132,7 +129,6 @@ function ComparisonViewInner({
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       switch (e.key) {
@@ -171,7 +167,7 @@ function ComparisonViewInner({
     return () => window.removeEventListener("keydown", handler);
   }, [handlePlayPause, handleRestart, handleSeek, handleAdjustOffset]);
 
-  // Sync playback speed when it changes
+  // Sync playback speed
   useEffect(() => {
     const players = window.__gridlinePlayers;
     if (!players) return;
@@ -181,59 +177,79 @@ function ComparisonViewInner({
   }, [playbackSpeed]);
 
   return (
-    <div className="flex-1 flex flex-col gap-3 p-3 sm:p-4 animate-slide-up">
-      {/* Back to garage */}
-      <button
-        onClick={() => setShowGarage(true)}
-        className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors mb-1"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-        </svg>
-        Back to Garage
-      </button>
-
-      {/* Video grid */}
+    <div className="flex-1 flex flex-col h-full min-h-0 animate-fade-in">
+      {/* Video area — immersive, takes most of the screen */}
       <div
         className={
           overlayMode
-            ? "relative"
-            : "grid grid-cols-1 md:grid-cols-2 gap-3"
+            ? "flex-1 min-h-0 relative"
+            : "cockpit-videos flex-1 min-h-0 p-1"
         }
       >
-        <div className={overlayMode ? "relative z-10" : ""}>
-          <VideoPlayer run={runA} label="A" />
-        </div>
-        <div className={overlayMode ? "absolute inset-0 z-20 opacity-50 mix-blend-screen" : ""}>
-          <VideoPlayer run={runB} label="B" />
-        </div>
+        {overlayMode ? (
+          <>
+            <div className="absolute inset-0 z-10">
+              <VideoPlayer run={runA} label="A" />
+            </div>
+            <div className="absolute inset-0 z-20 opacity-50 mix-blend-screen">
+              <VideoPlayer run={runB} label="B" />
+            </div>
+          </>
+        ) : (
+          <>
+            <VideoPlayer run={runA} label="A" />
+            <VideoPlayer run={runB} label="B" />
+          </>
+        )}
       </div>
 
-      {/* Playback controls */}
-      <PlaybackControls
-        onPlayPause={handlePlayPause}
-        onRestart={handleRestart}
-        onSeek={handleSeek}
-        onAdjustOffset={handleAdjustOffset}
-      />
-
-      {/* Annotation panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="glass rounded-xl border border-accent/10 p-3">
-          <AnnotationPanel run={runA} currentTime={stateA?.currentTime ?? 0} />
+      {/* Floating controls — bottom */}
+      <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-3">
+        {/* Adjust Sync quick button */}
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <button
+            onClick={() => setSyncSetupMode("runA")}
+            className="text-[10px] text-muted hover:text-accent transition-colors px-2 py-1 rounded-lg hover:bg-surface-hover"
+          >
+            Adjust Sync
+          </button>
+          <button
+            onClick={() => setShowAnnotations(!showAnnotations)}
+            className={`text-[10px] transition-colors px-2 py-1 rounded-lg ${
+              showAnnotations ? "text-accent bg-accent/10" : "text-muted hover:text-foreground hover:bg-surface-hover"
+            }`}
+          >
+            Markers
+          </button>
         </div>
-        <div className="glass rounded-xl border border-teal/10 p-3">
-          <AnnotationPanel run={runB} currentTime={stateB?.currentTime ?? 0} />
-        </div>
-      </div>
 
-      {/* Keyboard shortcut hints */}
-      <div className="hidden sm:flex items-center justify-center gap-4 text-[10px] text-subtle py-2">
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">Space</kbd> Play/Pause</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">R</kbd> Restart</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">J/L</kbd> Seek ±5s</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">[ ]</kbd> Run A offset</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">; &apos;</kbd> Run B offset</span>
+        <PlaybackControls
+          onPlayPause={handlePlayPause}
+          onRestart={handleRestart}
+          onSeek={handleSeek}
+          onAdjustOffset={handleAdjustOffset}
+        />
+
+        {/* Annotation panels — collapsible */}
+        {showAnnotations && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 animate-slide-up">
+            <div className="glass rounded-xl border border-accent/10 p-2.5">
+              <AnnotationPanel run={runA} currentTime={stateA?.currentTime ?? 0} />
+            </div>
+            <div className="glass rounded-xl border border-teal/10 p-2.5">
+              <AnnotationPanel run={runB} currentTime={stateB?.currentTime ?? 0} />
+            </div>
+          </div>
+        )}
+
+        {/* Keyboard shortcut hints — desktop only */}
+        <div className="hidden sm:flex items-center justify-center gap-4 text-[9px] text-subtle/60 py-1 mt-1">
+          <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted/60 font-mono">Space</kbd> Play</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted/60 font-mono">R</kbd> Restart</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted/60 font-mono">J/L</kbd> Seek</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted/60 font-mono">[ ]</kbd> A offset</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted/60 font-mono">; &apos;</kbd> B offset</span>
+        </div>
       </div>
     </div>
   );

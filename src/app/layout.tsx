@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gridline — Autocross Run Comparison",
+  title: "Gridline Cockpit",
   description:
-    "Compare autocross runs side by side with synchronized video playback, timing analysis, and annotations.",
+    "Immersive autocross run comparison — synchronized video playback, timing analysis, and annotations.",
   keywords: ["autocross", "comparison", "video", "racing", "analysis", "motorsports"],
   openGraph: {
-    title: "Gridline — Autocross Run Comparison",
-    description: "Compare autocross runs side by side with synchronized video playback.",
+    title: "Gridline Cockpit",
+    description: "Immersive autocross run comparison with synchronized video playback.",
     type: "website",
   },
 };
@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0c0c0f",
+  themeColor: "#08080c",
 };
 
 export default function RootLayout({
@@ -35,7 +35,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-dvh flex flex-col bg-background text-foreground">
+      <body className="h-dvh flex flex-col bg-background text-foreground overflow-hidden">
         {children}
       </body>
     </html>
