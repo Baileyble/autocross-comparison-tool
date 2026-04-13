@@ -67,9 +67,9 @@ function SyncSetupInner({
   onSkip: () => void;
   onCancel: () => void;
 }) {
-  const containerId = `sync-player-${run.id}-${Date.now()}`;
+  const stableId = useRef(`sync-player-${run.id}-${Math.random().toString(36).slice(2, 8)}`);
+  const containerId = stableId.current;
   const playerRef = useRef<YT.Player | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(run.startOffset);
   const [duration, setDuration] = useState(0);
   const [ready, setReady] = useState(false);
@@ -79,7 +79,6 @@ function SyncSetupInner({
   const isBlue = label === "A";
   const accentColor = isBlue ? "text-gulf-blue" : "text-gulf-orange";
   const accentBg = isBlue ? "bg-gulf-blue" : "bg-gulf-orange";
-  const accentBorder = isBlue ? "border-gulf-blue/30" : "border-gulf-orange/30";
 
   useEffect(() => {
     let cancelled = false;
@@ -226,7 +225,7 @@ function SyncSetupInner({
         </div>
 
         {/* Video player — using YouTube native controls */}
-        <div className="sync-video-container w-full" ref={containerRef}>
+        <div className="sync-video-container w-full">
           <div className="sync-player-wrap">
             <div id={containerId} />
           </div>
