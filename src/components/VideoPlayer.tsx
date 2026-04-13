@@ -12,15 +12,10 @@ interface VideoPlayerProps {
   onTapSync?: (time: number) => void;
 }
 
-const LABEL_COLORS: Record<string, { bg: string; text: string; border: string; glow: string }> = {
-  A: { bg: "bg-accent/10", text: "text-accent", border: "border-accent/30", glow: "glow-accent" },
-  B: { bg: "bg-teal/10", text: "text-teal", border: "border-teal/30", glow: "glow-teal" },
-};
-
 const ANNOTATION_DOTS: Record<AnnotationColor, string> = {
-  red: "bg-accent",
-  amber: "bg-amber",
-  teal: "bg-teal",
+  red: "bg-muted",
+  amber: "bg-muted",
+  teal: "bg-muted",
   white: "bg-foreground",
 };
 
@@ -32,7 +27,6 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
   const updateRun = useStore((s) => s.updateRun);
 
   const containerId = `yt-player-${run.id}`;
-  const colors = LABEL_COLORS[label];
 
   const onTimeUpdate = useCallback(
     (time: number) => {
@@ -86,30 +80,28 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
   );
 
   return (
-    <div className={`relative rounded-xl overflow-hidden border ${colors.border} bg-surface`}>
+    <div className="relative rounded-lg overflow-hidden border border-surface-elevated bg-surface">
       {/* Label badge */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
-        <span
-          className={`${colors.bg} ${colors.text} text-xs font-bold font-mono px-2 py-0.5 rounded border ${colors.border}`}
-        >
-          RUN {label}
+      <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5">
+        <span className="bg-surface-elevated/90 text-muted text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-subtle/20">
+          {label}
         </span>
-        <span className="text-xs text-muted truncate max-w-[120px] sm:max-w-[200px]">
+        <span className="text-[10px] text-subtle truncate max-w-[100px] sm:max-w-[160px]">
           {run.name}
         </span>
       </div>
 
       {/* Status indicator */}
-      <div className="absolute top-3 right-3 z-10">
+      <div className="absolute top-2.5 right-2.5 z-10">
         <span
-          className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
+          className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded ${
             status === "playing"
-              ? "bg-teal/20 text-teal"
+              ? "bg-surface-elevated/90 text-muted"
               : status === "loading"
-              ? "bg-amber/20 text-amber animate-pulse-live"
+              ? "bg-surface-elevated/90 text-subtle animate-pulse-live"
               : status === "error"
-              ? "bg-accent/20 text-accent"
-              : "bg-surface-elevated text-muted"
+              ? "bg-surface-elevated/90 text-subtle"
+              : "bg-surface-elevated/90 text-subtle"
           }`}
         >
           {status === "playing" ? "LIVE" : status.toUpperCase()}
@@ -118,32 +110,32 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
 
       {/* Video container */}
       <div
-        className={`video-wrapper ${isTapTarget ? "ring-2 ring-amber ring-offset-2 ring-offset-background cursor-pointer" : ""}`}
+        className={`video-wrapper ${isTapTarget ? "ring-1 ring-muted ring-offset-1 ring-offset-background cursor-pointer" : ""}`}
         onClick={isTapTarget ? handleTapSync : undefined}
       >
         <div id={containerId} />
         {/* Tap-to-sync overlay */}
         {isTapTarget && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 pointer-events-none">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 pointer-events-none">
             <div className="text-center animate-slide-up">
-              <div className="text-amber font-display text-2xl font-bold mb-1">TAP AT LAUNCH</div>
-              <div className="text-amber/70 text-sm">Tap the video when the car starts moving</div>
+              <div className="text-foreground font-mono text-sm font-medium tracking-wide uppercase mb-1">Tap at launch</div>
+              <div className="text-muted text-xs">Tap when the car starts moving</div>
             </div>
           </div>
         )}
       </div>
 
       {/* Bottom info bar */}
-      <div className="px-3 py-2 flex items-center justify-between bg-surface-elevated/50">
+      <div className="px-3 py-1.5 flex items-center justify-between bg-surface border-t border-surface-elevated">
         <div className="flex items-center gap-3">
-          {/* Elapsed time (big) */}
-          <div className="font-mono text-lg font-bold tracking-tight">
-            <span className={colors.text}>{formatTime(elapsed)}</span>
+          {/* Elapsed time */}
+          <div className="font-mono text-sm font-medium tracking-tight text-foreground">
+            {formatTime(elapsed)}
           </div>
           {/* Offset badge */}
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted uppercase tracking-wider">offset</span>
-            <span className="font-mono text-xs text-subtle">
+            <span className="text-[10px] text-subtle uppercase tracking-wider">offset</span>
+            <span className="font-mono text-[10px] text-subtle">
               {run.startOffset.toFixed(1)}s
             </span>
           </div>

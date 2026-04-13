@@ -1,30 +1,24 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #0c0c0f;
-  --color-surface: #16161d;
-  --color-surface-elevated: #1e1e28;
-  --color-surface-hover: #252530;
+  --color-background: #09090b;
+  --color-surface: #111113;
+  --color-surface-elevated: #18181b;
+  --color-surface-hover: #1f1f23;
 
-  --color-foreground: #eaeaf0;
-  --color-muted: #8888a0;
-  --color-subtle: #555568;
+  --color-foreground: #e4e4e7;
+  --color-muted: #94a3b8;
+  --color-subtle: #52525b;
 
-  --color-accent: #e63946;
-  --color-accent-glow: #ff4d5a;
-  --color-accent-muted: #c0303c;
+  --color-accent: #94a3b8;
+  --color-accent-muted: #64748b;
 
-  --color-teal: #00c9a7;
-  --color-teal-glow: #00f0c8;
+  --color-teal: #94a3b8;
+  --color-amber: #94a3b8;
 
-  --color-amber: #f4a623;
-  --color-amber-glow: #ffbe3d;
-
-  --color-stripe: #e63946;
-
-  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-display: "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-display: ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 /* Base */
@@ -36,7 +30,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   min-height: 100dvh;
 }
 
@@ -46,7 +40,7 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-surface);
+  background: var(--color-background);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-subtle);
@@ -56,62 +50,46 @@ body {
   background: var(--color-muted);
 }
 
-/* Racing stripe accent — a thin top border across the viewport */
+/* Single thin line — replaces the racing stripe */
 body::before {
   content: "";
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent) 0%,
-    var(--color-accent) 33%,
-    transparent 33%,
-    transparent 35%,
-    var(--color-amber) 35%,
-    var(--color-amber) 45%,
-    transparent 45%,
-    transparent 47%,
-    var(--color-teal) 47%,
-    var(--color-teal) 55%,
-    transparent 55%
-  );
+  height: 1px;
+  background: var(--color-subtle);
   z-index: 9999;
   pointer-events: none;
 }
 
-/* Checkered pattern utility */
-.checkered-bg {
-  background-image: repeating-conic-gradient(
-    var(--color-surface) 0% 25%,
-    transparent 0% 50%
-  );
-  background-size: 20px 20px;
-  opacity: 0.04;
-}
-
-/* Glass morphism panel */
+/* Flat solid panel — replaces glass morphism */
 .glass {
-  background: rgba(22, 22, 29, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-elevated);
 }
 
-/* Glow effects */
+/* Glow effects — all neutralized */
 .glow-accent {
-  box-shadow: 0 0 20px rgba(230, 57, 70, 0.15), 0 0 60px rgba(230, 57, 70, 0.05);
+  box-shadow: none;
 }
 .glow-teal {
-  box-shadow: 0 0 20px rgba(0, 201, 167, 0.15), 0 0 60px rgba(0, 201, 167, 0.05);
+  box-shadow: none;
 }
 .glow-amber {
-  box-shadow: 0 0 20px rgba(244, 166, 35, 0.15), 0 0 60px rgba(244, 166, 35, 0.05);
+  box-shadow: none;
 }
 
-/* Pulse animation for live indicators */
+/* Simple fade-in — replaces slide-up animation */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-slide-up {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+/* Pulse animation — kept minimal for loading states */
 @keyframes pulse-live {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -120,22 +98,13 @@ body::before {
   animation: pulse-live 1.5s ease-in-out infinite;
 }
 
-/* Slide up entrance */
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-slide-up {
-  animation: slide-up 0.4s ease-out forwards;
-}
-
 /* YouTube iframe responsive wrapper */
 .video-wrapper {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 */
   height: 0;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 .video-wrapper iframe,
 .video-wrapper div {
@@ -154,7 +123,7 @@ body::before {
   }
 }
 
-/* Range slider custom styling */
+/* Range slider — minimal thin track, small thumb */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -163,29 +132,29 @@ input[type="range"] {
   width: 100%;
 }
 input[type="range"]::-webkit-slider-track {
-  height: 4px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: var(--color-surface-elevated);
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--color-accent);
-  margin-top: -6px;
-  border: 2px solid var(--color-background);
+  background: var(--color-muted);
+  margin-top: -4px;
+  border: 1px solid var(--color-background);
 }
 input[type="range"]::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: var(--color-surface-elevated);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--color-accent);
-  border: 2px solid var(--color-background);
+  background: var(--color-muted);
+  border: 1px solid var(--color-background);
 }

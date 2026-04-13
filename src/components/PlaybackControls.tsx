@@ -30,13 +30,13 @@ export function PlaybackControls({
   const hasComparison = !!session.activeComparison;
 
   return (
-    <div className="glass rounded-xl border border-white/5 p-3 space-y-3">
+    <div className="bg-surface rounded-lg border border-surface-elevated p-3 space-y-3">
       {/* Main transport controls */}
       <div className="flex items-center justify-center gap-2">
         {/* Rewind 5s */}
         <button
           onClick={() => onSeek(-5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors duration-200"
           aria-label="Rewind 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -47,7 +47,7 @@ export function PlaybackControls({
         {/* Rewind 1s */}
         <button
           onClick={() => onSeek(-1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors duration-200"
           aria-label="Rewind 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -55,13 +55,13 @@ export function PlaybackControls({
           </svg>
         </button>
 
-        {/* Play/Pause — big center button */}
+        {/* Play/Pause — simple filled circle */}
         <button
           onClick={onPlayPause}
-          className={`p-4 rounded-full transition-all ${
+          className={`p-3.5 rounded-full transition-colors duration-200 ${
             isPlaying
-              ? "bg-accent text-white glow-accent"
-              : "bg-surface-elevated hover:bg-accent/20 text-foreground hover:text-accent"
+              ? "bg-foreground text-background"
+              : "bg-surface-elevated hover:bg-surface-hover text-foreground"
           }`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -79,7 +79,7 @@ export function PlaybackControls({
         {/* Forward 1s */}
         <button
           onClick={() => onSeek(1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors duration-200"
           aria-label="Forward 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -90,7 +90,7 @@ export function PlaybackControls({
         {/* Forward 5s */}
         <button
           onClick={() => onSeek(5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors duration-200"
           aria-label="Forward 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -10,22 +10,13 @@ export function Header() {
   const hasComparison = !!session.activeComparison;
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-white/5">
+    <header className="sticky top-0 z-50 bg-surface border-b border-surface-elevated">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-6 bg-accent rounded-sm" />
-            <div className="w-2 h-6 bg-amber rounded-sm" />
-          </div>
-          <div>
-            <h1 className="font-display text-lg font-bold tracking-wide leading-none text-foreground">
-              GRIDLINE
-            </h1>
-            <span className="text-[10px] tracking-[0.2em] text-muted uppercase">
-              Autocross Analysis
-            </span>
-          </div>
+          <h1 className="font-mono text-sm font-medium tracking-widest text-foreground">
+            GRIDLINE
+          </h1>
         </div>
 
         {/* Center — Session name */}
@@ -53,18 +44,15 @@ export function Header() {
           )}
           <button
             onClick={() => setShowGarage(!showGarage)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-colors duration-200 ${
               showGarage
-                ? "bg-accent/10 text-accent border border-accent/20"
+                ? "bg-surface-elevated text-foreground border border-subtle/30"
                 : "text-muted hover:text-foreground hover:bg-surface-hover"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a3 3 0 0 0-.879-2.121L16.5 8.25l-2.25-3H6.75L4.5 8.25l-2.004 3.753A3 3 0 0 0 1.5 14.25v3.375" />
-            </svg>
             <span className="hidden sm:inline">Garage</span>
             {session.runs.length > 0 && (
-              <span className="bg-accent/20 text-accent text-xs px-1.5 py-0.5 rounded-full font-mono">
+              <span className="text-subtle text-xs font-mono">
                 {session.runs.length}
               </span>
             )}
