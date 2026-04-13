@@ -40,6 +40,10 @@ interface AppState {
   tapSyncMode: "off" | "runA" | "runB";
   setTapSyncMode: (mode: "off" | "runA" | "runB") => void;
 
+  // Sync setup
+  syncSetupMode: "off" | "runA" | "runB";
+  setSyncSetupMode: (mode: "off" | "runA" | "runB") => void;
+
   // UI state
   showGarage: boolean;
   setShowGarage: (show: boolean) => void;
@@ -47,6 +51,12 @@ interface AppState {
   setShowShare: (show: boolean) => void;
   overlayMode: boolean;
   setOverlayMode: (overlay: boolean) => void;
+  showLeftSidebar: boolean;
+  setShowLeftSidebar: (show: boolean) => void;
+  showRightSidebar: boolean;
+  setShowRightSidebar: (show: boolean) => void;
+  activeTab: "runs" | "compare" | "data";
+  setActiveTab: (tab: "runs" | "compare" | "data") => void;
 
   // History
   saveToHistory: () => void;
@@ -189,12 +199,21 @@ export const useStore = create<AppState>((set, get) => ({
   tapSyncMode: "off",
   setTapSyncMode: (mode) => set({ tapSyncMode: mode }),
 
+  syncSetupMode: "off",
+  setSyncSetupMode: (mode) => set({ syncSetupMode: mode }),
+
   showGarage: true,
   setShowGarage: (show) => set({ showGarage: show }),
   showShare: false,
   setShowShare: (show) => set({ showShare: show }),
   overlayMode: false,
   setOverlayMode: (overlay) => set({ overlayMode: overlay }),
+  showLeftSidebar: true,
+  setShowLeftSidebar: (show) => set({ showLeftSidebar: show }),
+  showRightSidebar: true,
+  setShowRightSidebar: (show) => set({ showRightSidebar: show }),
+  activeTab: "runs",
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
   saveToHistory: () => {
     if (typeof window === "undefined") return;

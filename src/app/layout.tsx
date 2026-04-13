@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gridline — Autocross Run Comparison",
+  title: "Gridline Pitwall",
   description:
-    "Compare autocross runs side by side with synchronized video playback, timing analysis, and annotations.",
-  keywords: ["autocross", "comparison", "video", "racing", "analysis", "motorsports"],
+    "Data-rich autocross run comparison dashboard with synchronized video playback and analysis.",
+  keywords: ["autocross", "comparison", "video", "racing", "analysis", "pitwall", "dashboard"],
   openGraph: {
-    title: "Gridline — Autocross Run Comparison",
-    description: "Compare autocross runs side by side with synchronized video playback.",
+    title: "Gridline Pitwall",
+    description: "Data-rich autocross run comparison dashboard.",
     type: "website",
   },
 };
@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0c0c0f",
+  themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

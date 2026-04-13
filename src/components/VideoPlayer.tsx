@@ -4,35 +4,24 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useYouTubePlayer } from "@/hooks/useYouTubePlayer";
 import { useStore } from "@/lib/store";
 import { formatTime } from "@/lib/youtube";
-import type { Run, AnnotationColor } from "@/types";
+import type { Run } from "@/types";
 
 interface VideoPlayerProps {
   run: Run;
   label: "A" | "B";
-  onTapSync?: (time: number) => void;
 }
 
-const LABEL_COLORS: Record<string, { bg: string; text: string; border: string; glow: string }> = {
-  A: { bg: "bg-accent/10", text: "text-accent", border: "border-accent/30", glow: "glow-accent" },
-  B: { bg: "bg-teal/10", text: "text-teal", border: "border-teal/30", glow: "glow-teal" },
+const LABEL_STYLES: Record<string, { text: string; bg: string; border: string }> = {
+  A: { text: "text-run-a", bg: "bg-run-a/10", border: "border-run-a/30" },
+  B: { text: "text-run-b", bg: "bg-run-b/10", border: "border-run-b/30" },
 };
 
-const ANNOTATION_DOTS: Record<AnnotationColor, string> = {
-  red: "bg-accent",
-  amber: "bg-amber",
-  teal: "bg-teal",
-  white: "bg-foreground",
-};
-
-export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
+export function VideoPlayer({ run, label }: VideoPlayerProps) {
   const setPlayerState = useStore((s) => s.setPlayerState);
   const playerState = useStore((s) => s.playerStates[run.id]);
-  const tapSyncMode = useStore((s) => s.tapSyncMode);
-  const setTapSyncMode = useStore((s) => s.setTapSyncMode);
-  const updateRun = useStore((s) => s.updateRun);
 
   const containerId = `yt-player-${run.id}`;
-  const colors = LABEL_COLORS[label];
+  const styles = LABEL_STYLES[label];
 
   const onTimeUpdate = useCallback(
     (time: number) => {
@@ -51,7 +40,7 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
     [run.id, setPlayerState]
   );
 
-  const { status, getCurrentTime, getDuration } = useYouTubePlayer({
+  const { status, getDuration } = useYouTubePlayer({
     videoId: run.videoId,
     startOffset: run.startOffset,
     containerId,
@@ -66,108 +55,56 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
     }
   }, [status, getDuration, run.id, setPlayerState]);
 
-  const isTapTarget = (tapSyncMode === "runA" && label === "A") || (tapSyncMode === "runB" && label === "B");
   const elapsed = playerState?.elapsed ?? 0;
   const currentTime = playerState?.currentTime ?? 0;
 
-  const handleTapSync = useCallback(() => {
-    if (isTapTarget) {
-      const time = getCurrentTime();
-      updateRun(run.id, { startOffset: time });
-      setTapSyncMode("off");
-      onTapSync?.(time);
-    }
-  }, [isTapTarget, getCurrentTime, updateRun, run.id, setTapSyncMode, onTapSync]);
-
-  // Sort annotations by time
-  const sortedAnnotations = useMemo(
-    () => [...run.annotations].sort((a, b) => a.time - b.time),
-    [run.annotations]
-  );
-
   return (
-    <div className={`relative rounded-xl overflow-hidden border ${colors.border} bg-surface`}>
-      {/* Label badge */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+    <div className="relative h-full flex flex-col">
+      {/* Label badge — compact */}
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
         <span
-          className={`${colors.bg} ${colors.text} text-xs font-bold font-mono px-2 py-0.5 rounded border ${colors.border}`}
+          className={`${styles.bg} ${styles.text} text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border ${styles.border}`}
         >
-          RUN {label}
+          {label}
         </span>
-        <span className="text-xs text-muted truncate max-w-[120px] sm:max-w-[200px]">
+        <span className="text-[10px] text-muted truncate max-w-[100px]">
           {run.name}
         </span>
       </div>
 
       {/* Status indicator */}
-      <div className="absolute top-3 right-3 z-10">
-        <span
-          className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
+      <div className="absolute top-2 right-2 z-10">
+        <div
+          className={`w-2 h-2 rounded-full ${
             status === "playing"
-              ? "bg-teal/20 text-teal"
+              ? "status-green"
               : status === "loading"
-              ? "bg-amber/20 text-amber animate-pulse-live"
+              ? "status-amber animate-pulse"
               : status === "error"
-              ? "bg-accent/20 text-accent"
-              : "bg-surface-elevated text-muted"
+              ? "status-red"
+              : "bg-subtle"
           }`}
-        >
-          {status === "playing" ? "LIVE" : status.toUpperCase()}
-        </span>
+          title={status}
+        />
       </div>
 
       {/* Video container */}
-      <div
-        className={`video-wrapper ${isTapTarget ? "ring-2 ring-amber ring-offset-2 ring-offset-background cursor-pointer" : ""}`}
-        onClick={isTapTarget ? handleTapSync : undefined}
-      >
+      <div className="video-wrapper flex-1">
         <div id={containerId} />
-        {/* Tap-to-sync overlay */}
-        {isTapTarget && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 pointer-events-none">
-            <div className="text-center animate-slide-up">
-              <div className="text-amber font-display text-2xl font-bold mb-1">TAP AT LAUNCH</div>
-              <div className="text-amber/70 text-sm">Tap the video when the car starts moving</div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Bottom info bar */}
-      <div className="px-3 py-2 flex items-center justify-between bg-surface-elevated/50">
-        <div className="flex items-center gap-3">
-          {/* Elapsed time (big) */}
-          <div className="font-mono text-lg font-bold tracking-tight">
-            <span className={colors.text}>{formatTime(elapsed)}</span>
-          </div>
-          {/* Offset badge */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted uppercase tracking-wider">offset</span>
-            <span className="font-mono text-xs text-subtle">
-              {run.startOffset.toFixed(1)}s
-            </span>
-          </div>
+      {/* Bottom info bar — data-dense, compact */}
+      <div className="px-2 py-1 flex items-center justify-between bg-surface pw-border-t">
+        <div className={`font-mono text-sm font-bold ${styles.text}`}>
+          {formatTime(elapsed)}
         </div>
-
-        {/* Annotations dots */}
-        {sortedAnnotations.length > 0 && (
-          <div className="flex items-center gap-1">
-            {sortedAnnotations.slice(0, 5).map((ann) => (
-              <div
-                key={ann.id}
-                className={`w-2 h-2 rounded-full ${ANNOTATION_DOTS[ann.color]}`}
-                title={`${ann.label} @ ${formatTime(ann.time)}`}
-              />
-            ))}
-            {sortedAnnotations.length > 5 && (
-              <span className="text-[10px] text-muted">+{sortedAnnotations.length - 5}</span>
-            )}
-          </div>
-        )}
-
-        {/* Video timestamp */}
-        <div className="font-mono text-xs text-subtle">
-          {formatTime(currentTime)}
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] text-subtle font-mono">
+            off:{run.startOffset.toFixed(1)}s
+          </span>
+          <span className="text-[9px] text-subtle font-mono">
+            @{formatTime(currentTime)}
+          </span>
         </div>
       </div>
     </div>
