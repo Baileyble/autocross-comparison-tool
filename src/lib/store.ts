@@ -36,15 +36,17 @@ interface AppState {
   addAnnotation: (runId: string, time: number, label: string, color: AnnotationColor) => void;
   removeAnnotation: (runId: string, annotationId: string) => void;
 
-  // Tap-to-sync
-  tapSyncMode: "off" | "runA" | "runB";
-  setTapSyncMode: (mode: "off" | "runA" | "runB") => void;
+  // Sync setup
+  syncSetupMode: "off" | "runA" | "runB";
+  setSyncSetupMode: (mode: "off" | "runA" | "runB") => void;
 
   // UI state
   showGarage: boolean;
   setShowGarage: (show: boolean) => void;
   showShare: boolean;
   setShowShare: (show: boolean) => void;
+  showRunPanel: boolean;
+  setShowRunPanel: (show: boolean) => void;
   overlayMode: boolean;
   setOverlayMode: (overlay: boolean) => void;
 
@@ -186,13 +188,15 @@ export const useStore = create<AppState>((set, get) => ({
     }));
   },
 
-  tapSyncMode: "off",
-  setTapSyncMode: (mode) => set({ tapSyncMode: mode }),
+  syncSetupMode: "off",
+  setSyncSetupMode: (mode) => set({ syncSetupMode: mode }),
 
   showGarage: true,
   setShowGarage: (show) => set({ showGarage: show }),
   showShare: false,
   setShowShare: (show) => set({ showShare: show }),
+  showRunPanel: false,
+  setShowRunPanel: (show) => set({ showRunPanel: show }),
   overlayMode: false,
   setOverlayMode: (overlay) => set({ overlayMode: overlay }),
 

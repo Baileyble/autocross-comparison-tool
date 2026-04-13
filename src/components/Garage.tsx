@@ -5,15 +5,16 @@ import { useStore } from "@/lib/store";
 import { extractVideoId, getThumbnailUrl } from "@/lib/youtube";
 import type { Run } from "@/types";
 
-export function Garage() {
+export function Garage({ isPanel = false }: { isPanel?: boolean }) {
   const session = useStore((s) => s.session);
   const addRun = useStore((s) => s.addRun);
   const removeRun = useStore((s) => s.removeRun);
   const setActiveComparison = useStore((s) => s.setActiveComparison);
   const setShowGarage = useStore((s) => s.setShowGarage);
+  const setSyncSetupMode = useStore((s) => s.setSyncSetupMode);
   const renameSession = useStore((s) => s.renameSession);
   const saveToHistory = useStore((s) => s.saveToHistory);
-  const showGarage = useStore((s) => s.showGarage);
+  const setShowRunPanel = useStore((s) => s.setShowRunPanel);
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -51,16 +52,22 @@ export function Garage() {
   const toggleRunSelection = (id: string) => {
     setSelectedRuns((prev) => {
       if (prev.includes(id)) return prev.filter((r) => r !== id);
-      if (prev.length >= 2) return [prev[1], id]; // Replace oldest selection
+      if (prev.length >= 2) return [prev[1], id];
       return [...prev, id];
     });
   };
 
-  const handleCompare = () => {
+  const handleCompare = (withSync: boolean) => {
     if (selectedRuns.length === 2) {
       setActiveComparison(selectedRuns[0], selectedRuns[1]);
-      setShowGarage(false);
       saveToHistory();
+      if (withSync) {
+        setSyncSetupMode("runA");
+        setShowGarage(false);
+      } else {
+        setShowGarage(false);
+      }
+      if (isPanel) setShowRunPanel(false);
     }
   };
 
@@ -69,11 +76,11 @@ export function Garage() {
     setEditingSession(false);
   };
 
-  if (!showGarage) return null;
+  const maxWidth = isPanel ? "" : "max-w-2xl mx-auto";
 
   return (
     <div className="animate-slide-up">
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className={`${maxWidth} px-4 py-6 space-y-6`}>
         {/* Session header */}
         <div className="flex items-center gap-3">
           {editingSession ? (
@@ -82,13 +89,13 @@ export function Garage() {
                 type="text"
                 value={sessionName}
                 onChange={(e) => setSessionName(e.target.value)}
-                className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                className="flex-1 bg-surface border border-foreground/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-gulf-orange/50"
                 onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
                 autoFocus
               />
               <button
                 onClick={handleSessionRename}
-                className="px-3 py-2 rounded-lg bg-accent/10 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
+                className="px-3 py-2 rounded-lg bg-gulf-orange/10 text-gulf-orange text-sm font-medium hover:bg-gulf-orange/20 transition-colors"
               >
                 Save
               </button>
@@ -99,10 +106,10 @@ export function Garage() {
                 setSessionName(session.name);
                 setEditingSession(true);
               }}
-              className="flex items-center gap-2 text-foreground hover:text-accent transition-colors group"
+              className="flex items-center gap-2 text-foreground hover:text-gulf-orange transition-colors group"
             >
-              <h2 className="font-display text-xl font-bold tracking-wide">{session.name}</h2>
-              <svg className="w-4 h-4 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <h2 className="font-display text-3xl tracking-wider">{session.name.toUpperCase()}</h2>
+              <svg className="w-4 h-4 text-muted group-hover:text-gulf-orange transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
               </svg>
             </button>
@@ -110,9 +117,9 @@ export function Garage() {
         </div>
 
         {/* Add run form */}
-        <div className="glass rounded-xl border border-white/5 p-4 space-y-3">
+        <div className="glass rounded-xl border border-foreground/5 p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="w-1.5 h-1.5 rounded-full bg-gulf-orange" />
             <span className="text-xs font-medium text-muted uppercase tracking-wider">Add Run</span>
           </div>
 
@@ -121,8 +128,8 @@ export function Garage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Run name (optional)"
-              className="w-32 sm:w-40 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
+              placeholder="Run name"
+              className="w-28 sm:w-36 bg-surface border border-foreground/8 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
             />
             <input
               type="text"
@@ -132,19 +139,18 @@ export function Garage() {
                 setError("");
               }}
               placeholder="YouTube URL or video ID"
-              className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
+              className="flex-1 bg-surface border border-foreground/8 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
               onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
             />
             <button
               onClick={handleAddRun}
               disabled={!url}
-              className="px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2.5 rounded-lg bg-gulf-orange text-white text-sm font-semibold hover:bg-gulf-orange-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all btn-tactile"
             >
               Add
             </button>
           </div>
 
-          {/* URL preview */}
           {previewId && (
             <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50">
               <img
@@ -156,9 +162,7 @@ export function Garage() {
             </div>
           )}
 
-          {error && (
-            <p className="text-accent text-xs font-medium">{error}</p>
-          )}
+          {error && <p className="text-gulf-orange text-xs font-medium">{error}</p>}
         </div>
 
         {/* Runs list */}
@@ -191,14 +195,24 @@ export function Garage() {
               ))}
             </div>
 
-            {/* Compare button */}
-            <button
-              onClick={handleCompare}
-              disabled={selectedRuns.length !== 2}
-              className="w-full py-3 rounded-xl bg-accent text-white font-display text-lg font-bold tracking-wide uppercase hover:bg-accent-glow disabled:opacity-20 disabled:cursor-not-allowed transition-all glow-accent disabled:shadow-none"
-            >
-              {selectedRuns.length === 2 ? "Compare Runs" : "Select 2 Runs to Compare"}
-            </button>
+            {/* Compare buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => handleCompare(true)}
+                disabled={selectedRuns.length !== 2}
+                className="w-full py-3 rounded-xl bg-gulf-orange text-white font-display text-xl tracking-wider uppercase hover:bg-gulf-orange-glow disabled:opacity-20 disabled:cursor-not-allowed transition-all btn-tactile glow-accent disabled:shadow-none"
+              >
+                {selectedRuns.length === 2 ? "Set Launch Points & Compare" : "Select 2 Runs"}
+              </button>
+              {selectedRuns.length === 2 && (
+                <button
+                  onClick={() => handleCompare(false)}
+                  className="w-full py-2 rounded-lg text-sm text-muted hover:text-foreground transition-colors"
+                >
+                  Skip sync — compare directly
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -210,9 +224,9 @@ export function Garage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
               </svg>
             </div>
-            <h3 className="font-display text-lg font-bold text-foreground mb-1">No runs yet</h3>
+            <h3 className="font-display text-2xl text-foreground mb-1 tracking-wider">NO RUNS YET</h3>
             <p className="text-sm text-muted max-w-xs mx-auto">
-              Add YouTube videos of your autocross runs to start comparing them side by side.
+              Add YouTube videos of your autocross runs above to start comparing them side by side.
             </p>
           </div>
         )}
@@ -244,44 +258,40 @@ function RunCard({
       className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
         selected
           ? label === "A"
-            ? "bg-accent/10 border border-accent/30 glow-accent"
-            : "bg-teal/10 border border-teal/30 glow-teal"
-          : "bg-surface border border-white/5 hover:border-white/10 hover:bg-surface-elevated"
+            ? "bg-gulf-blue/10 border border-gulf-blue/30 glow-blue"
+            : "bg-gulf-orange/10 border border-gulf-orange/30 glow-accent"
+          : "bg-surface border border-foreground/5 hover:border-foreground/10 hover:bg-surface-elevated"
       }`}
     >
-      {/* Selection indicator */}
       <div
         className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold font-mono shrink-0 ${
           label === "A"
-            ? "bg-accent/20 text-accent"
+            ? "bg-gulf-blue/20 text-gulf-blue"
             : label === "B"
-            ? "bg-teal/20 text-teal"
+            ? "bg-gulf-orange/20 text-gulf-orange"
             : "bg-surface-elevated text-subtle"
         }`}
       >
         {label || index + 1}
       </div>
 
-      {/* Thumbnail */}
       <img
         src={getThumbnailUrl(run.videoId, "default")}
         alt={run.name}
         className="w-16 h-10 rounded object-cover shrink-0"
       />
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-foreground truncate">{run.name}</div>
         <div className="text-xs font-mono text-subtle">{run.videoId}</div>
       </div>
 
-      {/* Remove */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        className="p-1.5 rounded-lg text-subtle hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
+        className="p-1.5 rounded-lg text-subtle hover:text-gulf-orange hover:bg-gulf-orange/10 transition-colors shrink-0"
         aria-label="Remove run"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

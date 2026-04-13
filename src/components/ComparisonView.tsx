@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { VideoPlayer } from "./VideoPlayer";
 import { PlaybackControls } from "./PlaybackControls";
 import { AnnotationPanel } from "./AnnotationPanel";
+import type { Run, PlayerState } from "@/types";
 
 export function ComparisonView() {
   const session = useStore((s) => s.session);
@@ -15,10 +16,6 @@ export function ComparisonView() {
   const playerStates = useStore((s) => s.playerStates);
   const overlayMode = useStore((s) => s.overlayMode);
   const setShowGarage = useStore((s) => s.setShowGarage);
-
-  // Player refs for direct control
-  const playerARef = useRef<{ play: () => void; pause: () => void; seekTo: (t: number) => void; getCurrentTime: () => number; setPlaybackRate: (r: number) => void } | null>(null);
-  const playerBRef = useRef<{ play: () => void; pause: () => void; seekTo: (t: number) => void; getCurrentTime: () => number; setPlaybackRate: (r: number) => void } | null>(null);
 
   if (!session.activeComparison) return null;
 
@@ -46,42 +43,35 @@ export function ComparisonView() {
   );
 }
 
-// Inner component to avoid hooks-after-early-return issues
 function ComparisonViewInner({
   runA,
   runB,
-  stateA,
-  stateB,
   isPlaying,
   setIsPlaying,
   playbackSpeed,
   updateRun,
   overlayMode,
   setShowGarage,
+  stateA,
+  stateB,
 }: {
-  runA: NonNullable<ReturnType<typeof useStore.getState>["session"]["runs"][number]>;
-  runB: NonNullable<ReturnType<typeof useStore.getState>["session"]["runs"][number]>;
-  stateA: ReturnType<typeof useStore.getState>["playerStates"][string];
-  stateB: ReturnType<typeof useStore.getState>["playerStates"][string];
+  runA: Run;
+  runB: Run;
+  stateA: PlayerState | undefined;
+  stateB: PlayerState | undefined;
   isPlaying: boolean;
   setIsPlaying: (p: boolean) => void;
   playbackSpeed: number;
-  updateRun: (id: string, updates: Record<string, unknown>) => void;
+  updateRun: (id: string, updates: Partial<Run>) => void;
   overlayMode: boolean;
   setShowGarage: (s: boolean) => void;
 }) {
-  // We'll use a message-based approach to communicate with YouTube players
-  // through the VideoPlayer component's internal hook
-  // For now, we'll use a global registry approach
-
   const handlePlayPause = useCallback(() => {
     const players = window.__gridlinePlayers;
     if (!players) return;
 
     if (isPlaying) {
-      players.forEach((p) => {
-        try { p.pauseVideo(); } catch {}
-      });
+      players.forEach((p) => { try { p.pauseVideo(); } catch {} });
       setIsPlaying(false);
     } else {
       players.forEach((p) => {
@@ -111,7 +101,6 @@ function ComparisonViewInner({
   const handleSeek = useCallback((delta: number) => {
     const players = window.__gridlinePlayers;
     if (!players) return;
-
     players.forEach((p) => {
       try {
         const current = p.getCurrentTime();
@@ -132,57 +121,31 @@ function ComparisonViewInner({
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
       switch (e.key) {
-        case " ":
-          e.preventDefault();
-          handlePlayPause();
-          break;
-        case "r":
-        case "R":
-          handleRestart();
-          break;
-        case "j":
-        case "J":
-          handleSeek(-5);
-          break;
-        case "l":
-        case "L":
-          handleSeek(5);
-          break;
-        case "[":
-          handleAdjustOffset("A", e.shiftKey ? -1 : -0.1);
-          break;
-        case "]":
-          handleAdjustOffset("A", e.shiftKey ? 1 : 0.1);
-          break;
-        case ";":
-          handleAdjustOffset("B", e.shiftKey ? -1 : -0.1);
-          break;
-        case "'":
-          handleAdjustOffset("B", e.shiftKey ? 1 : 0.1);
-          break;
+        case " ": e.preventDefault(); handlePlayPause(); break;
+        case "r": case "R": handleRestart(); break;
+        case "j": case "J": handleSeek(-5); break;
+        case "l": case "L": handleSeek(5); break;
+        case "[": handleAdjustOffset("A", e.shiftKey ? -1 : -0.1); break;
+        case "]": handleAdjustOffset("A", e.shiftKey ? 1 : 0.1); break;
+        case ";": handleAdjustOffset("B", e.shiftKey ? -1 : -0.1); break;
+        case "'": handleAdjustOffset("B", e.shiftKey ? 1 : 0.1); break;
       }
     };
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [handlePlayPause, handleRestart, handleSeek, handleAdjustOffset]);
 
-  // Sync playback speed when it changes
+  // Sync playback speed
   useEffect(() => {
     const players = window.__gridlinePlayers;
     if (!players) return;
-    players.forEach((p) => {
-      try { p.setPlaybackRate(playbackSpeed); } catch {}
-    });
+    players.forEach((p) => { try { p.setPlaybackRate(playbackSpeed); } catch {} });
   }, [playbackSpeed]);
 
   return (
     <div className="flex-1 flex flex-col gap-3 p-3 sm:p-4 animate-slide-up">
-      {/* Back to garage */}
       <button
         onClick={() => setShowGarage(true)}
         className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors mb-1"
@@ -193,14 +156,7 @@ function ComparisonViewInner({
         Back to Garage
       </button>
 
-      {/* Video grid */}
-      <div
-        className={
-          overlayMode
-            ? "relative"
-            : "grid grid-cols-1 md:grid-cols-2 gap-3"
-        }
-      >
+      <div className={overlayMode ? "relative" : "grid grid-cols-1 md:grid-cols-2 gap-3"}>
         <div className={overlayMode ? "relative z-10" : ""}>
           <VideoPlayer run={runA} label="A" />
         </div>
@@ -209,7 +165,6 @@ function ComparisonViewInner({
         </div>
       </div>
 
-      {/* Playback controls */}
       <PlaybackControls
         onPlayPause={handlePlayPause}
         onRestart={handleRestart}
@@ -217,17 +172,15 @@ function ComparisonViewInner({
         onAdjustOffset={handleAdjustOffset}
       />
 
-      {/* Annotation panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="glass rounded-xl border border-accent/10 p-3">
+        <div className="glass rounded-xl border border-gulf-blue/10 p-3">
           <AnnotationPanel run={runA} currentTime={stateA?.currentTime ?? 0} />
         </div>
-        <div className="glass rounded-xl border border-teal/10 p-3">
+        <div className="glass rounded-xl border border-gulf-orange/10 p-3">
           <AnnotationPanel run={runB} currentTime={stateB?.currentTime ?? 0} />
         </div>
       </div>
 
-      {/* Keyboard shortcut hints */}
       <div className="hidden sm:flex items-center justify-center gap-4 text-[10px] text-subtle py-2">
         <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">Space</kbd> Play/Pause</span>
         <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">R</kbd> Restart</span>
@@ -239,7 +192,6 @@ function ComparisonViewInner({
   );
 }
 
-// Global player registry for sync control
 declare global {
   interface Window {
     __gridlinePlayers: YT.Player[];

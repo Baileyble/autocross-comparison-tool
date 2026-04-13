@@ -6,6 +6,7 @@ import { Garage } from "@/components/Garage";
 import { ComparisonView } from "@/components/ComparisonView";
 import { ShareModal } from "@/components/ShareModal";
 import { HistoryPanel } from "@/components/HistoryPanel";
+import { SyncSetup } from "@/components/SyncSetup";
 import { useStore } from "@/lib/store";
 import { extractVideoId } from "@/lib/youtube";
 
@@ -15,6 +16,9 @@ export default function Home() {
   const setShowGarage = useStore((s) => s.setShowGarage);
   const addRun = useStore((s) => s.addRun);
   const setActiveComparison = useStore((s) => s.setActiveComparison);
+  const showRunPanel = useStore((s) => s.showRunPanel);
+  const setShowRunPanel = useStore((s) => s.setShowRunPanel);
+  const syncSetupMode = useStore((s) => s.syncSetupMode);
 
   // Load from URL params on mount
   useEffect(() => {
@@ -33,13 +37,10 @@ export default function Home() {
       const n1 = params.get("n1") || "Run A";
       const n2 = params.get("n2") || "Run B";
 
-      // Only auto-load if we have no runs yet
       if (session.runs.length === 0) {
         addRun({ name: n1, youtubeUrl: v1, videoId: id1, startOffset: t1, notes: "", metadata: {} });
         addRun({ name: n2, youtubeUrl: v2, videoId: id2, startOffset: t2, notes: "", metadata: {} });
 
-        // We need to set comparison after runs are added
-        // Use a small delay to ensure store has updated
         setTimeout(() => {
           const runs = useStore.getState().session.runs;
           if (runs.length >= 2) {
@@ -53,23 +54,22 @@ export default function Home() {
   }, []);
 
   const hasComparison = !!session.activeComparison;
+  const showingSyncSetup = syncSetupMode !== "off";
 
   return (
     <>
       <Header />
 
       <main className="flex-1 flex flex-col">
-        {showGarage && (
-          <>
-            <Garage />
-            <HistoryPanel />
-          </>
-        )}
+        {/* Main garage — shown on the main screen when no comparison or user navigates back */}
+        {showGarage && <Garage />}
+        {showGarage && <HistoryPanel />}
 
-        {hasComparison && !showGarage && <ComparisonView />}
+        {/* Comparison view */}
+        {hasComparison && !showGarage && !showingSyncSetup && <ComparisonView />}
 
-        {/* Empty state when no garage and no comparison */}
-        {!showGarage && !hasComparison && (
+        {/* Empty state */}
+        {!showGarage && !hasComparison && !showingSyncSetup && (
           <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center space-y-4">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-surface-elevated">
@@ -78,12 +78,12 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <h2 className="font-display text-xl font-bold text-foreground mb-1">No comparison loaded</h2>
+                <h2 className="font-display text-3xl text-foreground mb-1 tracking-wider">NO COMPARISON LOADED</h2>
                 <p className="text-sm text-muted">Open the Garage to add runs and start comparing.</p>
               </div>
               <button
                 onClick={() => setShowGarage(true)}
-                className="px-6 py-2.5 rounded-xl bg-accent text-white font-semibold hover:bg-accent-glow transition-all glow-accent"
+                className="px-6 py-2.5 rounded-xl bg-gulf-orange text-white font-semibold hover:bg-gulf-orange-glow transition-all btn-tactile glow-accent"
               >
                 Open Garage
               </button>
@@ -92,10 +92,30 @@ export default function Home() {
         )}
       </main>
 
-      <ShareModal />
+      {/* Sync Setup — full screen overlay */}
+      <SyncSetup />
 
-      {/* Checkered background decoration */}
-      <div className="fixed inset-0 checkered-bg pointer-events-none -z-10" />
+      {/* Slide-out run panel for swapping during comparison */}
+      <div
+        className={`slide-panel-backdrop ${showRunPanel ? "open" : ""}`}
+        onClick={() => setShowRunPanel(false)}
+      />
+      <div className={`slide-panel bg-background border-l border-foreground/5 ${showRunPanel ? "open" : ""}`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5">
+          <h3 className="font-display text-xl tracking-wider">SWAP RUNS</h3>
+          <button
+            onClick={() => setShowRunPanel(false)}
+            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <Garage isPanel />
+      </div>
+
+      <ShareModal />
     </>
   );
 }
