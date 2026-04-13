@@ -1,32 +1,28 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #141210;
-  --color-surface: #1c1a16;
-  --color-surface-elevated: #242118;
-  --color-surface-hover: #2e2a22;
+  --color-background: #0f1923;
+  --color-surface: #162230;
+  --color-surface-elevated: #1c2d3f;
+  --color-surface-hover: #243a4f;
 
-  --color-foreground: #f5f0e8;
-  --color-muted: #a09882;
-  --color-subtle: #6b6354;
+  --color-foreground: #f0f4f8;
+  --color-muted: #8899a6;
+  --color-subtle: #556677;
 
-  --color-accent: #f26522;
-  --color-accent-glow: #ff7e3d;
-  --color-accent-muted: #c04f18;
+  --color-accent: #FF3B30;
+  --color-accent-hover: #ff5147;
+  --color-accent-muted: #cc2f26;
 
-  --color-gulf-blue: #6abed8;
-  --color-gulf-blue-glow: #8ad0e8;
-  --color-gulf-orange: #f26522;
-  --color-gulf-orange-glow: #ff7e3d;
+  --color-run-a: #007AFF;
+  --color-run-a-hover: #339aff;
+  --color-run-b: #FF3B30;
+  --color-run-b-hover: #ff5147;
 
-  --color-teal: #6abed8;
-  --color-teal-glow: #8ad0e8;
-  --color-amber: #f26522;
-  --color-amber-glow: #ff7e3d;
+  --color-success: #34C759;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-display: "Bebas Neue", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Base */
@@ -40,50 +36,6 @@ html {
 body {
   font-family: var(--font-sans);
   min-height: 100dvh;
-}
-
-/* Film grain overlay */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-}
-
-/* Vignette */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9997;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
-}
-
-/* Racing stripe — Gulf blue + orange */
-.racing-stripe {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-gulf-blue) 0%,
-    var(--color-gulf-blue) 40%,
-    transparent 40%,
-    transparent 42%,
-    var(--color-gulf-orange) 42%,
-    var(--color-gulf-orange) 60%,
-    transparent 60%
-  );
-  z-index: 9999;
-  pointer-events: none;
 }
 
 /* Scrollbar */
@@ -102,46 +54,49 @@ body::before {
   background: var(--color-muted);
 }
 
-/* Warm glass panel */
-.glass {
-  background: rgba(28, 26, 22, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(245, 240, 232, 0.06);
+/* Card base */
+.card {
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
 }
 
-/* Tactile button */
-.btn-tactile {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
-  transition: all 0.35s ease;
-}
-.btn-tactile:hover {
-  box-shadow: 0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
-  transform: translateY(-1px);
-}
-.btn-tactile:active {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  transform: translateY(0);
+.card-elevated {
+  background: var(--color-surface-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
 }
 
-/* Glow effects — warm toned */
-.glow-accent {
-  box-shadow: 0 0 20px rgba(242, 101, 34, 0.2), 0 0 60px rgba(242, 101, 34, 0.06);
+/* Button base */
+.btn {
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
-.glow-teal, .glow-blue {
-  box-shadow: 0 0 20px rgba(106, 190, 216, 0.2), 0 0 60px rgba(106, 190, 216, 0.06);
-}
-.glow-amber {
-  box-shadow: 0 0 20px rgba(242, 101, 34, 0.15), 0 0 60px rgba(242, 101, 34, 0.05);
+.btn:active {
+  transform: scale(0.97);
 }
 
-/* Pulse animation */
-@keyframes pulse-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
 }
-.animate-pulse-live {
-  animation: pulse-live 1.5s ease-in-out infinite;
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn-secondary {
+  background: var(--color-surface-elevated);
+  color: var(--color-foreground);
+}
+.btn-secondary:hover {
+  background: var(--color-surface-hover);
+}
+
+/* Smooth transitions */
+.transition-fast {
+  transition: all 0.2s ease;
 }
 
 /* Slide up entrance */
@@ -150,7 +105,7 @@ body::before {
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-up {
-  animation: slide-up 0.35s ease-out forwards;
+  animation: slide-up 0.3s ease-out forwards;
 }
 
 /* Fade in */
@@ -159,7 +114,7 @@ body::before {
   to { opacity: 1; }
 }
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+  animation: fade-in 0.25s ease-out forwards;
 }
 
 /* YouTube iframe responsive wrapper */
@@ -168,7 +123,7 @@ body::before {
   padding-bottom: 56.25%;
   height: 0;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .video-wrapper iframe,
 .video-wrapper > div {
@@ -179,7 +134,7 @@ body::before {
   height: 100%;
 }
 
-/* Sync setup video — NOT using padding-bottom trick, uses fixed height */
+/* Sync setup video */
 .sync-video-container {
   position: relative;
   width: 100%;
@@ -191,7 +146,7 @@ body::before {
   padding-bottom: 56.25%;
   height: 0;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #000;
 }
 .sync-video-container .sync-player-wrap iframe,
@@ -209,11 +164,11 @@ body::before {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 380px;
+  width: 400px;
   max-width: 92vw;
   z-index: 40;
   transform: translateX(100%);
-  transition: transform 0.35s ease;
+  transition: transform 0.3s ease;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -225,9 +180,11 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: 39;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.3s ease;
   pointer-events: none;
 }
 .slide-panel-backdrop.open {
@@ -235,26 +192,16 @@ body::before {
   pointer-events: auto;
 }
 
-/* Checkered pattern — warm toned */
-.checkered-bg {
-  background-image: repeating-conic-gradient(
-    var(--color-surface) 0% 25%,
-    transparent 0% 50%
-  );
-  background-size: 20px 20px;
-  opacity: 0.03;
-}
-
-/* Warm inputs */
+/* Inputs */
 input[type="text"], input[type="url"] {
-  caret-color: var(--color-gulf-orange);
+  caret-color: var(--color-accent);
 }
 
 /* Touch-friendly sizing */
 @media (pointer: coarse) {
   button, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
   }
 }
 
@@ -274,13 +221,13 @@ input[type="range"]::-webkit-slider-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--color-gulf-orange);
-  margin-top: -7px;
-  border: 2px solid var(--color-background);
-  box-shadow: 0 0 8px rgba(242, 101, 34, 0.3);
+  background: var(--color-accent);
+  margin-top: -8px;
+  border: 3px solid var(--color-background);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 input[type="range"]::-moz-range-track {
   height: 6px;
@@ -288,10 +235,29 @@ input[type="range"]::-moz-range-track {
   background: var(--color-surface-elevated);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--color-gulf-orange);
-  border: 2px solid var(--color-background);
-  box-shadow: 0 0 8px rgba(242, 101, 34, 0.3);
+  background: var(--color-accent);
+  border: 3px solid var(--color-background);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Selection badges */
+.badge-a {
+  background: rgba(0, 122, 255, 0.15);
+  color: var(--color-run-a);
+  border: 1px solid rgba(0, 122, 255, 0.3);
+}
+.badge-b {
+  background: rgba(255, 59, 48, 0.15);
+  color: var(--color-run-b);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-run-a);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
