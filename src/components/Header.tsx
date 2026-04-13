@@ -10,20 +10,20 @@ export function Header() {
   const hasComparison = !!session.activeComparison;
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-white/5">
+    <header className="sticky top-0 z-50 glass border-b border-cream/5">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-6 bg-accent rounded-sm" />
-            <div className="w-2 h-6 bg-amber rounded-sm" />
+            <div className="w-2 h-6 bg-gulf-blue rounded-sm" />
+            <div className="w-2 h-6 bg-gulf-orange rounded-sm" />
           </div>
           <div>
-            <h1 className="font-display text-lg font-bold tracking-wide leading-none text-foreground">
+            <h1 className="font-display text-xl font-bold tracking-wider leading-none text-cream">
               GRIDLINE
             </h1>
             <span className="text-[10px] tracking-[0.2em] text-muted uppercase">
-              Autocross Analysis
+              Heritage Edition
             </span>
           </div>
         </div>
@@ -34,7 +34,7 @@ export function Header() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
             </svg>
-            <span className="truncate max-w-[200px]">{session.name}</span>
+            <span className="truncate max-w-[200px] text-cream/70">{session.name}</span>
           </div>
         )}
 
@@ -43,7 +43,7 @@ export function Header() {
           {hasComparison && (
             <button
               onClick={() => setShowShare(true)}
-              className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+              className="p-2 rounded-lg text-muted hover:text-cream hover:bg-surface-hover transition-colors"
               aria-label="Share"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -53,10 +53,10 @@ export function Header() {
           )}
           <button
             onClick={() => setShowGarage(!showGarage)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium btn-tactile ${
               showGarage
-                ? "bg-accent/10 text-accent border border-accent/20"
-                : "text-muted hover:text-foreground hover:bg-surface-hover"
+                ? "bg-gulf-orange/10 text-gulf-orange border border-gulf-orange/20"
+                : "text-muted hover:text-cream hover:bg-surface-hover"
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -64,7 +64,7 @@ export function Header() {
             </svg>
             <span className="hidden sm:inline">Garage</span>
             {session.runs.length > 0 && (
-              <span className="bg-accent/20 text-accent text-xs px-1.5 py-0.5 rounded-full font-mono">
+              <span className="bg-gulf-orange/20 text-gulf-orange text-xs px-1.5 py-0.5 rounded-full font-mono">
                 {session.runs.length}
               </span>
             )}

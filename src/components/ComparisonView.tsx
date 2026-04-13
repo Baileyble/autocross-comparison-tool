@@ -185,7 +185,7 @@ function ComparisonViewInner({
       {/* Back to garage */}
       <button
         onClick={() => setShowGarage(true)}
-        className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors mb-1"
+        className="self-start flex items-center gap-1.5 text-xs text-muted hover:text-cream transition-colors mb-1"
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -219,21 +219,21 @@ function ComparisonViewInner({
 
       {/* Annotation panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="glass rounded-xl border border-accent/10 p-3">
+        <div className="glass rounded-xl border border-gulf-blue/10 p-3">
           <AnnotationPanel run={runA} currentTime={stateA?.currentTime ?? 0} />
         </div>
-        <div className="glass rounded-xl border border-teal/10 p-3">
+        <div className="glass rounded-xl border border-gulf-orange/10 p-3">
           <AnnotationPanel run={runB} currentTime={stateB?.currentTime ?? 0} />
         </div>
       </div>
 
-      {/* Keyboard shortcut hints */}
+      {/* Keyboard shortcut hints — warm cream */}
       <div className="hidden sm:flex items-center justify-center gap-4 text-[10px] text-subtle py-2">
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">Space</kbd> Play/Pause</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">R</kbd> Restart</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">J/L</kbd> Seek ±5s</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">[ ]</kbd> Run A offset</span>
-        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-muted font-mono">; &apos;</kbd> Run B offset</span>
+        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-cream/60 font-mono border border-cream/8">Space</kbd> Play/Pause</span>
+        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-cream/60 font-mono border border-cream/8">R</kbd> Restart</span>
+        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-cream/60 font-mono border border-cream/8">J/L</kbd> Seek ±5s</span>
+        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-cream/60 font-mono border border-cream/8">[ ]</kbd> Run A offset</span>
+        <span><kbd className="px-1 py-0.5 rounded bg-surface-elevated text-cream/60 font-mono border border-cream/8">; &apos;</kbd> Run B offset</span>
       </div>
     </div>
   );

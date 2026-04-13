@@ -30,13 +30,13 @@ export function PlaybackControls({
   const hasComparison = !!session.activeComparison;
 
   return (
-    <div className="glass rounded-xl border border-white/5 p-3 space-y-3">
+    <div className="glass rounded-xl border border-cream/5 p-3 space-y-3">
       {/* Main transport controls */}
       <div className="flex items-center justify-center gap-2">
         {/* Rewind 5s */}
         <button
           onClick={() => onSeek(-5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cream btn-tactile"
           aria-label="Rewind 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -47,7 +47,7 @@ export function PlaybackControls({
         {/* Rewind 1s */}
         <button
           onClick={() => onSeek(-1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cream btn-tactile"
           aria-label="Rewind 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -58,10 +58,10 @@ export function PlaybackControls({
         {/* Play/Pause — big center button */}
         <button
           onClick={onPlayPause}
-          className={`p-4 rounded-full transition-all ${
+          className={`p-4 rounded-full btn-tactile ${
             isPlaying
-              ? "bg-accent text-white glow-accent"
-              : "bg-surface-elevated hover:bg-accent/20 text-foreground hover:text-accent"
+              ? "bg-gulf-orange text-white glow-gulf-orange"
+              : "bg-surface-elevated hover:bg-gulf-orange/20 text-cream hover:text-gulf-orange"
           }`}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -79,7 +79,7 @@ export function PlaybackControls({
         {/* Forward 1s */}
         <button
           onClick={() => onSeek(1)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cream btn-tactile"
           aria-label="Forward 1 second"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -90,7 +90,7 @@ export function PlaybackControls({
         {/* Forward 5s */}
         <button
           onClick={() => onSeek(5)}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cream btn-tactile"
           aria-label="Forward 5 seconds"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -101,7 +101,7 @@ export function PlaybackControls({
         {/* Restart */}
         <button
           onClick={onRestart}
-          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-foreground transition-colors ml-2"
+          className="p-2.5 rounded-lg bg-surface-elevated hover:bg-surface-hover text-muted hover:text-cream btn-tactile ml-2"
           aria-label="Restart"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -119,10 +119,10 @@ export function PlaybackControls({
             <button
               key={speed}
               onClick={() => setPlaybackSpeed(speed)}
-              className={`px-2 py-1 rounded text-xs font-mono transition-colors ${
+              className={`px-2 py-1 rounded text-xs font-mono btn-tactile ${
                 playbackSpeed === speed
-                  ? "bg-accent/15 text-accent border border-accent/30"
-                  : "text-muted hover:text-foreground hover:bg-surface-hover"
+                  ? "bg-gulf-orange/15 text-gulf-orange border border-gulf-orange/30"
+                  : "text-muted hover:text-cream hover:bg-surface-hover"
               }`}
             >
               {speed}x
@@ -136,10 +136,10 @@ export function PlaybackControls({
             <>
               <button
                 onClick={() => setOverlayMode(!overlayMode)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium btn-tactile ${
                   overlayMode
-                    ? "bg-amber/10 text-amber border border-amber/20"
-                    : "text-muted hover:text-foreground hover:bg-surface-hover"
+                    ? "bg-gulf-orange/10 text-gulf-orange border border-gulf-orange/20"
+                    : "text-muted hover:text-cream hover:bg-surface-hover"
                 }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -149,7 +149,7 @@ export function PlaybackControls({
               </button>
               <button
                 onClick={swapRuns}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-muted hover:text-cream hover:bg-surface-hover btn-tactile"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
@@ -168,34 +168,34 @@ export function PlaybackControls({
             <div
               key={lbl}
               className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 ${
-                lbl === "A" ? "bg-accent/5 border border-accent/10" : "bg-teal/5 border border-teal/10"
+                lbl === "A" ? "bg-gulf-blue/5 border border-gulf-blue/10" : "bg-gulf-orange/5 border border-gulf-orange/10"
               }`}
             >
-              <span className={`text-[10px] font-mono font-bold ${lbl === "A" ? "text-accent" : "text-teal"}`}>
+              <span className={`text-[10px] font-mono font-bold ${lbl === "A" ? "text-gulf-blue" : "text-gulf-orange"}`}>
                 RUN {lbl}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onAdjustOffset(lbl, -1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-cream btn-tactile"
                 >
                   -1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, -0.1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-cream btn-tactile"
                 >
                   -.1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, 0.1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-[10px] font-mono text-muted hover:text-cream btn-tactile"
                 >
                   +.1
                 </button>
                 <button
                   onClick={() => onAdjustOffset(lbl, 1)}
-                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-foreground transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded bg-surface-elevated hover:bg-surface-hover text-xs font-mono text-muted hover:text-cream btn-tactile"
                 >
                   +1
                 </button>
@@ -208,7 +208,7 @@ export function PlaybackControls({
                 }}
                 className={`ml-1 p-1.5 rounded transition-colors ${
                   (tapSyncMode === "runA" && lbl === "A") || (tapSyncMode === "runB" && lbl === "B")
-                    ? "bg-amber/20 text-amber"
+                    ? "bg-gulf-orange/20 text-gulf-orange"
                     : "text-subtle hover:text-muted hover:bg-surface-hover"
                 }`}
                 title="Tap to sync — set start point by tapping"

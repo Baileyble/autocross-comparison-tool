@@ -82,13 +82,13 @@ export function Garage() {
                 type="text"
                 value={sessionName}
                 onChange={(e) => setSessionName(e.target.value)}
-                className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                className="flex-1 bg-surface border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream focus:outline-none focus:border-gulf-orange/50"
                 onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
                 autoFocus
               />
               <button
                 onClick={handleSessionRename}
-                className="px-3 py-2 rounded-lg bg-accent/10 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
+                className="px-3 py-2 rounded-lg bg-gulf-orange/10 text-gulf-orange text-sm font-medium hover:bg-gulf-orange/20 btn-tactile"
               >
                 Save
               </button>
@@ -99,10 +99,10 @@ export function Garage() {
                 setSessionName(session.name);
                 setEditingSession(true);
               }}
-              className="flex items-center gap-2 text-foreground hover:text-accent transition-colors group"
+              className="flex items-center gap-2 text-cream hover:text-gulf-orange transition-colors group"
             >
-              <h2 className="font-display text-xl font-bold tracking-wide">{session.name}</h2>
-              <svg className="w-4 h-4 text-muted group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <h2 className="font-display text-2xl font-bold tracking-wider">{session.name}</h2>
+              <svg className="w-4 h-4 text-muted group-hover:text-gulf-orange transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
               </svg>
             </button>
@@ -110,9 +110,9 @@ export function Garage() {
         </div>
 
         {/* Add run form */}
-        <div className="glass rounded-xl border border-white/5 p-4 space-y-3">
+        <div className="glass rounded-xl border border-cream/8 p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <div className="w-1.5 h-1.5 rounded-full bg-gulf-orange" />
             <span className="text-xs font-medium text-muted uppercase tracking-wider">Add Run</span>
           </div>
 
@@ -122,7 +122,7 @@ export function Garage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Run name (optional)"
-              className="w-32 sm:w-40 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
+              className="w-32 sm:w-40 bg-surface border border-cream/10 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
             />
             <input
               type="text"
@@ -132,13 +132,13 @@ export function Garage() {
                 setError("");
               }}
               placeholder="YouTube URL or video ID"
-              className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/50 transition-colors"
+              className="flex-1 bg-surface border border-cream/10 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-subtle focus:outline-none focus:border-gulf-orange/50 transition-colors"
               onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
             />
             <button
               onClick={handleAddRun}
               disabled={!url}
-              className="px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-glow disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2.5 rounded-lg bg-gulf-orange text-white text-sm font-semibold hover:bg-gulf-orange-glow disabled:opacity-30 disabled:cursor-not-allowed btn-tactile"
             >
               Add
             </button>
@@ -146,7 +146,7 @@ export function Garage() {
 
           {/* URL preview */}
           {previewId && (
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50">
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated/50 border border-cream/5">
               <img
                 src={getThumbnailUrl(previewId, "default")}
                 alt="Video thumbnail"
@@ -157,7 +157,7 @@ export function Garage() {
           )}
 
           {error && (
-            <p className="text-accent text-xs font-medium">{error}</p>
+            <p className="text-gulf-orange text-xs font-medium">{error}</p>
           )}
         </div>
 
@@ -195,7 +195,7 @@ export function Garage() {
             <button
               onClick={handleCompare}
               disabled={selectedRuns.length !== 2}
-              className="w-full py-3 rounded-xl bg-accent text-white font-display text-lg font-bold tracking-wide uppercase hover:bg-accent-glow disabled:opacity-20 disabled:cursor-not-allowed transition-all glow-accent disabled:shadow-none"
+              className="w-full py-3 rounded-xl bg-gulf-orange text-white font-display text-xl font-bold tracking-wider uppercase hover:bg-gulf-orange-glow disabled:opacity-20 disabled:cursor-not-allowed glow-accent disabled:shadow-none btn-tactile"
             >
               {selectedRuns.length === 2 ? "Compare Runs" : "Select 2 Runs to Compare"}
             </button>
@@ -205,12 +205,12 @@ export function Garage() {
         {/* Empty state */}
         {session.runs.length === 0 && (
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-elevated mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-elevated border border-cream/5 mb-4">
               <svg className="w-8 h-8 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
               </svg>
             </div>
-            <h3 className="font-display text-lg font-bold text-foreground mb-1">No runs yet</h3>
+            <h3 className="font-display text-xl font-bold text-cream mb-1">No runs yet</h3>
             <p className="text-sm text-muted max-w-xs mx-auto">
               Add YouTube videos of your autocross runs to start comparing them side by side.
             </p>
@@ -244,18 +244,18 @@ function RunCard({
       className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
         selected
           ? label === "A"
-            ? "bg-accent/10 border border-accent/30 glow-accent"
-            : "bg-teal/10 border border-teal/30 glow-teal"
-          : "bg-surface border border-white/5 hover:border-white/10 hover:bg-surface-elevated"
+            ? "bg-gulf-blue/10 border border-gulf-blue/30 glow-gulf-blue"
+            : "bg-gulf-orange/10 border border-gulf-orange/30 glow-gulf-orange"
+          : "bg-surface border border-cream/5 hover:border-cream/10 hover:bg-surface-elevated"
       }`}
     >
       {/* Selection indicator */}
       <div
         className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold font-mono shrink-0 ${
           label === "A"
-            ? "bg-accent/20 text-accent"
+            ? "bg-gulf-blue/20 text-gulf-blue"
             : label === "B"
-            ? "bg-teal/20 text-teal"
+            ? "bg-gulf-orange/20 text-gulf-orange"
             : "bg-surface-elevated text-subtle"
         }`}
       >
@@ -271,7 +271,7 @@ function RunCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-foreground truncate">{run.name}</div>
+        <div className="text-sm font-medium text-cream truncate">{run.name}</div>
         <div className="text-xs font-mono text-subtle">{run.videoId}</div>
       </div>
 
@@ -281,7 +281,7 @@ function RunCard({
           e.stopPropagation();
           onRemove();
         }}
-        className="p-1.5 rounded-lg text-subtle hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
+        className="p-1.5 rounded-lg text-subtle hover:text-gulf-orange hover:bg-gulf-orange/10 transition-colors shrink-0"
         aria-label="Remove run"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

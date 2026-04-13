@@ -56,13 +56,13 @@ export function ShareModal() {
         onClick={() => setShowShare(false)}
       />
 
-      {/* Modal */}
-      <div className="relative glass rounded-2xl border border-white/10 p-6 w-full max-w-md animate-slide-up space-y-5">
+      {/* Modal — warm tinted */}
+      <div className="relative glass rounded-2xl border border-cream/10 p-6 w-full max-w-md animate-slide-up space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-wide">Share Comparison</h3>
+          <h3 className="font-display text-xl font-bold tracking-wider text-cream">Share Comparison</h3>
           <button
             onClick={() => setShowShare(false)}
-            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+            className="p-2 rounded-lg text-muted hover:text-cream hover:bg-surface-hover transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -70,15 +70,15 @@ export function ShareModal() {
           </button>
         </div>
 
-        {/* QR Code */}
+        {/* QR Code — cream background */}
         {shareUrl && (
-          <div className="flex justify-center p-4 bg-white rounded-xl">
+          <div className="flex justify-center p-4 bg-cream rounded-xl border border-cream/20">
             <QRCodeSVG
               value={shareUrl}
               size={200}
               level="M"
-              bgColor="#ffffff"
-              fgColor="#0c0c0f"
+              bgColor="#f5f0e8"
+              fgColor="#141210"
             />
           </div>
         )}
@@ -93,14 +93,14 @@ export function ShareModal() {
             type="text"
             value={shareUrl}
             readOnly
-            className="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono text-muted truncate"
+            className="flex-1 bg-surface border border-cream/10 rounded-lg px-3 py-2.5 text-xs font-mono text-muted truncate"
           />
           <button
             onClick={handleCopy}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium btn-tactile ${
               copied
-                ? "bg-teal/20 text-teal border border-teal/30"
-                : "bg-accent text-white hover:bg-accent-glow"
+                ? "bg-gulf-blue/20 text-gulf-blue border border-gulf-blue/30"
+                : "bg-gulf-orange text-white hover:bg-gulf-orange-glow"
             }`}
           >
             {copied ? "Copied!" : "Copy"}

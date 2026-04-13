@@ -13,15 +13,15 @@ interface VideoPlayerProps {
 }
 
 const LABEL_COLORS: Record<string, { bg: string; text: string; border: string; glow: string }> = {
-  A: { bg: "bg-accent/10", text: "text-accent", border: "border-accent/30", glow: "glow-accent" },
-  B: { bg: "bg-teal/10", text: "text-teal", border: "border-teal/30", glow: "glow-teal" },
+  A: { bg: "bg-gulf-blue/10", text: "text-gulf-blue", border: "border-gulf-blue/30", glow: "glow-gulf-blue" },
+  B: { bg: "bg-gulf-orange/10", text: "text-gulf-orange", border: "border-gulf-orange/30", glow: "glow-gulf-orange" },
 };
 
 const ANNOTATION_DOTS: Record<AnnotationColor, string> = {
-  red: "bg-accent",
-  amber: "bg-amber",
-  teal: "bg-teal",
-  white: "bg-foreground",
+  red: "bg-gulf-orange",
+  amber: "bg-gulf-orange",
+  teal: "bg-gulf-blue",
+  white: "bg-cream",
 };
 
 export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
@@ -87,29 +87,29 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
 
   return (
     <div className={`relative rounded-xl overflow-hidden border ${colors.border} bg-surface`}>
-      {/* Label badge */}
+      {/* Label badge — analog gauge style */}
       <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
         <span
-          className={`${colors.bg} ${colors.text} text-xs font-bold font-mono px-2 py-0.5 rounded border ${colors.border}`}
+          className={`${colors.bg} ${colors.text} text-xs font-bold font-mono px-2.5 py-0.5 rounded-full border ${colors.border}`}
         >
           RUN {label}
         </span>
-        <span className="text-xs text-muted truncate max-w-[120px] sm:max-w-[200px]">
+        <span className="text-xs text-cream/60 truncate max-w-[120px] sm:max-w-[200px]">
           {run.name}
         </span>
       </div>
 
-      {/* Status indicator */}
+      {/* Status indicator — analog gauge readout */}
       <div className="absolute top-3 right-3 z-10">
         <span
-          className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded ${
+          className={`badge-gauge ${
             status === "playing"
-              ? "bg-teal/20 text-teal"
+              ? "bg-gulf-blue/20 text-gulf-blue border-gulf-blue/30"
               : status === "loading"
-              ? "bg-amber/20 text-amber animate-pulse-live"
+              ? "bg-gulf-orange/20 text-gulf-orange border-gulf-orange/30 animate-pulse-live"
               : status === "error"
-              ? "bg-accent/20 text-accent"
-              : "bg-surface-elevated text-muted"
+              ? "bg-gulf-orange/20 text-gulf-orange border-gulf-orange/30"
+              : "bg-surface-elevated text-muted border-cream/10"
           }`}
         >
           {status === "playing" ? "LIVE" : status.toUpperCase()}
@@ -118,7 +118,7 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
 
       {/* Video container */}
       <div
-        className={`video-wrapper ${isTapTarget ? "ring-2 ring-amber ring-offset-2 ring-offset-background cursor-pointer" : ""}`}
+        className={`video-wrapper ${isTapTarget ? "ring-2 ring-gulf-orange ring-offset-2 ring-offset-background cursor-pointer" : ""}`}
         onClick={isTapTarget ? handleTapSync : undefined}
       >
         <div id={containerId} />
@@ -126,15 +126,15 @@ export function VideoPlayer({ run, label, onTapSync }: VideoPlayerProps) {
         {isTapTarget && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 pointer-events-none">
             <div className="text-center animate-slide-up">
-              <div className="text-amber font-display text-2xl font-bold mb-1">TAP AT LAUNCH</div>
-              <div className="text-amber/70 text-sm">Tap the video when the car starts moving</div>
+              <div className="text-gulf-orange font-display text-3xl font-bold mb-1">TAP AT LAUNCH</div>
+              <div className="text-gulf-orange/70 text-sm">Tap the video when the car starts moving</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom info bar */}
-      <div className="px-3 py-2 flex items-center justify-between bg-surface-elevated/50">
+      {/* Bottom info bar — warm tinted */}
+      <div className="px-3 py-2 flex items-center justify-between bg-surface-elevated/60 border-t border-cream/5">
         <div className="flex items-center gap-3">
           {/* Elapsed time (big) */}
           <div className="font-mono text-lg font-bold tracking-tight">
