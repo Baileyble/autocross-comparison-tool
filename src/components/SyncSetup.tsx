@@ -10,6 +10,7 @@ export function SyncSetup() {
   const setSyncSetupMode = useStore((s) => s.setSyncSetupMode);
   const updateRun = useStore((s) => s.updateRun);
   const setShowGarage = useStore((s) => s.setShowGarage);
+  const saveToHistory = useStore((s) => s.saveToHistory);
 
   if (!session.activeComparison || syncSetupMode === "off") return null;
 
@@ -30,6 +31,8 @@ export function SyncSetup() {
         step={step}
         onSetLaunchPoint={(time) => {
           updateRun(activeRun.id, { startOffset: time });
+          // Auto-save to localStorage so sync persists
+          setTimeout(() => saveToHistory(), 100);
           if (syncSetupMode === "runA") {
             setSyncSetupMode("runB");
           } else {

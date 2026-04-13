@@ -109,13 +109,17 @@ function ComparisonViewInner({
     });
   }, []);
 
+  const saveToHistory = useStore((s) => s.saveToHistory);
+
   const handleAdjustOffset = useCallback(
     (label: "A" | "B", delta: number) => {
       const run = label === "A" ? runA : runB;
       const newOffset = Math.max(0, run.startOffset + delta);
       updateRun(run.id, { startOffset: newOffset });
+      // Auto-save offset changes
+      setTimeout(() => saveToHistory(), 100);
     },
-    [runA, runB, updateRun]
+    [runA, runB, updateRun, saveToHistory]
   );
 
   // Keyboard shortcuts
