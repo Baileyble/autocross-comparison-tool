@@ -7,267 +7,238 @@ import type { Run } from "@/types";
 
 export function Garage({ isPanel = false }: { isPanel?: boolean }) {
   const session = useStore((s) => s.session);
+  const syncPoints = useStore((s) => s.syncPoints);
   const addRun = useStore((s) => s.addRun);
   const removeRun = useStore((s) => s.removeRun);
-  const setActiveComparison = useStore((s) => s.setActiveComparison);
-  const setShowGarage = useStore((s) => s.setShowGarage);
-  const setSyncSetupMode = useStore((s) => s.setSyncSetupMode);
+  const startComparison = useStore((s) => s.startComparison);
   const renameSession = useStore((s) => s.renameSession);
-  const saveToHistory = useStore((s) => s.saveToHistory);
-  const setShowRunPanel = useStore((s) => s.setShowRunPanel);
-  const createSession = useStore((s) => s.createSession);
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
-  const [editingSession, setEditingSession] = useState(false);
-  const [sessionName, setSessionName] = useState(session.name);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(session.name);
 
-  const previewId = useMemo(() => {
-    if (!url) return null;
-    return extractVideoId(url);
-  }, [url]);
+  const previewId = useMemo(() => (url ? extractVideoId(url) : null), [url]);
 
-  const handleAddRun = () => {
+  const selectedRuns = selected
+    .map((id) => session.runs.find((r) => r.id === id))
+    .filter(Boolean) as Run[];
+
+  const bothSynced =
+    selectedRuns.length === 2 &&
+    selectedRuns.every((r) => syncPoints[r.videoId] !== undefined);
+
+  const handleAdd = () => {
     setError("");
     const videoId = extractVideoId(url);
     if (!videoId) {
-      setError("Invalid YouTube URL or video ID");
+      setError("That doesn't look like a YouTube URL or video ID.");
       return;
     }
-
     addRun({
-      name: name || `Run ${session.runs.length + 1}`,
-      youtubeUrl: url,
+      name: name.trim() || `Run ${session.runs.length + 1}`,
+      youtubeUrl: url.trim(),
       videoId,
-      startOffset: 0,
-      notes: "",
-      metadata: {},
     });
-
     setUrl("");
     setName("");
   };
 
-  const toggleRunSelection = (id: string) => {
-    setSelectedRuns((prev) => {
-      if (prev.includes(id)) return prev.filter((r) => r !== id);
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
       if (prev.length >= 2) return [prev[1], id];
       return [...prev, id];
     });
   };
 
-  const handleCompare = (withSync: boolean) => {
-    if (selectedRuns.length === 2) {
-      setActiveComparison(selectedRuns[0], selectedRuns[1]);
-      saveToHistory();
-      if (withSync) {
-        setSyncSetupMode("runA");
-        setShowGarage(false);
-      } else {
-        setShowGarage(false);
-      }
-      if (isPanel) setShowRunPanel(false);
-    }
-  };
-
-  const handleNewSession = () => {
-    saveToHistory();
-    createSession();
-    setSelectedRuns([]);
-    setSessionName("New Session");
-  };
-
-  const handleSessionRename = () => {
-    renameSession(sessionName);
-    setEditingSession(false);
+  const compare = (withSync: boolean) => {
+    if (selected.length === 2) startComparison(selected[0], selected[1], withSync);
   };
 
   return (
-    <div className="animate-slide-up">
-      <div className={`${isPanel ? "" : "max-w-2xl mx-auto"} px-4 sm:px-6 py-6 space-y-6`}>
-        {/* Session header */}
+    <div className={`animate-rise ${isPanel ? "" : "pb-28"}`}>
+      <div className={`${isPanel ? "" : "max-w-2xl mx-auto"} px-4 sm:px-6 py-6 space-y-5`}>
+        {/* Session name */}
         {!isPanel && (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              {editingSession ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    type="text"
-                    value={sessionName}
-                    onChange={(e) => setSessionName(e.target.value)}
-                    className="flex-1 min-w-0 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-run-a/50"
-                    onKeyDown={(e) => e.key === "Enter" && handleSessionRename()}
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSessionRename}
-                    className="px-3 py-2 rounded-lg bg-run-a/10 text-run-a text-xs font-semibold hover:bg-run-a/20 transition-colors shrink-0"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
+          <div className="flex items-center gap-2 min-w-0">
+            {editingName ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="text"
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      renameSession(draftName.trim() || "New Session");
+                      setEditingName(false);
+                    }
+                  }}
+                  className="flex-1 min-w-0 bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-lime/50"
+                  autoFocus
+                />
                 <button
                   onClick={() => {
-                    setSessionName(session.name);
-                    setEditingSession(true);
+                    renameSession(draftName.trim() || "New Session");
+                    setEditingName(false);
                   }}
-                  className="flex items-center gap-2 text-foreground hover:text-run-a transition-colors group min-w-0"
+                  className="px-3 py-2 rounded-lg bg-lime/10 text-lime text-xs font-bold shrink-0"
                 >
-                  <h2 className="text-2xl font-extrabold tracking-tight truncate">
-                    {session.name}
-                  </h2>
-                  <svg className="w-4 h-4 text-subtle group-hover:text-run-a transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-                  </svg>
+                  Save
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setDraftName(session.name);
+                  setEditingName(true);
+                }}
+                className="group flex items-center gap-2 min-w-0"
+              >
+                <h2 className="text-2xl font-extrabold tracking-tight truncate">{session.name}</h2>
+                <svg className="w-4 h-4 text-subtle group-hover:text-lime transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
 
-        {/* Add run card */}
-        <div className="card p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="text-sm font-semibold text-foreground">Add a run</span>
-          </div>
-
-          {isPanel ? (
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Run name (optional)"
-                className="w-full bg-surface-elevated border border-white/6 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
-              />
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={url}
-                  onChange={(e) => { setUrl(e.target.value); setError(""); }}
-                  placeholder="YouTube URL or video ID"
-                  className="flex-1 min-w-0 bg-surface-elevated border border-white/6 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
-                />
-                <button
-                  onClick={handleAddRun}
-                  disabled={!url}
-                  className="btn btn-primary px-4 py-2.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Run name"
-                className="w-28 sm:w-36 bg-surface-elevated border border-white/6 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
-              />
+        {/* Add run */}
+        <div className="panel p-4 space-y-3">
+          <div className="label-micro">Add run</div>
+          <div className={isPanel ? "space-y-2" : "flex gap-2"}>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Run name"
+              className={`bg-elevated border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm placeholder:text-subtle focus:outline-none focus:border-lime/40 transition-colors ${
+                isPanel ? "w-full" : "w-28 sm:w-36"
+              }`}
+            />
+            <div className={`flex gap-2 ${isPanel ? "" : "flex-1"}`}>
               <input
                 type="text"
                 value={url}
-                onChange={(e) => { setUrl(e.target.value); setError(""); }}
-                placeholder="Paste a YouTube URL or video ID"
-                className="flex-1 bg-surface-elevated border border-white/6 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-run-a/40 transition-colors"
-                onKeyDown={(e) => e.key === "Enter" && handleAddRun()}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+                placeholder="Paste a YouTube link"
+                className="flex-1 min-w-0 bg-elevated border border-white/[0.06] rounded-lg px-3 py-2.5 text-sm placeholder:text-subtle focus:outline-none focus:border-lime/40 transition-colors"
               />
               <button
-                onClick={handleAddRun}
+                onClick={handleAdd}
                 disabled={!url}
-                className="btn btn-primary px-5 py-3 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 rounded-lg bg-lime text-background text-sm font-bold hover:bg-lime-bright disabled:opacity-25 disabled:cursor-not-allowed transition-colors shrink-0"
               >
-                Add Run
+                Add
               </button>
             </div>
-          )}
+          </div>
 
           {previewId && (
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-surface-elevated border border-white/5">
-              <img src={getThumbnailUrl(previewId, "default")} alt="Preview" className="w-16 h-10 rounded object-cover" />
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-elevated animate-fade">
+              <img
+                src={getThumbnailUrl(previewId, "default")}
+                alt="Video preview"
+                className="w-16 h-10 rounded object-cover"
+              />
               <span className="text-xs font-mono text-muted">{previewId}</span>
+              {syncPoints[previewId] !== undefined && (
+                <span className="text-[10px] font-mono text-lime">
+                  sync remembered · {syncPoints[previewId].toFixed(1)}s
+                </span>
+              )}
             </div>
           )}
 
-          {error && <p className="text-accent text-xs font-medium">{error}</p>}
+          {error && <p className="text-bad text-xs font-medium">{error}</p>}
         </div>
 
-        {/* Runs list */}
-        {session.runs.length > 0 && (
-          <div className="space-y-3">
+        {/* Run list */}
+        {session.runs.length > 0 ? (
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted uppercase tracking-wider">
-                Runs ({session.runs.length})
-              </span>
-              <span className="text-xs text-subtle font-medium">
-                {selectedRuns.length === 0
-                  ? "Select 2 to compare"
-                  : selectedRuns.length === 1
-                  ? "Select 1 more"
-                  : "Ready to compare"}
+              <span className="label-micro">Runs · {session.runs.length}</span>
+              <span className="text-xs text-subtle">
+                {selected.length === 0
+                  ? "Pick two to compare"
+                  : selected.length === 1
+                  ? "Pick one more"
+                  : "Ready"}
               </span>
             </div>
-
             <div className="space-y-2">
-              {session.runs.map((run, index) => (
+              {session.runs.map((run, i) => (
                 <RunCard
                   key={run.id}
                   run={run}
-                  index={index}
+                  index={i}
                   compact={isPanel}
-                  selected={selectedRuns.includes(run.id)}
-                  selectionOrder={selectedRuns.indexOf(run.id)}
-                  onSelect={() => toggleRunSelection(run.id)}
+                  synced={syncPoints[run.videoId] !== undefined}
+                  slot={selected.indexOf(run.id)}
+                  onSelect={() => toggleSelect(run.id)}
                   onRemove={() => removeRun(run.id)}
                 />
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Empty state */}
-        {session.runs.length === 0 && !isPanel && (
-          <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-white/5 mb-4">
-              <svg className="w-8 h-8 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-              </svg>
+            {/* Inline actions in panel mode */}
+            {isPanel && selected.length === 2 && (
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => compare(!bothSynced)}
+                  className="w-full py-3 rounded-xl bg-lime text-background font-bold text-sm hover:bg-lime-bright transition-colors"
+                >
+                  {bothSynced ? "Compare" : "Sync & compare"}
+                </button>
+                <button
+                  onClick={() => compare(bothSynced)}
+                  className="w-full py-2 rounded-lg text-xs text-muted hover:text-foreground transition-colors"
+                >
+                  {bothSynced ? "Re-sync first" : "Compare without syncing"}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          !isPanel && (
+            <div className="text-center py-14">
+              <div className="text-5xl mb-4">🏁</div>
+              <h3 className="text-lg font-extrabold tracking-tight mb-1">No runs yet</h3>
+              <p className="text-sm text-muted max-w-xs mx-auto">
+                Paste YouTube links of your runs above. Pick any two to line them up side by side.
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-foreground tracking-tight mb-1">No runs yet</h3>
-            <p className="text-sm text-muted max-w-xs mx-auto">
-              Add YouTube videos of your autocross runs above to start comparing.
-            </p>
-          </div>
+          )
         )}
-
-        {/* Spacer for bottom action bar */}
-        {selectedRuns.length === 2 && !isPanel && <div className="h-24" />}
       </div>
 
-      {/* Bottom action bar */}
-      {selectedRuns.length === 2 && (
-        <div className={isPanel ? "px-4 pb-4 space-y-2" : "bottom-action-bar"}>
-          <div className={isPanel ? "space-y-2" : "max-w-2xl mx-auto space-y-2"}>
+      {/* Bottom action bar — full-page mode only */}
+      {!isPanel && selected.length === 2 && (
+        <div className="fixed bottom-0 inset-x-0 z-30 bg-background/90 backdrop-blur-md border-t border-white/[0.07] animate-rise">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+            <div className="hidden sm:block text-xs text-muted min-w-0 flex-1">
+              <span className="text-run-a font-semibold">{selectedRuns[0]?.name}</span>
+              <span className="text-subtle"> vs </span>
+              <span className="text-run-b font-semibold">{selectedRuns[1]?.name}</span>
+            </div>
             <button
-              onClick={() => handleCompare(true)}
-              className="w-full btn btn-primary py-3.5 text-base font-bold tracking-tight"
+              onClick={() => compare(bothSynced)}
+              className="px-4 py-3 rounded-xl text-sm font-semibold text-muted hover:text-foreground hover:bg-hover transition-colors"
             >
-              Sync &amp; Compare
+              {bothSynced ? "Re-sync first" : "Skip sync"}
             </button>
             <button
-              onClick={() => handleCompare(false)}
-              className="w-full py-2 rounded-lg text-sm text-muted hover:text-foreground transition-colors font-medium"
+              onClick={() => compare(!bothSynced)}
+              className="flex-1 sm:flex-none sm:px-8 py-3 rounded-xl bg-lime text-background font-bold text-sm hover:bg-lime-bright transition-colors"
             >
-              Skip sync — compare directly
+              {bothSynced ? "Compare" : "Sync & compare"}
             </button>
           </div>
         </div>
@@ -280,85 +251,79 @@ function RunCard({
   run,
   index,
   compact,
-  selected,
-  selectionOrder,
+  synced,
+  slot,
   onSelect,
   onRemove,
 }: {
   run: Run;
   index: number;
-  compact?: boolean;
-  selected: boolean;
-  selectionOrder: number;
+  compact: boolean;
+  synced: boolean;
+  slot: number; // -1 unselected, 0 = A, 1 = B
   onSelect: () => void;
   onRemove: () => void;
 }) {
-  const label = selectionOrder === 0 ? "A" : selectionOrder === 1 ? "B" : null;
-  const isA = label === "A";
-  const isB = label === "B";
+  const label = slot === 0 ? "A" : slot === 1 ? "B" : null;
 
   return (
     <div
       onClick={onSelect}
-      className={`flex items-center gap-3 rounded-xl cursor-pointer transition-all ${
+      className={`flex items-center gap-3 rounded-xl cursor-pointer transition-all border ${
         compact ? "p-2.5" : "p-3"
       } ${
-        selected
-          ? isA
-            ? "bg-run-a/8 border-2 border-run-a/40"
-            : "bg-accent/8 border-2 border-accent/40"
-          : "card hover:bg-surface-elevated"
+        label === "A"
+          ? "bg-run-a/[0.07] border-run-a/40"
+          : label === "B"
+          ? "bg-run-b/[0.07] border-run-b/40"
+          : "bg-surface border-white/[0.06] hover:border-white/[0.14]"
       }`}
     >
-      {/* Selection indicator */}
       <div
-        className={`shrink-0 rounded-lg flex items-center justify-center font-bold font-mono ${
-          compact ? "w-7 h-7 text-xs" : "w-9 h-9 text-sm"
+        className={`shrink-0 rounded-lg flex items-center justify-center font-mono font-bold ${
+          compact ? "w-7 h-7 text-[11px]" : "w-9 h-9 text-xs"
         } ${
-          isA
+          label === "A"
             ? "bg-run-a/20 text-run-a"
-            : isB
-            ? "bg-accent/20 text-accent"
-            : "bg-surface-elevated text-subtle"
+            : label === "B"
+            ? "bg-run-b/20 text-run-b"
+            : "bg-elevated text-subtle"
         }`}
       >
-        {label || index + 1}
+        {label ?? index + 1}
       </div>
 
-      {/* Thumbnail */}
       <img
         src={getThumbnailUrl(run.videoId, "default")}
-        alt={run.name}
-        className={`rounded-lg object-cover shrink-0 ${compact ? "w-14 h-9" : "w-20 h-12"}`}
+        alt=""
+        className={`rounded-md object-cover shrink-0 ${compact ? "w-14 h-9" : "w-18 h-11"}`}
       />
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className={`font-semibold text-foreground truncate ${compact ? "text-sm" : "text-base"}`}>
+        <div className={`font-semibold truncate ${compact ? "text-xs" : "text-sm"}`}>
           {run.name}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs font-mono text-subtle">{run.videoId}</span>
-          {run.startOffset > 0 ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
-              Synced at {run.startOffset.toFixed(1)}s
+          {synced ? (
+            <span className="text-[10px] font-mono text-lime">
+              SYNCED {run.startOffset.toFixed(1)}s
             </span>
           ) : (
-            <span className="inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-surface-elevated text-subtle border border-white/5">
-              Not synced
-            </span>
+            <span className="text-[10px] font-mono text-subtle">NOT SYNCED</span>
           )}
         </div>
       </div>
 
-      {/* Remove button */}
       <button
-        onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        className="p-1.5 rounded-lg text-subtle hover:text-accent hover:bg-accent/10 transition-colors shrink-0"
-        aria-label="Remove"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="p-1.5 rounded-lg text-subtle hover:text-bad hover:bg-bad/10 transition-colors shrink-0"
+        aria-label={`Remove ${run.name}`}
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </button>
     </div>

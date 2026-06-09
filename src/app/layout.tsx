@@ -2,14 +2,15 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gridline — Autocross Run Comparison",
+  title: "RaceCompare — Autocross Run Analysis",
   description:
-    "Compare autocross runs side by side with synchronized video playback, timing analysis, and annotations.",
+    "Compare autocross runs side by side with synchronized video playback, launch-point syncing, and run markers.",
   keywords: ["autocross", "comparison", "video", "racing", "analysis", "motorsports"],
   openGraph: {
-    title: "Gridline — Autocross Run Comparison",
+    title: "RaceCompare — Autocross Run Analysis",
     description: "Compare autocross runs side by side with synchronized video playback.",
     type: "website",
+    url: "https://racecompare.app",
   },
 };
 
@@ -17,7 +18,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0f1923",
+  themeColor: "#0e0f11",
 };
 
 export default function RootLayout({
@@ -31,7 +32,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>

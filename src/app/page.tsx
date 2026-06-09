@@ -1,125 +1,118 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Garage } from "@/components/Garage";
 import { ComparisonView } from "@/components/ComparisonView";
-import { ShareModal } from "@/components/ShareModal";
-import { HistoryPanel } from "@/components/HistoryPanel";
-import { SyncSetup } from "@/components/SyncSetup";
+import { SyncWizard } from "@/components/SyncWizard";
+import { SharePanel } from "@/components/SharePanel";
+import { SessionHistory } from "@/components/SessionHistory";
 import { useStore } from "@/lib/store";
 import { extractVideoId } from "@/lib/youtube";
 
 export default function Home() {
-  const session = useStore((s) => s.session);
-  const showGarage = useStore((s) => s.showGarage);
-  const setShowGarage = useStore((s) => s.setShowGarage);
-  const addRun = useStore((s) => s.addRun);
-  const setActiveComparison = useStore((s) => s.setActiveComparison);
+  const [hydrated, setHydrated] = useState(false);
+
+  const view = useStore((s) => s.view);
+  const syncTarget = useStore((s) => s.syncTarget);
   const showRunPanel = useStore((s) => s.showRunPanel);
   const setShowRunPanel = useStore((s) => s.setShowRunPanel);
-  const syncSetupMode = useStore((s) => s.syncSetupMode);
 
-  // Load from URL params on mount
+  // Rehydrate persisted state, then handle share-link params
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const v1 = params.get("v1");
-    const v2 = params.get("v2");
+    Promise.resolve(useStore.persist.rehydrate()).then(() => {
+      const params = new URLSearchParams(window.location.search);
+      const v1 = params.get("v1");
+      const v2 = params.get("v2");
 
-    if (v1 && v2) {
-      const id1 = extractVideoId(v1);
-      const id2 = extractVideoId(v2);
-      if (!id1 || !id2) return;
+      if (v1 && v2) {
+        const id1 = extractVideoId(v1);
+        const id2 = extractVideoId(v2);
+        if (id1 && id2) {
+          const t1 = parseFloat(params.get("t1") || "0") || 0;
+          const t2 = parseFloat(params.get("t2") || "0") || 0;
+          const store = useStore.getState();
 
-      const t1 = parseFloat(params.get("t1") || "0") || 0;
-      const t2 = parseFloat(params.get("t2") || "0") || 0;
-      const n1 = params.get("n1") || "Run A";
-      const n2 = params.get("n2") || "Run B";
+          store.newSession();
+          useStore.getState().renameSession("Shared comparison");
+          useStore.getState().addRun({
+            name: params.get("n1") || "Run A",
+            youtubeUrl: v1,
+            videoId: id1,
+          });
+          useStore.getState().addRun({
+            name: params.get("n2") || "Run B",
+            youtubeUrl: v2,
+            videoId: id2,
+          });
 
-      if (session.runs.length === 0) {
-        addRun({ name: n1, youtubeUrl: v1, videoId: id1, startOffset: t1, notes: "", metadata: {} });
-        addRun({ name: n2, youtubeUrl: v2, videoId: id2, startOffset: t2, notes: "", metadata: {} });
-
-        setTimeout(() => {
           const runs = useStore.getState().session.runs;
           if (runs.length >= 2) {
-            setActiveComparison(runs[0].id, runs[1].id);
-            setShowGarage(false);
+            useStore.getState().setLaunchPoint(runs[0].id, t1);
+            useStore.getState().setLaunchPoint(runs[1].id, t2);
+            useStore.getState().startComparison(runs[0].id, runs[1].id, false);
           }
-        }, 50);
+
+          // Clean the URL so refreshes don't re-import
+          window.history.replaceState({}, "", window.location.pathname);
+        }
       }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+      setHydrated(true);
+    });
   }, []);
 
-  const hasComparison = !!session.activeComparison;
-  const showingSyncSetup = syncSetupMode !== "off";
+  if (!hydrated) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-baseline gap-0.5 animate-pulse select-none">
+          <span className="font-extrabold tracking-tight text-foreground">RACE</span>
+          <span className="font-extrabold tracking-tight text-lime">{"//"}</span>
+          <span className="font-extrabold tracking-tight text-foreground">COMPARE</span>
+        </div>
+      </div>
+    );
+  }
+
+  const inWizard = syncTarget !== null;
 
   return (
     <>
       <Header />
 
       <main className="flex-1 flex flex-col">
-        {/* Garage view */}
-        {showGarage && (
-          <div className="flex-1">
+        {view === "garage" && (
+          <>
             <Garage />
-            <HistoryPanel />
-          </div>
+            <SessionHistory />
+          </>
         )}
-
-        {/* Comparison view */}
-        {hasComparison && !showGarage && !showingSyncSetup && <ComparisonView />}
-
-        {/* Empty state — when comparison was cleared but not in garage */}
-        {!showGarage && !hasComparison && !showingSyncSetup && (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center space-y-6 animate-fade-in">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-surface border border-white/5">
-                <svg className="w-10 h-10 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-2xl font-extrabold text-foreground tracking-tight">No comparison loaded</h2>
-                <p className="text-sm text-muted mt-1">Head to the garage to add runs and start comparing.</p>
-              </div>
-              <button
-                onClick={() => setShowGarage(true)}
-                className="btn btn-primary px-8 py-3 text-sm font-semibold"
-              >
-                Open Garage
-              </button>
-            </div>
-          </div>
-        )}
+        {view === "compare" && !inWizard && <ComparisonView />}
       </main>
 
-      {/* Sync Setup overlay */}
-      <SyncSetup />
+      <SyncWizard />
+      <SharePanel />
 
-      {/* Slide-out run panel for swapping during comparison */}
+      {/* Slide-out run panel for swapping mid-comparison */}
       <div
-        className={`slide-panel-backdrop ${showRunPanel ? "open" : ""}`}
+        className={`slide-backdrop ${showRunPanel ? "open" : ""}`}
         onClick={() => setShowRunPanel(false)}
       />
-      <div className={`slide-panel bg-background border-l border-white/5 ${showRunPanel ? "open" : ""}`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-          <h3 className="text-lg font-bold tracking-tight">Swap Runs</h3>
+      <aside className={`slide-panel ${showRunPanel ? "open" : ""}`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] sticky top-0 bg-background z-10">
+          <h3 className="font-extrabold tracking-tight">Runs</h3>
           <button
             onClick={() => setShowRunPanel(false)}
-            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+            className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-hover transition-colors"
+            aria-label="Close panel"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <Garage isPanel />
-      </div>
-
-      <ShareModal />
+        {showRunPanel && <Garage isPanel />}
+      </aside>
     </>
   );
 }
