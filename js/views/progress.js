@@ -2,7 +2,7 @@
 
 import * as store from '../store.js';
 import { h, clear, select, fill } from '../ui.js';
-import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, splitTable } from '../model.js';
+import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, splitTable, officialTheoretical } from '../model.js';
 import { lineChart } from '../charts.js';
 import { driverName, carName, carClassOf } from '../common.js';
 
@@ -36,7 +36,7 @@ export function renderProgress(root) {
     const sd = clean.length > 1 ? Math.sqrt(clean.reduce((a, b) => a + (b - mean) ** 2, 0) / (clean.length - 1)) : null;
     const timed = mine.filter((r) => adjustedTime(r, pen) != null).sort((a, b) => (a.runNumber ?? 0) - (b.runNumber ?? 0));
     const first = timed[0] ? adjustedTime(timed[0], pen) : null;
-    const tb = ev.splits?.length ? splitTable(mine.filter((r) => r.markers?.start != null), ev).theoretical : null;
+    const tb = ev.splits?.length ? officialTheoretical(splitTable(mine.filter((r) => r.markers?.start != null), ev), ev, mine) : null;
     rows.push({
       ev, runs: counted.length, best, bestT,
       cones: counted.reduce((s, r) => s + (r.cones || 0), 0),

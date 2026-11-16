@@ -187,7 +187,9 @@ export function renderRun(root, id) {
     if (key === 'start') { run.markers.start = null; run.markers.startAuto = false; }
     else if (key === 'finish') run.markers.finish = null;
     else { delete run.markers.splits[key]; if (run.markers.splitAuto) delete run.markers.splitAuto[key]; }
-    save(); renderMarks();
+    save();
+    if (key === 'start' || key === 'finish') recalibrateBeam(ev);
+    renderMarks();
   }
 
   async function addNote() {
@@ -361,7 +363,7 @@ export function renderRun(root, id) {
         h('div', { class: 'tile-value mono' }, fmtTime(adj)),
         best && adj != null ? h('div', { class: 'tile-sub' }, best.id === run.id ? 'Best run of the day' : `${fmtDelta(adj - adjustedTime(best, pen))} to best (run ${best.runNumber ?? '?'})`) : null,
       ),
-      field('Event', h('select', { class: 'input', onchange: (e) => { run.eventId = e.target.value || null; ev = store.get('events', run.eventId); saveNow(); renderMarks(); } },
+      field('Event', h('select', { class: 'input', onchange: (e) => { const old = ev; run.eventId = e.target.value || null; ev = store.get('events', run.eventId); saveNow(); recalibrateBeam(old); recalibrateBeam(ev); renderMarks(); } },
         h('option', { value: '' }, '— none —'), eventOptions().map((e) => h('option', { value: e.id, selected: e.id === run.eventId }, eventLabel(e))))),
       h('div', { class: 'grid2' },
         field('Driver', entitySelect('drivers', run.driverId, (v) => { run.driverId = v; saveNow(); })),
@@ -375,7 +377,7 @@ export function renderRun(root, id) {
           run.rawTime = t; saveNow(); recalibrateBeam(ev); renderMarks(); renderSide();
         } })),
         field('Cones', h('input', { class: 'input num', type: 'number', min: 0, value: run.cones || 0, onchange: (e) => { run.cones = Math.max(0, parseInt(e.target.value) || 0); saveNow(); renderSide(); } })),
-        field('Status', h('select', { class: 'input', onchange: (e) => { run.status = e.target.value; saveNow(); renderSide(); } }, Object.entries(STATUSES).map(([k, v]) => h('option', { value: k, selected: (run.status || 'ok') === k }, v)))),
+        field('Status', h('select', { class: 'input', onchange: (e) => { run.status = e.target.value; saveNow(); recalibrateBeam(ev); renderSide(); } }, Object.entries(STATUSES).map(([k, v]) => h('option', { value: k, selected: (run.status || 'ok') === k }, v)))),
       ),
       field('Self-rating', h('div', { class: 'stars' }, [1, 2, 3, 4, 5].map((n) => h('button', { class: `star ${n <= (run.rating || 0) ? 'on' : ''}`, title: `${n}/5`, onclick: (e) => { e.preventDefault(); run.rating = run.rating === n ? 0 : n; saveNow(); renderSide(); } }, '★')))),
       field('Tags', h('input', { class: 'input', value: (run.tags || []).join(', '), placeholder: 'e.g. new tires, rain, 2nd gear slalom', onchange: (e) => { run.tags = e.target.value.split(',').map((s) => s.trim()).filter(Boolean); saveNow(); } }), 'Comma-separated. Filter by tag in the library.'),

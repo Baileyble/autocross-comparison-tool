@@ -209,3 +209,15 @@ test('motion segments are found in a long recording with little driving', () => 
   const one = detectLaunch(Float32Array.from(times.slice(0, 4500)), Float32Array.from(act.slice(0, 4500)));
   near(one.t, 300, 0.3);
 });
+
+test('theoretical best shown in official time removes the launch→beam offset', async () => {
+  const { officialTheoretical } = await import('../js/model.js');
+  const ev = { splits: [{ id: 's1', name: 'A' }], beamOffset: 0.4 };
+  const runs = [
+    { id: 'a', rawTime: 45.0, markers: { start: 10, splits: { s1: 30.2 } } },
+    { id: 'b', rawTime: 45.3, markers: { start: 10, splits: { s1: 30.0 } } },
+  ];
+  const tbl = splitTable(runs, ev);
+  near(tbl.theoretical, 45.2, 1e-9); // video time (includes the offset)
+  near(officialTheoretical(tbl, ev, runs), 44.8, 1e-9);
+});

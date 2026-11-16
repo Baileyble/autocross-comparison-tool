@@ -357,7 +357,6 @@ ul.plain { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
   h1 { font-size: 21px; }
   .pick-item { grid-template-columns: 1fr; }
   .cmp-toolbar { gap: 6px; }
-  .controls-toggle { display: inline-flex; }
   .hide-sm { display: none !important; }
   .modal, .modal-body { min-width: 0; }
   .modal-overlay { padding: 8px; }

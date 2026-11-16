@@ -131,8 +131,10 @@ export async function getVideoFile(videoId) {
 export async function relinkVideo(videoId, file, persist = settings.keepVideoCopies) {
   sessionFiles.set(videoId, file);
   const rec = (await getBig('videos', videoId)) || { id: videoId };
+  const different = rec.name != null && (rec.name !== file.name || rec.size !== file.size);
   Object.assign(rec, { name: file.name, size: file.size, type: file.type, lastModified: file.lastModified });
   if (persist) rec.blob = file;
+  else if (different) rec.blob = null; // never keep a stored copy of a different (old) file
   try { await putBig('videos', rec); } catch (e) { rec.blob = null; await putBig('videos', rec); }
 }
 

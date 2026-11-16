@@ -56,7 +56,7 @@ npm test          # unit tests: timing math, warping, split tables, launch detec
 npm run test:e2e  # headless Chromium end-to-end run on synthetic videos with known ground truth
 ```
 
-The e2e test (27 checks) generates two synthetic "in-car" videos (needs `python3` with numpy + Pillow, and `ffmpeg`) where the launch times and the time mapping between the runs are known exactly, then drives the real UI: import → auto start detection → time entry → split marking → synced playback → position-locked playback → video alignment → overlay/loop → adjust sync → timed notes → beam-offset calibration → auto-marked splits → YouTube import → run deletion → settings → progress → legacy share link → phone layout.
+The e2e test (29 checks) generates two synthetic "in-car" videos (needs `python3` with numpy + Pillow, and `ffmpeg`) where the launch times and the time mapping between the runs are known exactly, then drives the real UI: import → auto start detection → time entry → split marking → synced playback → position-locked playback → video alignment → overlay/loop → adjust sync → timed notes → beam-offset calibration → auto-marked splits → YouTube import → run deletion → settings → progress → legacy share link → phone layout.
 
 ## Limitations & notes
 

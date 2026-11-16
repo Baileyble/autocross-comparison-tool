@@ -4,7 +4,7 @@ import * as store from '../store.js';
 import { h, clear, modal, toast, confirmDialog, promptDialog, isSelected, toggleSelected, setSelection, onSelection, debounce, pickFiles, add, fill } from '../ui.js';
 import { entitySelect, driverName, markerBadges, thumbEl, today, nextRunNumber, recalibrateBeam, runTitle, indexedTime } from '../common.js';
 import { autoMarkSplits } from '../automark.js';
-import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, parseTime, splitTable, theoreticalBest, isCleanRun, STATUSES } from '../model.js';
+import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, parseTime, splitTable, theoreticalBest, officialTheoretical, isCleanRun, STATUSES } from '../model.js';
 import { lineChart } from '../charts.js';
 import { openImport } from './import.js';
 
@@ -74,7 +74,7 @@ export function renderEvent(root, id) {
     tile('Fastest', best ? fmtTime(adjustedTime(best, pen)) : '—', best ? `${driverName(best.driverId) || '—'} · run ${best.runNumber ?? '?'}` : ''),
     bestIdx ? tile('Fastest indexed', fmtTime(bestIdx.t), `${driverName(bestIdx.r.driverId) || '—'} · run ${bestIdx.r.runNumber ?? '?'}`) : null,
     tile('Cones', String(runs.reduce((s, r) => s + (r.cones || 0), 0))),
-    tile('Theoretical best', tbl.theoretical != null && ev.splits.length ? fmtTime(tbl.theoretical) : '—', ev.splits.length ? 'best of each segment, all drivers' : 'add course splits to enable'),
+    tile('Theoretical best', tbl.theoretical != null && ev.splits.length ? fmtTime(officialTheoretical(tbl, ev, runs)) : '—', ev.splits.length ? 'best of each segment, all drivers (raw time)' : 'add course splits to enable'),
   );
 
   // ---- runs quick-entry table ----

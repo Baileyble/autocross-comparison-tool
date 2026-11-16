@@ -256,7 +256,9 @@ export async function getAnalysis(videoId) {
 
 export function queueAnalysis(videoId, { force = false } = {}) {
   const s = status.get(videoId);
-  if (s && (s.state === 'queued' || s.state === 'running')) return;
+  if (s && s.state === 'queued') { if (force) s.force = true; return; }
+  // A forced request while running (e.g. the file was replaced) must not save the old pass.
+  if (s && s.state === 'running') { if (force) s.stale = true; return; }
   status.set(videoId, { state: 'queued', progress: 0, force });
   queue.push(videoId);
   notify();
@@ -280,6 +282,10 @@ async function pump() {
         onProgress: (p) => { st.progress = p; if (performance.now() - lastNotify > 250) { lastNotify = performance.now(); notify(); } },
       });
       a.id = id;
+      if (st.stale) { // the file changed mid-pass: analyze the new one instead
+        st.stale = false; st.state = 'queued'; st.force = true; st.progress = 0;
+        queue.push(id); notify(); continue;
+      }
       // The video (and its runs) may have been deleted while we were analyzing it.
       if (!(await store.getBig('videos', id))) { status.delete(id); notify(); continue; }
       await store.putBig('analysis', a);

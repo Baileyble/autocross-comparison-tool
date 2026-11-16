@@ -288,6 +288,20 @@ try {
   await page.waitForSelector('.run-chip');
   check('legacy ?v1=&v2= link opens shared compare', (await page.locator('.run-chip').count()) === 2);
 
+  // ---- share links: beam offset, status and legacy labels survive a round trip ----
+  const share = await page.evaluate(async () => {
+    const { encodeShare, decodeShare } = await import('/js/views/compare.js');
+    const ev = { id: 'e', splits: [{ id: 'x', name: 'Slalom' }], beamOffset: 0.4 };
+    const run = { id: 'r', eventId: 'e', runNumber: 3, rawTime: 45, cones: 1, status: 'dnf', source: { type: 'youtube', ytId: 'dQw4w9WgXcQ' }, markers: { start: 2, finish: null, splits: { x: 20 } } };
+    const d = decodeShare(encodeShare([run], () => ev, { mode: 'locked' }));
+    const r = d.runs[0], e = d.events.get(r.eventId);
+    const legacy = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, r: [{ y: 'dQw4w9WgXcQ', s: 1, l: 'Alice · Run 3' }, { y: 'dQw4w9WgXcQ', s: 1, l: 'Run A' }] })))); // as links were encoded before
+    const L = decodeShare(legacy).runs;
+    return { bo: e.beamOffset, status: r.status, split: Object.values(r.markers.splits)[0], mode: d.mode, ld: L[0].sharedDriver, ln: L[0].sharedRunNumber, ld2: L[1].sharedDriver };
+  });
+  check('share link keeps beam offset, status, splits and mode', share.bo === 0.4 && share.status === 'dnf' && share.split === 20 && share.mode === 'locked', JSON.stringify(share));
+  check('old share-link labels recover driver/run without inventing drivers', share.ld === 'Alice' && share.ln === 3 && share.ld2 === null);
+
   // ---- dialogs: Escape closes only the top one; import dialog fits a phone screen ----
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`http://127.0.0.1:${PORT}/#/`);

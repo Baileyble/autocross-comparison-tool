@@ -204,6 +204,18 @@ export function theoreticalBest(bestSegments, totals = []) {
   return real.length ? Math.min(sum, ...real) : sum;
 }
 
+/**
+ * Theoretical best expressed in official-clock time, for display next to official times.
+ * Segment sums are in video time (from the launch), so remove the launch→beam offset and
+ * never show more than the best clean official raw time.
+ */
+export function officialTheoretical(tbl, event, runs = []) {
+  if (tbl?.theoretical == null) return null;
+  const v = tbl.theoretical - (isNum(event?.beamOffset) ? event.beamOffset : 0);
+  const raws = runs.filter((r) => isCleanRun(r) && isNum(r.rawTime) && r.rawTime > 0).map((r) => r.rawTime);
+  return raws.length ? Math.min(v, ...raws) : v;
+}
+
 /** Best (lowest adjusted) run in a list. */
 export function bestRun(runs, conePenalty = 2) {
   let best = null, bt = Infinity;

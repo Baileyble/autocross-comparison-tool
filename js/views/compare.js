@@ -180,7 +180,7 @@ export function renderCompare(root, input) {
     // No shared splits? A video alignment gives a real running delta — use it if possible.
     const onlyEnds = runs.every((_, i) => i === st.ref || warps[i].size <= 2);
     if (onlyEnds && st.align === 'splits' && runs.every((r) => r.source?.type === 'local')) {
-      if (await ensureAutoAlign({ quiet: true })) {
+      if (await ensureAutoAlign({ auto: true })) {
         if (destroyed) return;
         st.align = 'auto';
         resync();
@@ -641,28 +641,45 @@ export function renderCompare(root, input) {
   }
 
   // ---------- auto alignment ----------
-  async function ensureAutoAlign({ quiet = false } = {}) {
+  const REF_PROBLEM = {
+    'not a local video': 'Video alignment needs the reference run to be a local video file (not YouTube).',
+    'no start mark': 'Video alignment needs a start mark on the reference run.',
+    'no finish mark or official time': 'Video alignment needs a finish mark or an official time on the reference run.',
+    'video not analyzed yet': 'The reference video hasn\'t been analyzed yet — open it in the run editor first.',
+  };
+  /**
+   * Align every other run to the reference by video. `auto` (open-time) mode is silent and all-or-nothing:
+   * it only succeeds if every run aligned confidently, so a poor match is never shown as a real delta.
+   */
+  async function ensureAutoAlign({ auto = false } = {}) {
     const ref = runs[st.ref], evR = evOf(ref);
-    const warn = (m) => { if (!quiet) toast(m, { type: 'warn', ms: 6000 }); };
+    const map = alignments, ref0 = st.ref;
+    const stale = () => destroyed || alignments !== map || st.ref !== ref0; // user changed reference meanwhile
+    const warn = (m) => { if (!auto) toast(m, { type: 'warn', ms: 6000 }); };
     const refProblem = await alignProblem(ref, evR);
-    if (refProblem) { warn(`Video alignment needs the reference run to have: ${refProblem === 'not a local video' ? 'a local video file (not YouTube)' : refProblem.replace(/^no /, 'a ')}.`); return false; }
-    const need = runs.map((_, i) => i).filter((i) => i !== st.ref && !alignments.has(i));
-    const problems = [];
-    let ok = 0;
+    if (stale()) return false;
+    if (refProblem) { warn(REF_PROBLEM[refProblem] || `Video alignment: ${refProblem}.`); return false; }
+    const need = runs.map((_, i) => i).filter((i) => i !== st.ref && !map.has(i));
+    const problems = [], found = new Map();
     for (const i of need) {
       const r = runs[i];
       const pr = await alignProblem(r, evOf(r));
+      if (stale()) return false;
       if (pr) { problems.push(`${RUN_LETTERS[i]}: ${pr}`); continue; }
       await new Promise((res) => setTimeout(res, 0));
       const al = await alignPair(ref, r, evR, evOf(r));
-      if (destroyed) return false;
+      if (stale()) return false;
       if (!al) { problems.push(`${RUN_LETTERS[i]}: alignment failed`); continue; }
-      alignments.set(i, al.knots);
-      ok++;
-      if (al.cost > 0.6 && !quiet) toast(`Alignment for ${RUN_LETTERS[i]} looks uncertain (different camera view?) — verify in position-locked mode.`, { type: 'warn', ms: 6000 });
+      if (al.cost > 0.6) {
+        if (auto) { problems.push(`${RUN_LETTERS[i]}: uncertain match`); continue; }
+        toast(`Alignment for ${RUN_LETTERS[i]} looks uncertain (different camera view?) — verify in position-locked mode.`, { type: 'warn', ms: 6000 });
+      }
+      found.set(i, al.knots);
     }
+    if (auto && (problems.length || !need.length)) return false;
+    for (const [i, k] of found) map.set(i, k);
     if (problems.length) warn(`Not aligned by video — ${problems.join('; ')}.`);
-    return need.length === 0 || ok > 0;
+    return need.length === 0 || found.size > 0;
   }
 
   function resync() {
@@ -758,6 +775,7 @@ export function encodeShare(runs, evOf, st) {
         d: driverName(r.driverId) || undefined,
         n: r.runNumber ?? undefined,
         st: r.status && r.status !== 'ok' ? r.status : undefined,
+        bo: Number.isFinite(ev?.beamOffset) && ev.beamOffset !== 0 ? +ev.beamOffset.toFixed(3) : undefined,
         sp,
       };
     }),
@@ -772,23 +790,34 @@ export function decodeShare(str) {
   const data = JSON.parse(json);
   const names = [];
   for (const r of data.r) for (const [n] of r.sp || []) if (!names.includes(n)) names.push(n);
-  const ev = { id: 'shared', name: 'Shared comparison', splits: names.map((n, i) => ({ id: 's' + i, name: n })) };
-  const runs = data.r.map((r, i) => ({
-    id: 'shared' + i,
-    eventId: 'shared',
-    title: r.l,
-    sharedLabel: r.l,
-    sharedDriver: r.d ?? null,
-    sharedRunNumber: r.n ?? null,
-    runNumber: null,
-    rawTime: r.t,
-    cones: r.c || 0,
-    status: r.st || 'ok',
-    source: { type: 'youtube', ytId: r.y },
-    markers: { start: r.s, finish: r.f, splits: Object.fromEntries((r.sp || []).map(([n, t]) => [ev.splits.find((s) => s.name === n).id, t])) },
-    annotations: [],
-  }));
-  return { runs, events: new Map([['shared', ev]]), mode: data.m };
+  const splits = names.map((n, i) => ({ id: 's' + i, name: n }));
+  // One shared event per launch→beam offset (runs may come from different events).
+  const events = new Map();
+  const eventFor = (bo) => {
+    const id = bo == null ? 'shared' : `shared:${bo}`;
+    if (!events.has(id)) events.set(id, { id, name: 'Shared comparison', splits, beamOffset: bo ?? null, beamOffsetManual: true });
+    return id;
+  };
+  const runs = data.r.map((r, i) => {
+    // Links from before driver/run number were encoded: recover them from the "Driver · Run N" label.
+    const legacy = r.d === undefined && r.n === undefined ? /^(?:(.+?) · )?Run (\d+)$/.exec(r.l || '') : null;
+    return {
+      id: 'shared' + i,
+      eventId: eventFor(r.bo),
+      title: r.l,
+      sharedLabel: r.l,
+      sharedDriver: r.d ?? (legacy ? legacy[1] ?? null : null),
+      sharedRunNumber: r.n ?? (legacy ? +legacy[2] : null),
+      runNumber: null,
+      rawTime: r.t,
+      cones: r.c || 0,
+      status: r.st || 'ok',
+      source: { type: 'youtube', ytId: r.y },
+      markers: { start: r.s, finish: r.f, splits: Object.fromEntries((r.sp || []).map(([n, t]) => [splits.find((s) => s.name === n).id, t])) },
+      annotations: [],
+    };
+  });
+  return { runs, events, mode: data.m };
 }
 
 function shareDialog(runs, evOf, st) {
@@ -802,10 +831,19 @@ function shareDialog(runs, evOf, st) {
 }
 
 async function saveShared(runs, input) {
-  const ev0 = input.events?.get('shared');
-  const ev = await store.put('events', { id: store.uid(), name: 'Shared comparison', date: new Date().toISOString().slice(0, 10), splits: (ev0?.splits || []).map((s) => ({ ...s, id: store.uid(), _old: s.id })), notes: '' });
+  const created = new Map(); // shared event id -> library event
   const ids = [];
   for (const r of runs) {
+    const src = input.events?.get(r.eventId);
+    if (!created.has(r.eventId)) {
+      const ev = await store.put('events', {
+        id: store.uid(), name: 'Shared comparison', date: new Date().toISOString().slice(0, 10), notes: '',
+        splits: (src?.splits || []).map((s) => ({ id: store.uid(), name: s.name, _old: s.id })),
+        beamOffset: src?.beamOffset ?? null, beamOffsetManual: src?.beamOffset != null,
+      });
+      created.set(r.eventId, ev);
+    }
+    const ev = created.get(r.eventId);
     // Only use an explicit driver from the link (labels like "Run A" are not driver names).
     let driverId = null;
     if (r.sharedDriver) {
@@ -819,8 +857,7 @@ async function saveShared(runs, input) {
     await store.put('runs', nr);
     ids.push(nr.id);
   }
-  ev.splits.forEach((s) => delete s._old);
-  await store.put('events', ev);
+  for (const ev of created.values()) { ev.splits.forEach((s) => delete s._old); await store.put('events', ev); }
   toast('Saved to your library.', { type: 'ok' });
   setSelection(ids);
   location.hash = `#/compare/${ids.join(',')}`;
