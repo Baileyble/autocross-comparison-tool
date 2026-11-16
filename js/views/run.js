@@ -20,8 +20,9 @@ export function renderRun(root, id) {
   let ev = store.get('events', run.eventId);
   const cleanups = [];
   let player = null, timeline = null, analysis = null, raf = 0, speedIdx = 3, hudKey = '';
+  let destroyed = false, playerReady = false;
   const save = debounce(() => store.put('runs', run), 300);
-  const saveNow = () => save.flush();
+  const saveNow = () => { save.cancel(); if (!destroyed) store.put('runs', run); };
 
   const fps = () => run.fps || store.settings.defaultFps || 30;
   const now = () => player?.time ?? 0;
@@ -75,6 +76,7 @@ export function renderRun(root, id) {
   // ---------- player ----------
   (async () => {
     const src = await resolveSource(run);
+    if (destroyed) return;
     if (src.none) { add(stage, h('div', { class: 'stage-msg' }, h('p', null, 'This run has no video.'), h('button', { class: 'btn btn-primary', onclick: async () => { if (await relinkFlow(run)) location.reload(); } }, 'Attach a video file'))); return; }
     if (src.missing) {
       add(stage, h('div', { class: 'stage-msg' }, h('p', null, `Video file "${src.name || ''}" isn't available in this browser session.`),
@@ -85,7 +87,9 @@ export function renderRun(root, id) {
       if (src.kind === 'youtube') player = new YouTubePlayer(stage, src.ytId, { muted: false, startAt: run.markers.start ?? 0 });
       else player = new LocalPlayer(stage, src.kind === 'local' ? URL.createObjectURL(src.file) : src.src, { muted: false });
       await player.ready;
+      if (destroyed) { player.destroy(); return; }
     } catch (e) {
+      if (destroyed) return;
       add(stage, h('div', { class: 'stage-msg error' }, h('p', null, e.message), src.kind === 'local' ? h('p', { class: 'sub' }, 'Tip: H.264 MP4 plays everywhere. HEVC/H.265 files may need conversion depending on browser and OS.') : null));
       return;
     }
@@ -95,6 +99,7 @@ export function renderRun(root, id) {
       player.el.addEventListener('pause', () => { playBtn.textContent = '▶'; });
       player.el.addEventListener('click', () => togglePlay());
     }
+    playerReady = true;
     let dur = player.duration;
     timeline = new Timeline(canvas, {
       duration: dur,
@@ -106,6 +111,7 @@ export function renderRun(root, id) {
     if (run.markers.start != null) seek(run.markers.start);
     if (src.kind === 'local') {
       analysis = await getAnalysis(src.videoId);
+      if (destroyed) return;
       if (analysis) timeline.setAnalysis(analysis);
       updateStatus();
       cleanups.push(onAnalysis(async () => {
@@ -113,8 +119,9 @@ export function renderRun(root, id) {
         const st = analysisStatus(src.videoId);
         if (st?.state === 'done' && !analysis) {
           analysis = await getAnalysis(src.videoId);
+          if (destroyed) return;
           timeline.setAnalysis(analysis);
-          setTimeout(() => { renderMarks(); renderSide(); if (run.markers.start != null && player.paused) seek(run.markers.start); }, 600);
+          setTimeout(() => { if (destroyed) return; renderMarks(); renderSide(); if (run.markers.start != null && player.paused) seek(run.markers.start); }, 600);
         }
       }));
     }
@@ -162,6 +169,8 @@ export function renderRun(root, id) {
   }
 
   function setMarker(key, t, { quiet = false } = {}) {
+    // Without a loaded video "current frame" means nothing — never overwrite marks with 0.
+    if (!playerReady || !player) { toast('Load the video first — marks are set at the current video frame.', { type: 'warn' }); return; }
     t = Math.round(t * 1000) / 1000;
     if (key === 'start') { run.markers.start = t; run.markers.startAuto = false; }
     else if (key === 'finish') run.markers.finish = t;
@@ -179,7 +188,7 @@ export function renderRun(root, id) {
   }
 
   async function addNote() {
-    if (!player) return;
+    if (!playerReady || !player) return;
     const t = now();
     player.pause();
     const input = h('textarea', { class: 'input', rows: 3, placeholder: 'e.g. Braked too early for the offset; look further ahead' });
@@ -350,7 +359,7 @@ export function renderRun(root, id) {
         h('div', { class: 'row-actions' },
           h('button', { class: 'btn btn-small btn-ghost danger', onclick: async () => {
             if (await confirmDialog('Delete this run? (If no other run uses its video, the stored video copy is removed too.)', { danger: true, okLabel: 'Delete' })) {
-              cleanup(); await store.deleteRun(run.id); location.hash = ev ? `#/event/${ev.id}` : '#/';
+              cleanup(); save.cancel(); await store.deleteRun(run.id); location.hash = ev ? `#/event/${ev.id}` : '#/';
             }
           } }, 'Delete run'),
         ),
@@ -380,7 +389,9 @@ export function renderRun(root, id) {
   document.addEventListener('keydown', onKey);
 
   function cleanup() {
+    if (destroyed) return;
     save.flush();
+    destroyed = true;
     cancelAnimationFrame(raf);
     document.removeEventListener('keydown', onKey);
     for (const c of cleanups) c();

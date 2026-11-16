@@ -140,9 +140,17 @@ export function isTyping(e) {
 }
 
 export function debounce(fn, ms = 400) {
-  let t;
-  const d = (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-  d.flush = (...a) => { clearTimeout(t); fn(...a); };
+  let t = null, pendingArgs = null;
+  const d = (...a) => { clearTimeout(t); pendingArgs = a; t = setTimeout(() => { t = null; pendingArgs = null; fn(...a); }, ms); };
+  /** Run now if a call is pending (or if args are given explicitly). */
+  d.flush = (...a) => {
+    const pending = t != null;
+    clearTimeout(t); t = null;
+    const args = a.length ? a : pendingArgs;
+    pendingArgs = null;
+    if (pending || a.length) fn(...(args || []));
+  };
+  d.cancel = () => { clearTimeout(t); t = null; pendingArgs = null; };
   return d;
 }
 

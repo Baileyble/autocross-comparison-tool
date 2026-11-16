@@ -101,7 +101,7 @@ export class YouTubePlayer {
             res();
           },
           onStateChange: (e) => { this._state = e.data; },
-          onError: (e) => rej(new Error(`YouTube error ${e.data} (video private, removed, or embedding disabled?)`)),
+          onError: (e) => { this.failed = true; this._state = 2; rej(new Error(`YouTube error ${e.data} (video private, removed, or embedding disabled?)`)); },
           onPlaybackRateChange: (e) => { this._rate = e.data; },
         },
       });
@@ -115,8 +115,10 @@ export class YouTubePlayer {
   set muted(m) { this._muted = m; try { m ? this.p?.mute() : this.p?.unMute(); } catch {} }
   get rate() { return this._rate; }
   seek(t) { try { this.p?.seekTo(Math.max(0, t), true); } catch {} }
-  play() { try { this.p?.playVideo(); } catch {} }
-  pause() { try { this.p?.pauseVideo(); } catch {} }
+  // State updates arrive asynchronously from the iframe; set it optimistically so callers
+  // polling `paused` every frame don't re-issue play/seek in the meantime.
+  play() { if (this.failed) return; this._state = 1; try { this.p?.playVideo(); } catch {} }
+  pause() { if (this._state === 1 || this._state === 3) this._state = 2; try { this.p?.pauseVideo(); } catch {} }
   setRate(r) {
     let best = 1, bd = Infinity;
     for (const x of YT_RATES) { const d = Math.abs(x - r); if (d < bd) { bd = d; best = x; } }

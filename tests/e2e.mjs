@@ -219,6 +219,24 @@ try {
   const yt = await store((s) => s.all('runs').filter((r) => r.source?.type === 'youtube').map((r) => r.markers.start));
   check('YouTube link imported with ?t= as start mark', yt.length === 1 && yt[0] === 12, JSON.stringify(yt));
 
+  // ---- regressions: marks need a loaded video; deleted runs stay deleted ----
+  const ytId = await store((s) => s.all('runs').find((r) => r.source?.type === 'youtube').id);
+  await page.goto(`http://127.0.0.1:${PORT}/#/run/${ytId}`);
+  await page.waitForSelector('.run-side');
+  await page.waitForTimeout(500);
+  await page.keyboard.press('f'); // YouTube can't load in this sandbox, so there is no current frame
+  await page.waitForTimeout(300);
+  const fin = await store((s, id) => s.get('runs', id).markers.finish, ytId);
+  check('mark keys do nothing without a loaded video', fin == null, `finish=${fin}`);
+  await page.click('.video-details summary');
+  await page.click('button:has-text("Delete run")');
+  await page.click('.modal-actions >> text=Delete');
+  await page.waitForSelector('.entry-table');
+  await page.waitForTimeout(800);
+  const stillThere = await store((s, id) => !!s.get('runs', id), ytId);
+  const inDb = await page.evaluate((id) => new Promise((res) => { const r = indexedDB.open('autox-compare'); r.onsuccess = () => { const g = r.result.transaction('runs').objectStore('runs').get(id); g.onsuccess = () => res(!!g.result); }; }), ytId);
+  check('deleting a run from the editor keeps it deleted', !stillThere && !inDb, `cache=${stillThere} db=${inDb}`);
+
   // ---- settings dialog ----
   await page.click('#btn-settings');
   await page.waitForSelector('.settings h3');

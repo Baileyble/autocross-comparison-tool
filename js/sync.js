@@ -96,7 +96,8 @@ export class SyncEngine {
     if (stalled) {
       if (!this.holding) {
         this.holding = true;
-        for (const tr of this.tracks) if (!tr.player.buffering) tr.player.pause();
+        // Pause local videos only: pausing/resuming a YouTube iframe makes it re-buffer, which can ping-pong holds.
+        for (const tr of this.tracks) if (!tr.player.buffering && tr.player.kind === 'local') tr.player.pause();
       }
       this.onTick(this.t);
       return;
@@ -115,7 +116,7 @@ export class SyncEngine {
     }
     this.t = next;
 
-    if (this.loop && this.t >= this.loop.b) { this.seek(this.loop.a); return; }
+    if (this.loop && this.t >= Math.min(this.loop.b, this.range.max)) { this.seek(this.loop.a); return; }
     if (this.t >= this.range.max) {
       this.t = this.range.max;
       this.pause();
@@ -132,13 +133,15 @@ export class SyncEngine {
         continue;
       }
       const wantRate = this.rate * tr.slope(this.t);
+      const err = p.time - target;
+      const fine = p.canFineRate();
       if (p.paused) {
-        p.seek(target); tr.lastSeek = now;
+        // (Re)start a player that just became active. Only seek when it's actually off, and throttle
+        // seeks so a player that reports `paused` for a while (YouTube) isn't re-seeked every frame.
+        if (Math.abs(err) > (fine ? 0.05 : 0.35) && now - tr.lastSeek > (fine ? 250 : 1200)) { p.seek(target); tr.lastSeek = now; }
         p.setRate(wantRate); p.play();
         continue;
       }
-      const err = p.time - target;
-      const fine = p.canFineRate();
       const hard = fine ? 0.2 : 0.35;
       if (Math.abs(err) > hard && now - tr.lastSeek > (fine ? 400 : 1200)) {
         p.seek(target + (fine ? 0 : 0.08 * this.rate));

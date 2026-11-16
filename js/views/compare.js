@@ -169,6 +169,7 @@ export function renderCompare(root, input) {
     await Promise.all(panels.map(loadPlayer));
     if (destroyed) return;
     rebuildWarps();
+    if (st.mode === 'locked' && !canLock()) st.mode = 'realtime';
     engine?.destroy();
     engine = new SyncEngine(tracks(), { onTick, range: range() });
     engine.setRate(st.speed);
@@ -269,6 +270,10 @@ export function renderCompare(root, input) {
 
   // ---------- per-frame UI ----------
   function onTick(t) {
+    // YouTube reports duration 0 until its metadata loads; widen the range once it's known.
+    let durChanged = false;
+    for (const p of panels) { const d = p.player?.duration || 0; if (d && d !== p.knownDur) { p.knownDur = d; durChanged = true; } }
+    if (durChanged && engine) engine.setRange(range());
     for (const p of panels) renderHud(p, t);
     drawScrubber(t);
     if (timeLabel) timeLabel.textContent = t < -0.005 ? `−${Math.abs(t).toFixed(2)}` : fmtTime(Math.max(0, t), 2);
@@ -385,19 +390,21 @@ export function renderCompare(root, input) {
     g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke();
   }
 
+  function canLock() { return runs.some((_, i) => i !== st.ref && warps[i]?.informative); }
+  function setMode(v) {
+    if (v === 'locked' && !canLock()) { toast('Position-lock needs the finish (or official time) or matching splits on the reference and at least one other run.', { type: 'warn', ms: 4500 }); return; }
+    st.mode = v; prefs.mode = v; savePrefs(); resync();
+  }
+
   // ---------- toolbar ----------
   function seg(label, options, value, onPick, title) {
     return h('div', { class: 'seg', title }, h('span', { class: 'seg-label' }, label), options.map(([v, l, tip]) => h('button', { class: `seg-btn ${v === value ? 'on' : ''}`, title: tip || '', onclick: () => onPick(v) }, l)));
   }
   function renderToolbar() {
     const anyLocal = panels.some((p) => p.player?.kind === 'local');
-    const canLock = runs.some((_, i) => i !== st.ref && warps[i]?.informative);
     const anyYT = panels.some((p) => p.player?.kind === 'youtube');
     fill(toolbar, 
-      seg('Sync', [['realtime', 'Real time', 'All runs start together — see who pulls ahead'], ['locked', 'Position-locked', 'Runs are time-warped so they reach each split together — compare lines at the same spot']], st.mode, (v) => {
-        if (v === 'locked' && !canLock) return toast('Position-lock needs the finish (or official time) or matching splits on at least two runs.', { type: 'warn', ms: 4500 });
-        st.mode = v; prefs.mode = v; savePrefs(); resync();
-      }),
+      seg('Sync', [['realtime', 'Real time', 'All runs start together — see who pulls ahead'], ['locked', 'Position-locked', 'Runs are time-warped so they reach each split together — compare lines at the same spot']], st.mode, setMode),
       seg('Layout', [['side', 'Side by side'], ['stack', 'Stacked'], ['overlay', 'Overlay', 'Ghost the second run over the reference']], st.layout, (v) => { st.layout = v; prefs.layout = v; savePrefs(); applyLayout(); renderToolbar(); }),
       st.layout === 'overlay' ? h('div', { class: 'seg' },
         h('span', { class: 'seg-label' }, 'Ghost'),
@@ -466,7 +473,6 @@ export function renderCompare(root, input) {
     // Segments along the reference's knots; for other runs use their matched knots.
     const segs = [];
     for (let k = 0; k < kr.length - 1; k++) segs.push({ from: kr[k], to: kr[k + 1] });
-    const lead = st.mode === 'locked' ? 0 : 0;
     const otherKnots = runs.map((r, i) => {
       if (i === st.ref) return new Map(kr.map((k) => [k.key, k.t]));
       const pairs = st.align === 'auto' && alignments.has(i) ? null : matchKnots(kr, knotsOf(r), sameCourse(runs[st.ref], r));
@@ -484,7 +490,7 @@ export function renderCompare(root, input) {
       const valid = cells.filter((v) => v != null);
       const best = valid.length ? Math.min(...valid) : null;
       const isLoop = st.loopSeg && st.loopSeg.label === label;
-      const tr = h('tr', { class: `clickable ${isLoop ? 'looping' : ''}`, title: 'Click to loop this segment', onclick: () => setLoop(isLoop ? null : { a: a - 0.5 + lead, b: b + 0.5, label }) },
+      const tr = h('tr', { class: `clickable ${isLoop ? 'looping' : ''}`, title: 'Click to loop this segment', onclick: () => setLoop(isLoop ? null : { a: a - 0.5, b: b + 0.5, label }) },
         h('td', null, label),
         cells.map((v, i) => h('td', { class: `r mono ${v != null && v === best && valid.length > 1 ? 'seg-best' : ''}` },
           v != null ? fmtTime(v, 2) : '—',
@@ -493,7 +499,7 @@ export function renderCompare(root, input) {
       splitRows.push({ tr, a, b });
       return tr;
     });
-    const totals = runs.map((_, i) => { const m = otherKnots[i]; const f = [...m.keys()].pop(); return m.size ? m.get(f) : null; });
+    const totals = runs.map((_, i) => otherKnots[i].get('finish') ?? null);
     add(splitBox, 
       h('h3', null, 'Segments ', h('span', { class: 'sub' }, `(vs ${RUN_LETTERS[st.ref]}${st.align === 'auto' ? ', using video alignment' : ''})`)),
       h('div', { class: 'table-wrap' }, h('table', { class: 'table compact cmp-split-table' },
@@ -540,7 +546,7 @@ export function renderCompare(root, input) {
         h('div', { class: 'strong' }, runTitle(r), h('span', { class: 'mono chip-time' }, timeSummary(r))),
         h('div', { class: 'sub' }, runSubtitle(r) || (ephemeral ? 'Shared run' : ''), r.markers?.start == null ? h('span', { class: 'warn' }, ' · no start mark') : null),
       ),
-      h('button', { class: `icon-btn ${i === st.ref ? 'on' : ''}`, title: 'Use as reference (deltas are measured against it)', onclick: () => { st.ref = i; st.audio = i; alignments = new Map(); if (st.align === 'auto') st.align = 'splits'; resync(); renderChips(); } }, '★'),
+      h('button', { class: `icon-btn ${i === st.ref ? 'on' : ''}`, title: 'Use as reference (deltas are measured against it)', onclick: () => { st.ref = i; st.audio = i; alignments = new Map(); if (st.align === 'auto') st.align = 'splits'; applyAudio(); applyLayout(); resync(); renderChips(); } }, '★'),
       !ephemeral ? h('a', { class: 'icon-btn', title: 'Open run editor', href: `#/run/${r.id}` }, '✎') : null,
       !ephemeral && runs.length > 2 ? h('button', { class: 'icon-btn', title: 'Remove from comparison', onclick: () => { const ids = runs.filter((x) => x !== r).map((x) => x.id); setSelection(ids); location.hash = `#/compare/${ids.join(',')}`; } }, '✕') : null,
     )),
@@ -554,6 +560,8 @@ export function renderCompare(root, input) {
     engine?.pause();
     applyLayout();
     for (const p of panels) {
+      p.offAdjust?.();
+      p.offAdjust = null;
       clear(p.adjustBar);
       if (!on || !p.player) continue;
       const fps = p.run.fps || store.settings.defaultFps || 30;
@@ -575,10 +583,17 @@ export function renderCompare(root, input) {
           p.el.classList.remove('no-start');
           if (!ephemeral) await store.put('runs', p.run);
           toast(`Start for ${RUN_LETTERS[p.i]} set at ${fmtTime(t)}`, { ms: 1800 });
-          alignments.delete(p.i);
+          if (p.i === st.ref) {
+            // Video alignments are measured in the reference's course time — all are stale now.
+            alignments = new Map();
+            if (st.align === 'auto') st.align = 'splits';
+          } else alignments.delete(p.i);
         } }, 'Set start here'),
       );
-      p.player.el?.addEventListener?.('timeupdate', upd);
+      if (p.player.kind === 'local') {
+        p.player.el.addEventListener('timeupdate', upd);
+        p.offAdjust = () => p.player?.el.removeEventListener('timeupdate', upd);
+      }
     }
     if (!on) resync();
     renderToolbar();
@@ -637,6 +652,11 @@ export function renderCompare(root, input) {
     if (isTyping(e) || e.metaKey || e.ctrlKey || document.querySelector('.modal-overlay') || !engine) return;
     const fps = Math.max(...runs.map((r) => r.fps || store.settings.defaultFps || 30));
     const k = e.key;
+    if (st.adjust && [' ', 'ArrowLeft', 'ArrowRight', ',', '.', 'Home', 'l', 'L', 'p', 'P'].includes(k) || (st.adjust && /^[1-9]$/.test(k))) {
+      if (k === ' ' || k.startsWith('Arrow')) e.preventDefault();
+      toast('Adjusting sync — use each video\'s own buttons, or press A to finish.', { ms: 1500 });
+      return;
+    }
     if (k === ' ') { e.preventDefault(); engine.toggle(); }
     else if (k === 'ArrowLeft' || k === ',') { e.preventDefault(); engine.step(e.shiftKey ? -1 : -1 / fps); }
     else if (k === 'ArrowRight' || k === '.') { e.preventDefault(); engine.step(e.shiftKey ? 1 : 1 / fps); }
@@ -645,7 +665,7 @@ export function renderCompare(root, input) {
     else if (k === 'f' || k === 'F') toggleFullscreen(wrap);
     else if (k === 'm' || k === 'M') { st.audio = st.audio == null ? 0 : st.audio + 1 >= runs.length ? null : st.audio + 1; applyAudio(); renderToolbar(); toast(st.audio == null ? 'Muted' : `Audio: run ${RUN_LETTERS[st.audio]}`, { ms: 1000 }); }
     else if (k === 'o' || k === 'O') { const L = ['side', 'stack', 'overlay']; st.layout = L[(L.indexOf(st.layout) + 1) % 3]; prefs.layout = st.layout; savePrefs(); applyLayout(); renderToolbar(); }
-    else if (k === 'p' || k === 'P') { st.mode = st.mode === 'locked' ? 'realtime' : 'locked'; prefs.mode = st.mode; savePrefs(); resync(); }
+    else if (k === 'p' || k === 'P') setMode(st.mode === 'locked' ? 'realtime' : 'locked');
     else if (k === 'a' || k === 'A') setAdjust(!st.adjust);
     else if (k === 'l' || k === 'L') { const r = splitRows.find((x) => engine.t >= x.a && engine.t < x.b); if (st.loopSeg) setLoop(null); else if (r) r.tr.click(); }
     else if (/^[1-9]$/.test(k)) { const kr = knotsOf(runs[st.ref]); const kk = kr[parseInt(k)]; if (kk) engine.seek(kk.t - 0.5); }
