@@ -1,0 +1,11 @@
+{
+  "name": "autocross-run-compare",
+  "private": true,
+  "type": "module",
+  "description": "Sync and compare autocross run videos side by side. Static site, no build step.",
+  "scripts": {
+    "test": "node --test tests/unit.test.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}
