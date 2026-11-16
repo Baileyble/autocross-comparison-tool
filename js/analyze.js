@@ -51,9 +51,8 @@ function snapFps(f) {
   return bd < 0.04 ? best : Math.round(f);
 }
 
-/** Estimate frame rate by playing ~0.5 s at 1x and reading presented frame timestamps. */
-async function estimateFps(v) {
-  if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return null;
+/** Lower-quartile interval between presented frames while playing at `rate` (media seconds). */
+async function sampleFrameInterval(v, rate, timeoutMs) {
   const ts = [];
   await new Promise((resolve) => {
     let done = false;
@@ -63,15 +62,32 @@ async function estimateFps(v) {
       if (ts.length >= 24) finish(); else v.requestVideoFrameCallback(cb);
     };
     v.requestVideoFrameCallback(cb);
-    v.playbackRate = 1;
+    v.playbackRate = rate;
     v.play().catch(finish);
-    setTimeout(finish, 1500);
+    setTimeout(finish, timeoutMs);
   });
   const d = [];
-  for (let i = 1; i < ts.length; i++) { const x = ts[i] - ts[i - 1]; if (x > 0.001) d.push(x); }
+  for (let i = 1; i < ts.length; i++) { const x = ts[i] - ts[i - 1]; if (x > 0.0005) d.push(x); }
   if (d.length < 5) return null;
   d.sort((a, b) => a - b);
-  return snapFps(1 / d[Math.floor(d.length * 0.25)]); // lower quartile: robust to dropped frames
+  return d[Math.floor(d.length * 0.25)]; // lower quartile: robust to dropped frames
+}
+
+/**
+ * Estimate frame rate from presented-frame timestamps. Frame callbacks fire at most once per
+ * display refresh, so a 120/240 fps clip at 1x looks like ~60 fps; re-measure slowed down then.
+ */
+async function estimateFps(v) {
+  if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return null;
+  const start = v.currentTime;
+  let dt = await sampleFrameInterval(v, 1, 1500);
+  if (dt && 1 / dt >= 45) {
+    await seekTo(v, start);
+    const slow = await sampleFrameInterval(v, 0.125, 4000);
+    if (slow && slow < dt * 0.9) dt = slow;
+  }
+  v.playbackRate = 1;
+  return dt ? snapFps(1 / dt) : null;
 }
 
 /**
@@ -264,6 +280,8 @@ async function pump() {
         onProgress: (p) => { st.progress = p; if (performance.now() - lastNotify > 250) { lastNotify = performance.now(); notify(); } },
       });
       a.id = id;
+      // The video (and its runs) may have been deleted while we were analyzing it.
+      if (!(await store.getBig('videos', id))) { status.delete(id); notify(); continue; }
       await store.putBig('analysis', a);
       st.state = 'done'; st.progress = 1;
       notify();
@@ -282,6 +300,9 @@ async function postProcess(videoId, a = null) {
   a = a || (await getAnalysis(videoId));
   if (!a) return;
   const runs = store.all('runs').filter((r) => r.source?.videoId === videoId);
+  // `run` is the live cached object: the user may edit or delete it while we await below,
+  // so re-check before every write and never overwrite something they set meanwhile.
+  const alive = (run) => store.get('runs', run.id) === run;
   for (const run of runs) {
     let changed = false;
     if (run.fps == null && a.fps) { run.fps = a.fps; changed = true; }
@@ -291,22 +312,26 @@ async function postProcess(videoId, a = null) {
         let t = L.t;
         try {
           const file = await store.getVideoFile(videoId);
-          const r = file ? await refineLaunch(file, t, a.fps || store.settings.defaultFps) : null;
+          const r = file ? await refineLaunch(file, t, run.fps || a.fps || store.settings.defaultFps) : null;
           if (r != null && Math.abs(r - t) < 0.7) t = r;
         } catch (e) { console.warn('refine failed', e); }
-        run.markers = { ...(run.markers || {}), start: t, startAuto: true };
-        changed = true;
+        if (!alive(run)) continue;
+        if (run.markers?.start == null) {
+          run.markers = { ...(run.markers || { splits: {} }), start: Math.round(t * 1000) / 1000, startAuto: true };
+          changed = true;
+        }
       }
     }
     if (!run.thumb) {
       const file = await store.getVideoFile(videoId);
       if (file) {
         const t = run.markers?.start != null ? run.markers.start + 3 : Math.min(5, a.duration / 3);
-        run.thumb = await captureThumb(file, t);
-        changed = true;
+        const th = await captureThumb(file, t);
+        if (!alive(run)) continue;
+        if (th && !run.thumb) { run.thumb = th; changed = true; }
       }
     }
     if (run.duration == null) { run.duration = a.duration; changed = true; }
-    if (changed) await store.put('runs', run);
+    if (changed && alive(run)) await store.put('runs', run);
   }
 }

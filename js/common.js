@@ -4,6 +4,7 @@ import * as store from './store.js';
 import { h, promptDialog, toast, pickFiles } from './ui.js';
 import { adjustedTime, fmtTime, fmtDate, STATUSES } from './model.js';
 import { ytThumb } from './players.js';
+import { queueAnalysis } from './analyze.js';
 
 export function driverName(id) { return store.get('drivers', id)?.name || ''; }
 export function carName(id) { return store.get('cars', id)?.name || ''; }
@@ -102,20 +103,36 @@ export async function resolveSource(run) {
   return { none: true };
 }
 
+/**
+ * Attach / re-link / replace a run's local video.
+ * Same file (name + size match): just make it available again (all runs sharing it benefit).
+ * Different file: the run gets that video; cached analysis, thumbnail and fps are reset and re-computed.
+ * If other runs share the old video, only this run is switched to the new one.
+ */
 export async function relinkFlow(run) {
   const [file] = await pickFiles({ multiple: false });
   if (!file) return false;
   const s = run.source || {};
-  if (s.fileName && s.fileSize && (file.name !== s.fileName || file.size !== s.fileSize)) {
-    toast(`Linked "${file.name}" (expected "${s.fileName}").`, { type: 'warn' });
-  }
-  if (s.type === 'local' && s.videoId) {
+  const same = s.type === 'local' && s.videoId && s.fileName === file.name && (!s.fileSize || s.fileSize === file.size);
+  if (same) {
     await store.relinkVideo(s.videoId, file);
-  } else {
-    const videoId = await store.addVideo(file);
-    run.source = { type: 'local', videoId, fileName: file.name, fileSize: file.size };
-    await store.put('runs', run);
+    return true;
   }
+  if (s.fileName) toast(`Using "${file.name}" (was "${s.fileName}"). Check the marks — they were set on the old file.`, { type: 'warn', ms: 6000 });
+  const sharers = s.videoId ? store.all('runs').filter((r) => r.source?.videoId === s.videoId && r.id !== run.id) : [];
+  let videoId;
+  if (s.type === 'local' && s.videoId && !sharers.length) {
+    videoId = s.videoId;
+    await store.relinkVideo(videoId, file);
+    await store.delBig('analysis', videoId).catch(() => {});
+  } else {
+    videoId = await store.addVideo(file);
+  }
+  run.source = { type: 'local', videoId, fileName: file.name, fileSize: file.size };
+  delete run.thumb; run.fps = null; run.duration = null;
+  await store.put('runs', run);
+  await store.gcVideos();
+  if (store.settings.autoAnalyze) queueAnalysis(videoId, { force: true });
   return true;
 }
 

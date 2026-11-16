@@ -14,6 +14,11 @@ export function renderLibrary(root) {
   const runs = store.all('runs');
 
   if (!events.length && !runs.length) return renderWelcome(root);
+  // Drop filters that point at things that no longer exist (deleted event/driver/car/tag).
+  if (filters.event && !store.get('events', filters.event)) filters.event = '';
+  if (filters.driver && !store.get('drivers', filters.driver)) filters.driver = '';
+  if (filters.car && !store.get('cars', filters.car)) filters.car = '';
+  if (filters.tag && !allTags().includes(filters.tag)) filters.tag = '';
 
   const pen = store.settings.conePenalty;
   const evGrid = h('div', { class: 'event-grid' },

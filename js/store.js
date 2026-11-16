@@ -127,6 +127,7 @@ export async function getVideoFile(videoId) {
   return null;
 }
 
+/** Make a video available again (same id). Callers handle analysis invalidation for different files. */
 export async function relinkVideo(videoId, file, persist = settings.keepVideoCopies) {
   sessionFiles.set(videoId, file);
   const rec = (await getBig('videos', videoId)) || { id: videoId };
@@ -150,6 +151,9 @@ export async function gcVideos() {
   for (const id of await allKeys('videos')) {
     if (!used.has(id)) { await delBig('videos', id); await delBig('analysis', id).catch(() => {}); sessionFiles.delete(id); }
   }
+  // Analysis records whose video is gone (e.g. written by a pass that finished after deletion).
+  const videos = new Set(await allKeys('videos'));
+  for (const id of await allKeys('analysis')) if (!videos.has(id)) await delBig('analysis', id).catch(() => {});
 }
 
 export async function dropStoredCopies() {
@@ -183,6 +187,13 @@ export async function importJSON(data, { replace = false } = {}) {
   if (replace) for (const s of META) for (const id of [...cache[s].keys()]) await del(s, id);
   let n = 0;
   for (const s of META) for (const o of data[s] || []) { await put(s, o); n++; }
+  // Timing rules travel with the data (adjusted times depend on them). Storage choices stay per-browser.
+  if (data.settings && typeof data.settings === 'object') {
+    for (const k of ['conePenalty', 'leadIn', 'leadOut', 'defaultFps', 'autoAnalyze']) {
+      const v = data.settings[k];
+      if (v !== undefined && typeof v === typeof settings[k]) await saveSetting(k, v);
+    }
+  }
   return n;
 }
 

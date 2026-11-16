@@ -163,12 +163,27 @@ export function splitTable(runs, event) {
     const total = tOf.has('finish') ? tOf.get('finish') : null;
     return { run, times, total };
   });
+  // Only clean runs count towards "best" (a DNF/off-course run may have cut the course).
+  const clean = rows.filter((r) => isCleanRun(r.run));
   const best = segments.map((_, i) => {
-    const vals = rows.map((r) => r.times[i]).filter((v) => v != null && v > 0);
+    const vals = clean.map((r) => r.times[i]).filter((v) => v != null && v > 0);
     return vals.length ? Math.min(...vals) : null;
   });
-  const theoretical = best.length && best.every((b) => b != null) ? best.reduce((a, b) => a + b, 0) : null;
+  const theoretical = theoreticalBest(best, clean.map((r) => r.total));
   return { segments, rows, best, theoretical };
+}
+
+export const isCleanRun = (run) => !run?.status || run.status === 'ok';
+
+/**
+ * Sum of best segments — but never slower than a complete run actually achieved
+ * (runs without all splits marked still have real totals).
+ */
+export function theoreticalBest(bestSegments, totals = []) {
+  if (!bestSegments.length || !bestSegments.every((b) => b != null)) return null;
+  const sum = bestSegments.reduce((a, b) => a + b, 0);
+  const real = totals.filter((v) => v != null && v > 0);
+  return real.length ? Math.min(sum, ...real) : sum;
 }
 
 /** Best (lowest adjusted) run in a list. */

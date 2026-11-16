@@ -177,3 +177,35 @@ test('frame helpers', () => {
   const r = dtw([n, n], [n, n, n]);
   assert.ok(r && r.path.length >= 2);
 });
+
+test('theoretical best ignores DNF/off-course runs and is never slower than a real total', () => {
+  const ev = { splits: [{ id: 's1', name: 'A' }, { id: 's2', name: 'B' }] };
+  const runs = [
+    { id: 'clean', markers: { start: 0, finish: 46, splits: { s1: 10, s2: 30 } } },
+    { id: 'cut', status: 'off', markers: { start: 0, finish: 43, splits: { s1: 10, s2: 27 } } },
+  ];
+  assert.equal(splitTable(runs, ev).theoretical, 46);
+  // Fast run with only start/finish marked caps the theoretical best.
+  const runs2 = [
+    { id: 'fast', markers: { start: 0, finish: 44, splits: {} } },
+    { id: 'slow', markers: { start: 0, finish: 45, splits: { s1: 10, s2: 30 } } },
+  ];
+  assert.equal(splitTable(runs2, ev).theoretical, 44);
+});
+
+test('motion segments are found in a long recording with little driving', () => {
+  const times = [], act = [];
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // 30 minutes at 7.5 Hz, three 55 s runs
+  for (let t = 0; t < 1800; t += 1 / 7.5) {
+    times.push(t);
+    const driving = [300, 900, 1500].some((s) => t >= s && t < s + 55);
+    act.push(driving ? 0.3 + rnd() * 0.1 : 0.01 + rnd() * 0.01);
+  }
+  const segs = motionSegments(Float32Array.from(times), Float32Array.from(act), { minDuration: 15, mergeGap: 2.5 });
+  assert.equal(segs.length, 3);
+  segs.forEach((s, i) => near(s.onset, [300, 900, 1500][i], 0.3));
+  const one = detectLaunch(Float32Array.from(times.slice(0, 4500)), Float32Array.from(act.slice(0, 4500)));
+  near(one.t, 300, 0.3);
+});

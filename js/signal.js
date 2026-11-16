@@ -26,9 +26,11 @@ export function motionSegments(times, act, opts = {}) {
   const n = act.length;
   if (n < 5) return [];
   const base = percentile(act, 0.2);
-  const high = percentile(act, 0.9);
-  if (high - base < 0.04) return [];
   const s = smoothByTime(times, act, smoothWin);
+  // "Moving" level: p90 works when most of the clip is driving; the p99 of the smoothed signal
+  // still finds it when driving is a small share of a long continuous recording.
+  const high = Math.max(percentile(act, 0.9), percentile(s, 0.99));
+  if (high - base < 0.04) return [];
   const thrOn = base + 0.35 * (high - base);
   const segs = [];
   let cur = null;

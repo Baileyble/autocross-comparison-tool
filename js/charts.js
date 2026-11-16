@@ -37,10 +37,15 @@ export function lineChart(series, opts = {}) {
   ymin -= pad; ymax += pad;
   const X = (x) => m.l + ((x - xmin) / (xmax - xmin)) * (W - m.l - m.r);
   const Y = (y) => m.t + ((ymax - y) / (ymax - ymin)) * (H - m.t - m.b);
-  const yFmt = opts.yFmt || ((v) => v.toFixed(1));
+  // Label precision follows the tick step so close values don't print identical labels.
+  const ytk = niceTicks(ymin, ymax, 4);
+  const stepY = ytk.length > 1 ? ytk[1] - ytk[0] : 1;
+  let dec = 0;
+  while (dec < 4 && Math.abs(Math.round(stepY * 10 ** dec) - stepY * 10 ** dec) > 1e-6) dec++;
+  const yFmt = (v) => (opts.yFmt ? opts.yFmt(v, Math.max(1, dec)) : v.toFixed(Math.max(1, dec)));
   const xFmt = opts.xFmt || ((v) => String(v));
   const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart', role: 'img', 'aria-label': opts.title || 'chart' });
-  const yt = niceTicks(ymin, ymax, 4);
+  const yt = ytk;
   for (const v of yt) {
     svg.appendChild(s('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: 'grid' }));
     svg.appendChild(s('text', { x: m.l - 6, y: Y(v) + 4, 'text-anchor': 'end', class: 'tick' }, yFmt(v)));

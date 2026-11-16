@@ -45,7 +45,7 @@ export function renderCompare(root, input) {
       runs.forEach((r, i) => { const t = adjustedTime(r, pen); if (t != null && t < bt) { bt = t; bi = i; } });
       return bi;
     })(),
-    mode: prefs.mode,
+    mode: input.mode === 'locked' || input.mode === 'realtime' ? input.mode : prefs.mode,
     layout: prefs.layout,
     speed: prefs.speed,
     align: 'splits',
@@ -725,6 +725,9 @@ export function encodeShare(runs, evOf, st) {
         t: r.rawTime ?? null,
         c: r.cones || 0,
         l: [driverName(r.driverId), r.runNumber != null ? `Run ${r.runNumber}` : null].filter(Boolean).join(' · ') || 'Run',
+        d: driverName(r.driverId) || undefined,
+        n: r.runNumber ?? undefined,
+        st: r.status && r.status !== 'ok' ? r.status : undefined,
         sp,
       };
     }),
@@ -745,10 +748,12 @@ export function decodeShare(str) {
     eventId: 'shared',
     title: r.l,
     sharedLabel: r.l,
+    sharedDriver: r.d ?? null,
+    sharedRunNumber: r.n ?? null,
     runNumber: null,
     rawTime: r.t,
     cones: r.c || 0,
-    status: 'ok',
+    status: r.st || 'ok',
     source: { type: 'youtube', ytId: r.y },
     markers: { start: r.s, finish: r.f, splits: Object.fromEntries((r.sp || []).map(([n, t]) => [ev.splits.find((s) => s.name === n).id, t])) },
     annotations: [],
@@ -771,18 +776,16 @@ async function saveShared(runs, input) {
   const ev = await store.put('events', { id: store.uid(), name: 'Shared comparison', date: new Date().toISOString().slice(0, 10), splits: (ev0?.splits || []).map((s) => ({ ...s, id: store.uid(), _old: s.id })), notes: '' });
   const ids = [];
   for (const r of runs) {
+    // Only use an explicit driver from the link (labels like "Run A" are not driver names).
     let driverId = null;
-    if (r.sharedLabel) {
-      const name = r.sharedLabel.split(' · ')[0];
-      if (name && !/^Run \d+$/.test(name)) {
-        const existing = store.all('drivers').find((d) => d.name === name);
-        driverId = existing?.id || (await store.put('drivers', { id: store.uid(), name })).id;
-      }
+    if (r.sharedDriver) {
+      const existing = store.all('drivers').find((d) => d.name === r.sharedDriver);
+      driverId = existing?.id || (await store.put('drivers', { id: store.uid(), name: r.sharedDriver })).id;
     }
     const splits = {};
     for (const s of ev.splits) if (r.markers.splits[s._old] != null) splits[s.id] = r.markers.splits[s._old];
-    const runNumber = parseInt((r.sharedLabel || '').match(/Run (\d+)/)?.[1]) || null;
-    const nr = store.newRun({ eventId: ev.id, driverId, runNumber, rawTime: r.rawTime, cones: r.cones, source: r.source, markers: { ...r.markers, splits } });
+    const runNumber = r.sharedRunNumber ?? null;
+    const nr = store.newRun({ eventId: ev.id, driverId, runNumber, rawTime: r.rawTime, cones: r.cones, status: r.status || 'ok', notes: r.sharedDriver ? '' : `Shared run: ${r.sharedLabel || ''}`, source: r.source, markers: { ...r.markers, splits } });
     await store.put('runs', nr);
     ids.push(nr.id);
   }

@@ -27,6 +27,9 @@ function append(el, children) {
   }
 }
 
+/** Re-run the current route (re-renders the view without reloading the page or losing session state). */
+export function rerenderRoute() { window.dispatchEvent(new HashChangeEvent('hashchange')); }
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -36,10 +39,14 @@ export function add(el, ...children) { append(el, children); return el; }
 /** Replace all children. */
 export function fill(el, ...children) { clear(el); append(el, children); return el; }
 
+// Dialogs and toasts must live inside the fullscreen element, or they are invisible in fullscreen.
+const layerHost = () => document.fullscreenElement || document.body;
+
 // ---------- toasts ----------
 export function toast(msg, { type = 'info', ms = 3200 } = {}) {
   let host = $('#toasts');
-  if (!host) { host = h('div', { id: 'toasts' }); document.body.appendChild(host); }
+  if (!host) host = h('div', { id: 'toasts' });
+  if (host.parentNode !== layerHost()) layerHost().appendChild(host);
   const t = h('div', { class: `toast toast-${type}` }, msg);
   host.appendChild(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
@@ -48,10 +55,26 @@ export function toast(msg, { type = 'info', ms = 3200 } = {}) {
 // ---------- modals ----------
 export function modal({ title, body, actions = [], wide = false, onClose }) {
   const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey, true); onClose?.(); };
-  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  const onKey = (e) => {
+    if (e.key !== 'Escape') return;
+    const overlays = document.querySelectorAll('.modal-overlay');
+    if (overlays[overlays.length - 1] !== overlay) return; // only the topmost dialog closes
+    e.stopPropagation();
+    close();
+  };
+  let busy = false; // ignore double clicks while an async action (e.g. import) is running
   const footer = h('div', { class: 'modal-actions' }, actions.map((a) => h('button', {
     class: `btn ${a.primary ? 'btn-primary' : ''} ${a.danger ? 'btn-danger' : ''}`,
-    onclick: async () => { const r = await a.onClick?.(close); if (r !== false && !a.keepOpen) close(); },
+    onclick: async () => {
+      if (busy) return;
+      busy = true;
+      const btns = [...footer.querySelectorAll('button')];
+      btns.forEach((b) => { b.disabled = true; });
+      let r;
+      try { r = await a.onClick?.(close); } catch (e) { console.error(e); toast(e.message || String(e), { type: 'error' }); r = false; }
+      finally { busy = false; btns.forEach((b) => { b.disabled = false; }); }
+      if (r !== false && !a.keepOpen) close();
+    },
   }, a.label)));
   const box = h('div', { class: `modal ${wide ? 'modal-wide' : ''}`, role: 'dialog', 'aria-modal': 'true' },
     h('div', { class: 'modal-head' }, h('h2', null, title), h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: close }, '✕')),
@@ -59,7 +82,7 @@ export function modal({ title, body, actions = [], wide = false, onClose }) {
     actions.length ? footer : null,
   );
   const overlay = h('div', { class: 'modal-overlay', onmousedown: (e) => { if (e.target === overlay) close(); } }, box);
-  document.body.appendChild(overlay);
+  layerHost().appendChild(overlay);
   document.addEventListener('keydown', onKey, true);
   setTimeout(() => box.querySelector('input,select,textarea')?.focus(), 30);
   return { close, box };

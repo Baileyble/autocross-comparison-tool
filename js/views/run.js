@@ -1,7 +1,7 @@
 // Run editor: mark start / splits / finish frame-accurately, add timed notes, edit run details.
 
 import * as store from '../store.js';
-import { h, clear, toast, modal, confirmDialog, debounce, isTyping, toggleSelected, isSelected, setSelection, add, fill } from '../ui.js';
+import { h, rerenderRoute, clear, toast, modal, confirmDialog, debounce, isTyping, toggleSelected, isSelected, setSelection, add, fill } from '../ui.js';
 import { entitySelect, resolveSource, relinkFlow, runTitle, eventOptions, eventLabel, driverName, nextRunNumber } from '../common.js';
 import { adjustedTime, bestRun, effectiveFinish, fmtTime, fmtDelta, parseTime, STATUSES, videoTime } from '../model.js';
 import { LocalPlayer, YouTubePlayer } from '../players.js';
@@ -50,7 +50,7 @@ export function renderRun(root, id) {
     h('span', { class: 'spacer' }),
     h('label', { class: 'fps-pick', title: 'Frame rate used for frame stepping' }, 'fps ',
       h('select', { class: 'input input-small', onchange: (e) => { run.fps = parseFloat(e.target.value); saveNow(); } },
-        [24, 25, 29.97, 30, 50, 59.94, 60, 100, 119.88, 120, 240].map((f) => h('option', { value: f, selected: Math.abs(fps() - f) < 0.01 }, String(f))))),
+        [...new Set([23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 90, 100, 119.88, 120, 240, fps()])].sort((a, b) => a - b).map((f) => h('option', { value: f, selected: Math.abs(fps() - f) < 0.01 }, String(f))))),
     h('button', { class: 'btn btn-small', title: 'Zoom timeline to the run', onclick: () => zoomRun() }, 'Zoom to run'),
     h('button', { class: 'btn btn-small', title: 'Show whole video', onclick: () => timeline?.fit() }, 'Fit'),
   );
@@ -77,10 +77,10 @@ export function renderRun(root, id) {
   (async () => {
     const src = await resolveSource(run);
     if (destroyed) return;
-    if (src.none) { add(stage, h('div', { class: 'stage-msg' }, h('p', null, 'This run has no video.'), h('button', { class: 'btn btn-primary', onclick: async () => { if (await relinkFlow(run)) location.reload(); } }, 'Attach a video file'))); return; }
+    if (src.none) { add(stage, h('div', { class: 'stage-msg' }, h('p', null, 'This run has no video.'), h('button', { class: 'btn btn-primary', onclick: async () => { if (await relinkFlow(run)) rerenderRoute(); } }, 'Attach a video file'))); return; }
     if (src.missing) {
       add(stage, h('div', { class: 'stage-msg' }, h('p', null, `Video file "${src.name || ''}" isn't available in this browser session.`),
-        h('button', { class: 'btn btn-primary', onclick: async () => { if (await relinkFlow(run)) { location.reload(); } } }, 'Re-link file…')));
+        h('button', { class: 'btn btn-primary', onclick: async () => { if (await relinkFlow(run)) rerenderRoute(); } }, 'Re-link file…')));
       return;
     }
     try {
@@ -239,8 +239,13 @@ export function renderRun(root, id) {
       actions: [{ label: 'Cancel' }, { label: 'Create runs', primary: true, onClick: async () => {
         const chosen = picks.filter((p) => p.on);
         let n = nextRunNumber(run.eventId, run.driverId), created = 0;
-        for (const [k, p] of chosen.entries()) {
-          if (k === 0 && run.markers.start == null) { run.markers.start = p.s.onset; run.markers.startAuto = true; await store.put('runs', run); continue; }
+        // A confirmed (manual) start keeps this run on its segment; an auto start is only a guess.
+        const manual = run.markers.start != null && !run.markers.startAuto;
+        const covered = manual ? chosen.find((p) => run.markers.start >= p.s.onset - 3 && run.markers.start <= p.s.end) : null;
+        let reused = manual;
+        for (const p of chosen) {
+          if (p === covered) continue;
+          if (!reused) { reused = true; run.markers.start = p.s.onset; run.markers.startAuto = true; await store.put('runs', run); continue; }
           await store.put('runs', store.newRun({ eventId: run.eventId, driverId: run.driverId, carId: run.carId, runNumber: n++, source: { ...run.source }, fps: run.fps, markers: { start: p.s.onset, startAuto: true, finish: null, splits: {} } }));
           created++;
         }
@@ -354,7 +359,7 @@ export function renderRun(root, id) {
         run.source?.type === 'local' ? h('div', { class: 'row-actions' },
           h('button', { class: 'btn btn-small', onclick: () => queueAnalysis(run.source.videoId, { force: true }) }, 'Re-analyze'),
           h('button', { class: 'btn btn-small', onclick: findRuns, title: 'For videos that contain several runs' }, 'Find runs in this video'),
-          h('button', { class: 'btn btn-small', onclick: async () => { if (await relinkFlow(run)) location.reload(); } }, 'Re-link / replace file'),
+          h('button', { class: 'btn btn-small', onclick: async () => { if (await relinkFlow(run)) rerenderRoute(); } }, 'Re-link / replace file'),
         ) : null,
         h('div', { class: 'row-actions' },
           h('button', { class: 'btn btn-small btn-ghost danger', onclick: async () => {

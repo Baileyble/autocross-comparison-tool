@@ -23,6 +23,7 @@ export function renderProgress(root) {
     const all = store.runsOfEvent(ev.id);
     const mine = all.filter((r) => r.driverId === chosen);
     if (!mine.length) continue;
+    const counted = mine.filter((r) => r.status !== 'rerun'); // a rerun is a voided attempt
     const best = bestRun(mine, pen);
     const bestT = best ? adjustedTime(best, pen) : null;
     const overall = bestRun(all, pen);
@@ -34,9 +35,9 @@ export function renderProgress(root) {
     const first = timed[0] ? adjustedTime(timed[0], pen) : null;
     const tb = ev.splits?.length ? splitTable(mine.filter((r) => r.markers?.start != null), ev).theoretical : null;
     rows.push({
-      ev, runs: mine.length, best, bestT,
-      cones: mine.reduce((s, r) => s + (r.cones || 0), 0),
-      dnfs: mine.filter((r) => r.status && r.status !== 'ok').length,
+      ev, runs: counted.length, best, bestT,
+      cones: counted.reduce((s, r) => s + (r.cones || 0), 0),
+      dnfs: counted.filter((r) => r.status && r.status !== 'ok').length,
       pctRef: bestT != null && ev.refTime ? (bestT / ev.refTime) * 100 : null,
       gapField: bestT != null && fieldBest != null && overall.driverId !== chosen ? bestT - fieldBest : null,
       sd, improve: first != null && bestT != null ? bestT - first : null, tb,
@@ -45,7 +46,7 @@ export function renderProgress(root) {
   }
 
   const pctSeries = [{ name: '% of reference', color: '#ff7a1a', points: rows.filter((r) => r.pctRef != null).map((r, i) => ({ x: i + 1, y: r.pctRef, label: `${r.ev.name}: ${r.pctRef.toFixed(2)}%` })) }];
-  const pctChart = pctSeries[0].points.length > 1 ? lineChart(pctSeries, { yFmt: (v) => `${v.toFixed(1)}%`, xFmt: (v) => rows.filter((r) => r.pctRef != null)[v - 1]?.ev.date?.slice(5) || '', integerX: true, title: '% of reference time by event' }) : null;
+  const pctChart = pctSeries[0].points.length > 1 ? lineChart(pctSeries, { yFmt: (v, d = 1) => `${v.toFixed(d)}%`, xFmt: (v) => rows.filter((r) => r.pctRef != null)[v - 1]?.ev.date?.slice(5) || '', integerX: true, title: '% of reference time by event' }) : null;
 
   const totalRuns = rows.reduce((s, r) => s + r.runs, 0);
   const totalCones = rows.reduce((s, r) => s + r.cones, 0);
@@ -66,7 +67,7 @@ export function renderProgress(root) {
       h('h2', { class: 'section-title' }, `Events — ${driverName(chosen)}`),
       rows.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'table' },
         h('thead', null, h('tr', null,
-          ['Date', 'Event', 'Car', 'Runs', 'Best', '% of ref', 'Gap to fastest', 'First → best', 'Theoretical', 'Consistency', 'Cones / DNF'].map((t, i) => h('th', { class: i > 2 ? 'r' : '' }, t)))),
+          ['Date', 'Event', 'Car', 'Runs', 'Best', '% of ref', 'Gap to fastest', 'First → best', 'Theoretical', 'Consistency', 'Cones / DNF'].map((t, i) => h('th', { class: i > 2 ? 'r' : '', title: t === 'Cones / DNF' ? 'DNF column counts DNF, off-course and DSQ runs; reruns are not counted' : '' }, t)))),
         h('tbody', null, rows.slice().reverse().map((r) => h('tr', null,
           h('td', null, r.ev.date ? fmtDate(r.ev.date) : '—'),
           h('td', null, h('a', { href: `#/event/${r.ev.id}` }, r.ev.name || 'Event'), r.ev.courseName ? h('div', { class: 'sub' }, r.ev.courseName) : null),

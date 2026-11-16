@@ -50,7 +50,7 @@ kbd { font: 11px var(--mono); background: #1d2732; border: 1px solid var(--line2
 .nav a.active { color: var(--text); background: var(--panel2); }
 .jobs { font-size: 12px; color: var(--accent2); background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.3); padding: 4px 10px; border-radius: 99px; }
 
-.view { max-width: 1440px; margin: 0 auto; padding: 22px 20px 120px; }
+.view { max-width: 1440px; margin: 0 auto; padding: 22px 20px calc(var(--tray-h, 0px) + 40px); }
 section { margin-top: 28px; }
 .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); margin-bottom: 12px; font-weight: 700; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -330,7 +330,7 @@ ul.plain { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
   .cmp-stage.layout-side.n3 { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 720px) {
-  .view { padding: 14px 10px 130px; }
+  .view { padding: 14px 10px calc(var(--tray-h, 0px) + 40px); }
   .topbar { padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
   .nav { margin-left: 0; }
   .nav a { padding: 5px 8px; }

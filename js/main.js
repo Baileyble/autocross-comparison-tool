@@ -28,7 +28,7 @@ const routes = [
   [/^#\/shared\/(.+)$/, (m) => ({ name: 'shared', live: false, render: (r) => {
     try {
       const d = decodeShare(m[1]);
-      return renderCompare(r, { runs: d.runs, events: d.events, ephemeral: true, title: 'Shared comparison' });
+      return renderCompare(r, { runs: d.runs, events: d.events, mode: d.mode, ephemeral: true, title: 'Shared comparison' });
     } catch (e) { fill(r, h('div', { class: 'empty' }, 'This share link is invalid or truncated.')); }
   } })],
   [/^#\/progress$/, () => ({ name: 'progress', live: true, render: (r) => renderProgress(r) })],
@@ -42,6 +42,7 @@ function route() {
   if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { console.error(e); } }
   cleanup = null;
   current = match;
+  gen++; pending = false;
   document.body.dataset.view = match.name;
   for (const a of document.querySelectorAll('.nav a')) a.classList.toggle('active', a.dataset.view === match.name || (match.name === 'event' && a.dataset.view === 'library'));
   window.scrollTo(0, 0);
@@ -50,16 +51,19 @@ function route() {
 }
 
 // Live views re-render on data changes — but never while the user is typing in them.
-let pending = false;
+let pending = false, gen = 0;
 function scheduleRerender() {
   if (!current.live || pending) return;
   pending = true;
+  const g = gen;
   const go = () => {
     const a = document.activeElement;
+    if (g !== gen) return; // a navigation already rendered fresh
     if (a && view.contains(a) && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) {
-      a.addEventListener('blur', () => setTimeout(go, 50), { once: true });
+      setTimeout(go, 300); // poll: a removed field may never fire blur
       return;
     }
+    if (g !== gen) return;
     if (document.querySelector('.modal-overlay')) { setTimeout(go, 300); return; }
     pending = false;
     if (!current.live) return;
@@ -78,7 +82,7 @@ function renderTray() {
   if (sel.length !== getSelection().length) setSelection(sel.map((r) => r.id));
   const hide = !sel.length || current.name === 'compare' || current.name === 'shared';
   tray.hidden = hide;
-  if (hide) return;
+  if (hide) { syncTrayHeight(); return; }
   fill(tray, 
     h('span', { class: 'tray-label' }, `Compare (${sel.length}/4):`),
     sel.map((r) => h('span', { class: 'tray-chip' }, runTitle(r), h('button', { class: 'icon-btn', title: 'Remove', onclick: () => toggleSelected(r.id, false) }, '✕'))),
@@ -86,6 +90,12 @@ function renderTray() {
     h('button', { class: 'btn btn-ghost btn-small', onclick: () => setSelection([]) }, 'Clear'),
     h('button', { class: 'btn btn-primary', disabled: sel.length < 2, onclick: () => { location.hash = `#/compare/${sel.map((r) => r.id).join(',')}`; } }, sel.length < 2 ? 'Pick one more' : '⇄ Compare'),
   );
+}
+
+// Reserve room at the bottom of the page for the floating tray so it never covers content.
+function syncTrayHeight() {
+  const tray = $('#tray');
+  document.documentElement.style.setProperty('--tray-h', tray.hidden ? '0px' : `${tray.offsetHeight + 16}px`);
 }
 
 // ---------- analysis indicator ----------
@@ -110,8 +120,9 @@ function setupDrop() {
   window.addEventListener('dragover', (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
   window.addEventListener('drop', (e) => {
     depth = 0; overlay.hidden = true;
-    if (!e.dataTransfer?.files?.length || document.querySelector('.modal-overlay')) return;
-    e.preventDefault();
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    e.preventDefault(); // never let the browser navigate to a dropped file
+    if (!e.dataTransfer.files.length || document.querySelector('.modal-overlay')) return;
     const evId = (location.hash.match(/^#\/event\/([\w-]+)/) || [])[1] || null;
     openImport({ files: [...e.dataTransfer.files], eventId: evId });
   });
@@ -141,6 +152,7 @@ async function boot() {
   $('#btn-help').addEventListener('click', showHelp);
   store.onChange((s) => { if (s !== 'videos' && s !== 'analysis') scheduleRerender(); if (s === 'runs') renderTray(); });
   onSelection(renderTray);
+  new ResizeObserver(syncTrayHeight).observe($('#tray'));
   onAnalysis(renderJobs);
   setupDrop();
   window.addEventListener('hashchange', route);

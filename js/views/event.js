@@ -1,9 +1,9 @@
 // Event page: details, quick time entry, course splits, split analysis, progression chart, course map.
 
 import * as store from '../store.js';
-import { h, clear, modal, toast, confirmDialog, promptDialog, isSelected, toggleSelected, setSelection, debounce, pickFiles, add, fill } from '../ui.js';
+import { h, clear, modal, toast, confirmDialog, promptDialog, isSelected, toggleSelected, setSelection, onSelection, debounce, pickFiles, add, fill } from '../ui.js';
 import { entitySelect, driverName, markerBadges, thumbEl, today, nextRunNumber } from '../common.js';
-import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, parseTime, splitTable, STATUSES, RUN_COLORS } from '../model.js';
+import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, parseTime, splitTable, theoreticalBest, isCleanRun, STATUSES } from '../model.js';
 import { lineChart } from '../charts.js';
 import { openImport } from './import.js';
 
@@ -144,7 +144,7 @@ export function renderEvent(root, id) {
       return { x: r.runNumber, y: a ?? NaN, highlight: a != null && a === bestPerDriver.get(d), marker: a == null, label: a != null ? `run ${r.runNumber}: ${fmtTime(a)}${r.cones ? ` (${r.cones} cone${r.cones > 1 ? 's' : ''})` : ''}` : `run ${r.runNumber}: ${STATUSES[r.status] || 'no time'}` };
     }),
   }));
-  const chart = lineChart(series, { integerX: true, xLabel: 'Run #', yFmt: (v) => v.toFixed(1), title: 'Adjusted time by run' });
+  const chart = lineChart(series, { integerX: true, xLabel: 'Run #', yFmt: (v, d = 1) => v.toFixed(d), title: 'Adjusted time by run' });
 
   // ---- notes, reference time & course map ----
   const saveEv = debounce(() => store.put('events', ev), 500);
@@ -155,7 +155,13 @@ export function renderEvent(root, id) {
       h('h2', { class: 'section-title' }, 'Event notes'),
       h('textarea', { class: 'input', rows: 6, placeholder: 'Course walk notes, what worked, what to try next time…', value: ev.notes || '', oninput: (e) => { ev.notes = e.target.value; saveEv(); } }),
       h('label', { class: 'field inline' }, h('span', null, 'Reference time (e.g. FTD or class winner)'),
-        h('input', { class: 'input num time-input', value: ev.refTime != null ? fmtTime(ev.refTime) : '', placeholder: '—', onchange: async (e) => { ev.refTime = parseTime(e.target.value); await store.put('events', ev); } })),
+        h('input', { class: 'input num time-input', value: ev.refTime != null ? fmtTime(ev.refTime) : '', placeholder: '—', onchange: async (e) => {
+          const raw = e.target.value.trim();
+          const t = parseTime(raw);
+          if (raw && t == null) { toast('Time format: 45.123 or 1:05.123', { type: 'warn' }); e.target.value = ev.refTime != null ? fmtTime(ev.refTime) : ''; return; }
+          ev.refTime = t; // empty clears it on purpose
+          await store.put('events', ev);
+        } })),
       h('p', { class: 'hint' }, 'Used on the Progress page to show your best as a % of a reference — the fairest way to compare across different courses.'),
     ),
     h('div', null, h('h2', { class: 'section-title' }, 'Course map'), mapBox),
@@ -169,6 +175,9 @@ export function renderEvent(root, id) {
     splitSection,
     h('section', null, extras),
   );
+  // Keep compare checkboxes in step with the tray (Clear / ✕ there).
+  const off = onSelection(() => { for (const cb of root.querySelectorAll('input[data-run]')) cb.checked = isSelected(cb.dataset.run); });
+  return () => off();
 }
 
 function tile(label, value, sub = '') {
@@ -180,10 +189,13 @@ function splitAnalysis(ev, tbl, colorOf) {
   // Theoretical best per driver
   const byDriver = new Map();
   for (const r of rows) { const d = r.run.driverId || ''; if (!byDriver.has(d)) byDriver.set(d, []); byDriver.get(d).push(r); }
-  const tbRows = [...byDriver.entries()].map(([d, rs]) => {
-    const best = tbl.segments.map((_, i) => { const v = rs.map((r) => r.times[i]).filter((x) => x != null); return v.length ? Math.min(...v) : null; });
-    const fastest = Math.min(...rs.map((r) => r.total ?? Infinity));
-    return { d, best, tb: best.every((b) => b != null) ? best.reduce((a, b) => a + b, 0) : null, fastest: Number.isFinite(fastest) ? fastest : null };
+  const tbRows = [...byDriver.keys()].map((d) => {
+    // Clean runs only; totals from all of the driver's clean runs (even ones without split marks).
+    const all = tbl.rows.filter((r) => (r.run.driverId || '') === d && isCleanRun(r.run));
+    const best = tbl.segments.map((_, i) => { const v = all.map((r) => r.times[i]).filter((x) => x != null && x > 0); return v.length ? Math.min(...v) : null; });
+    const totals = all.map((r) => r.total).filter((x) => x != null);
+    const fastest = totals.length ? Math.min(...totals) : null;
+    return { d, best, tb: theoreticalBest(best, totals), fastest };
   });
   return h('section', null,
     h('h2', { class: 'section-title' }, 'Segment times ', h('span', { class: 'sub' }, '(from video marks; purple = fastest overall, green = driver\'s best)')),
@@ -192,16 +204,17 @@ function splitAnalysis(ev, tbl, colorOf) {
       h('tbody', null,
         rows.map((r) => {
           const mine = tbRows.find((x) => x.d === (r.run.driverId || ''));
-          return h('tr', null,
-            h('td', null, h('span', { class: 'dot', style: { background: colorOf(r.run.driverId) } }), h('a', { href: `#/run/${r.run.id}` }, `${driverName(r.run.driverId) || '—'} #${r.run.runNumber ?? '?'}`)),
-            r.times.map((t, i) => h('td', { class: `r mono ${t != null && t === tbl.best[i] ? 'seg-best' : t != null && t === mine?.best[i] ? 'seg-pb' : ''}` }, t != null ? fmtTime(t, 2) : '—')),
+          const clean = isCleanRun(r.run);
+          return h('tr', { class: clean ? '' : 'muted', title: clean ? '' : `${STATUSES[r.run.status]} — not counted in best segments` },
+            h('td', null, h('span', { class: 'dot', style: { background: colorOf(r.run.driverId) } }), h('a', { href: `#/run/${r.run.id}` }, `${driverName(r.run.driverId) || '—'} #${r.run.runNumber ?? '?'}`), clean ? null : h('span', { class: `badge badge-${r.run.status}` }, STATUSES[r.run.status])),
+            r.times.map((t, i) => h('td', { class: `r mono ${clean && t != null && t === tbl.best[i] ? 'seg-best' : clean && t != null && t === mine?.best[i] ? 'seg-pb' : ''}` }, t != null ? fmtTime(t, 2) : '—')),
             h('td', { class: 'r mono' }, r.total != null ? fmtTime(r.total, 2) : '—'),
           );
         }),
         tbRows.filter((x) => x.tb != null).map((x) => h('tr', { class: 'tb-row' },
           h('td', null, `Theoretical best — ${driverName(x.d) || '—'}`),
           x.best.map((b) => h('td', { class: 'r mono' }, fmtTime(b, 2))),
-          h('td', { class: 'r mono strong', title: x.fastest ? `${fmtDelta(x.tb - x.fastest, 2)} vs fastest video total` : '' }, fmtTime(x.tb, 2), x.fastest ? h('div', { class: 'sub' }, `${fmtDelta(x.tb - x.fastest, 2)} available`) : null),
+          h('td', { class: 'r mono strong', title: x.fastest ? `${(x.fastest - x.tb).toFixed(2)} s faster than your fastest video total, if you put your best segments together` : '' }, fmtTime(x.tb, 2), x.fastest && x.fastest - x.tb > 0.005 ? h('div', { class: 'sub' }, `${(x.fastest - x.tb).toFixed(2)} s on the table`) : null),
         )),
       ),
     )),

@@ -84,8 +84,24 @@ async function importBackup() {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    const replace = await confirmDialog('Replace your current library with this backup? Choose Cancel to merge it in instead (same items are overwritten).', { okLabel: 'Replace', title: 'Import backup' });
-    const n = await store.importJSON(data, { replace });
+    if (data?.app !== 'autox-compare') throw new Error('Not an autocross compare backup file.');
+    const mode = await new Promise((resolve) => {
+      let choice = null;
+      modal({
+        title: 'Import backup',
+        body: h('div', null,
+          h('p', null, `Backup from ${data.exportedAt ? new Date(data.exportedAt).toLocaleString() : 'unknown date'}: ${(data.events || []).length} events, ${(data.runs || []).length} runs.`),
+          h('p', { class: 'sub' }, 'Merge adds it to your library (items that exist in both are replaced by the backup\'s version). Replace deletes your current library first.')),
+        actions: [
+          { label: 'Cancel' },
+          { label: 'Merge', primary: true, onClick: () => { choice = 'merge'; } },
+          { label: 'Replace library', danger: true, onClick: () => { choice = 'replace'; } },
+        ],
+        onClose: () => resolve(choice),
+      });
+    });
+    if (!mode) return;
+    const n = await store.importJSON(data, { replace: mode === 'replace' });
     toast(`Imported ${n} records. Re-link video files from each run when needed.`, { type: 'ok', ms: 5000 });
     location.hash = '#/';
   } catch (e) { toast(e.message, { type: 'error' }); }
