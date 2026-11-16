@@ -16,21 +16,25 @@ It's a static web app: no server, no build step, no accounts. Videos stay on you
 **Start sync**
 - After import, each local video is analyzed in the browser (a fast, muted playback pass): it detects the **launch from camera motion** — skipping the creep up to the line — and refines it frame by frame. Auto marks are flagged `auto` until you confirm them.
 - Run editor: frame-step (←/→), set start (S), splits (1–9), finish (F), timed notes (N). A zoomable timeline shows camera motion and audio loudness so the launch and finish are easy to spot; drag the flags to adjust.
-- Enter the official time and the finish is placed automatically (start + time).
+- Enter the official time and the finish is placed automatically. The start mark is the launch but the official clock starts at the timing beam, so the app calibrates a per-event **launch→beam offset** from runs where you marked the finish too (editable on the event page).
+- **Auto-mark splits**: mark the course splits by hand on one run, and copy them to every other run of the event by matching the videos frame by frame. Copied marks are flagged `auto` until you confirm them; marks you set by hand are never overwritten.
 - In the compare view, **Adjust sync** lets you step each video on its own and "Set start here" without leaving the comparison.
 
 **Compare (2–4 runs)**
 - **Real time**: every run starts together, so you see who pulls ahead and by how much.
 - **Position-locked**: runs are time-warped so they arrive at every split together — compare lines and braking points at the same spot on course.
 - **Align by marks or by video**: with local videos, "✨ Video" matches what the cameras see (frame fingerprints + dynamic time warping) for a continuous alignment without marking splits. It works best with the same camera mount (e.g. co-drivers in one car); verify it in position-locked mode.
-- Live **delta** on each video vs the reference run, a **delta graph** along the course, and a **segment table** (click a segment to loop it).
-- Side-by-side, stacked, or **overlay/ghost** (opacity + difference blend). Scroll to zoom into a video, drag to pan (linked across videos by default).
+- Live **delta** on each video vs the reference run, a **delta graph** along the course, and a **segment table** (click a segment to loop it). With only start/finish matched, the in-between delta is marked as an estimate (dashed) — and if all runs are local videos the app aligns them by video automatically to give a real running delta.
+- Side-by-side, stacked, or **overlay/ghost** (opacity + difference blend). Scroll or pinch to zoom into a video, drag to pan (linked across videos by default). In fullscreen and on landscape phones the options fold away behind ☰.
+- Run chips show each run's setup notes and tags, highlighted when they differ — so you can see what changed between runs.
+- From any run: **vs my best** (your best other run that event) or **vs fastest**.
 - Timed notes pop up during playback. Pick which run's audio you hear. Playback 0.1×–2×, fullscreen.
 - **Share link** for YouTube comparisons: marks and times are encoded in the URL, nothing uploaded. Old `?v1=&v2=&t1=&t2=` links from the previous version still open.
 
 **Track progress**
-- Event page: best run per driver, Δ to own best, progression chart, **segment times with best segments highlighted**, and **theoretical best** (sum of your best segments).
-- Progress page: per driver across events — best time, % of a reference time (FTD / class winner, entered per event), gap to the fastest driver you recorded, first-run → best improvement, consistency (spread of clean runs), cones and DNFs, and same-course history when the course name matches.
+- Event page: best run per driver, Δ to own best, progression chart, **segment times with best segments highlighted**, and **theoretical best** (sum of your best segments, from clean runs only). Fast time entry: type a time, press Enter, and you're in the next run's time field.
+- Optional car **class** and **index factor** (you enter the factor — they differ between clubs and years): indexed times on the event page, and Progress compares you within your class.
+- Progress page: per driver across events — best time, % of a reference time (FTD / class winner, entered per event), gap to the fastest run you recorded (in your class, if set), first-run → best improvement, consistency (spread of clean runs), cones and DNFs, and same-course history when the course name matches.
 - Backup/restore as JSON, CSV export of all runs.
 
 Press `?` in the app for keyboard shortcuts.
@@ -52,7 +56,7 @@ npm test          # unit tests: timing math, warping, split tables, launch detec
 npm run test:e2e  # headless Chromium end-to-end run on synthetic videos with known ground truth
 ```
 
-The e2e test generates two synthetic "in-car" videos (needs `python3` with numpy + Pillow, and `ffmpeg`) where the launch times and the time mapping between the runs are known exactly, then drives the real UI: import → auto start detection → time entry → split marking → synced playback → position-locked playback → video alignment → overlay/loop → progress page → legacy share link.
+The e2e test (27 checks) generates two synthetic "in-car" videos (needs `python3` with numpy + Pillow, and `ffmpeg`) where the launch times and the time mapping between the runs are known exactly, then drives the real UI: import → auto start detection → time entry → split marking → synced playback → position-locked playback → video alignment → overlay/loop → adjust sync → timed notes → beam-offset calibration → auto-marked splits → YouTube import → run deletion → settings → progress → legacy share link → phone layout.
 
 ## Limitations & notes
 
@@ -60,6 +64,7 @@ The e2e test generates two synthetic "in-car" videos (needs `python3` with numpy
 - **YouTube**: the YouTube player can't be read pixel by pixel, so motion analysis, auto start detection and video alignment need local files. YouTube only supports a few fixed playback speeds, so position-locked mode keeps YouTube videos aligned with small jumps rather than smooth speed changes.
 - **Launch detection** finds the first visible movement. From a standstill the first few frames move by less than a pixel, so the mark can land a few frames after the true launch. That bias is usually the same for every run, so sync isn't affected much, but check it with the frame buttons.
 - **Video alignment** assumes the runs follow the same course and the cameras see similar things. Different cars or mounts, or very different lighting, reduce accuracy. The app warns when the match looks poor.
+- Not yet: speed traces from GPS loggers or GoPro telemetry would be the natural next step for braking/minimum-speed analysis.
 - Storage: with "keep copies" on, videos count against the browser's storage quota (usually a large share of free disk). Turn it off in Settings to store only data and re-link files each session.
 
 `legacy.html` is the previous single-file version of the tool.

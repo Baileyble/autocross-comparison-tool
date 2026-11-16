@@ -4,7 +4,7 @@ import * as store from '../store.js';
 import { h, clear, select, fill } from '../ui.js';
 import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, splitTable } from '../model.js';
 import { lineChart } from '../charts.js';
-import { driverName, carName } from '../common.js';
+import { driverName, carName, carClassOf } from '../common.js';
 
 let chosen = null;
 
@@ -26,7 +26,10 @@ export function renderProgress(root) {
     const counted = mine.filter((r) => r.status !== 'rerun'); // a rerun is a voided attempt
     const best = bestRun(mine, pen);
     const bestT = best ? adjustedTime(best, pen) : null;
-    const overall = bestRun(all, pen);
+    // Compare against the fastest run in your class when your car has a class set.
+    const myClass = best ? carClassOf(best) : carClassOf(mine[0]);
+    const field = myClass ? all.filter((r) => carClassOf(r) === myClass) : all;
+    const overall = bestRun(field, pen);
     const fieldBest = overall ? adjustedTime(overall, pen) : null;
     const clean = mine.filter((r) => adjustedTime(r, pen) != null && !r.cones).map((r) => r.rawTime);
     const mean = clean.length ? clean.reduce((a, b) => a + b, 0) / clean.length : null;
@@ -67,7 +70,7 @@ export function renderProgress(root) {
       h('h2', { class: 'section-title' }, `Events — ${driverName(chosen)}`),
       rows.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'table' },
         h('thead', null, h('tr', null,
-          ['Date', 'Event', 'Car', 'Runs', 'Best', '% of ref', 'Gap to fastest', 'First → best', 'Theoretical', 'Consistency', 'Cones / DNF'].map((t, i) => h('th', { class: i > 2 ? 'r' : '', title: t === 'Cones / DNF' ? 'DNF column counts DNF, off-course and DSQ runs; reruns are not counted' : '' }, t)))),
+          ['Date', 'Event', 'Car', 'Runs', 'Best', '% of ref', 'Gap to fastest*', 'First → best', 'Theoretical', 'Consistency', 'Cones / DNF'].map((t, i) => h('th', { class: i > 2 ? 'r' : '', title: t === 'Cones / DNF' ? 'DNF column counts DNF, off-course and DSQ runs; reruns are not counted' : '' }, t)))),
         h('tbody', null, rows.slice().reverse().map((r) => h('tr', null,
           h('td', null, r.ev.date ? fmtDate(r.ev.date) : '—'),
           h('td', null, h('a', { href: `#/event/${r.ev.id}` }, r.ev.name || 'Event'), r.ev.courseName ? h('div', { class: 'sub' }, r.ev.courseName) : null),
@@ -83,6 +86,7 @@ export function renderProgress(root) {
         ))),
       )) : h('div', { class: 'empty' }, 'No runs for this driver yet.'),
     ),
+    rows.length ? h('p', { class: 'hint' }, '* Gap to the fastest run you recorded at that event — within your class if your car has a class set (Settings → Cars).') : null,
     sameCourse(rows),
   );
 }

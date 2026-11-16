@@ -2,12 +2,21 @@
 
 import * as store from './store.js';
 import { h, promptDialog, toast, pickFiles } from './ui.js';
-import { adjustedTime, fmtTime, fmtDate, STATUSES } from './model.js';
+import { adjustedTime, fmtTime, fmtDate, STATUSES, calibrateBeamOffset } from './model.js';
 import { ytThumb } from './players.js';
 import { queueAnalysis } from './analyze.js';
 
 export function driverName(id) { return store.get('drivers', id)?.name || ''; }
-export function carName(id) { return store.get('cars', id)?.name || ''; }
+export function carName(id) { const c = store.get('cars', id); return c ? (c.carClass ? `${c.name} (${c.carClass})` : c.name) : ''; }
+
+/** Adjusted time × the car's index factor (user-entered, e.g. a PAX-style factor). null if no factor. */
+export function indexedTime(run) {
+  const f = store.get('cars', run.carId)?.indexFactor;
+  const adj = adjustedTime(run, store.settings.conePenalty);
+  return adj != null && typeof f === 'number' && f > 0 ? adj * f : null;
+}
+
+export function carClassOf(run) { return (store.get('cars', run.carId)?.carClass || '').trim().toLowerCase() || null; }
 
 export function runTitle(run) {
   if (run.sharedLabel) return run.sharedLabel;
@@ -80,11 +89,13 @@ export function statusBadge(run) {
 
 export function markerBadges(run, event) {
   const m = run.markers || {};
-  const nSplits = Object.values(m.splits || {}).filter((v) => v != null).length;
-  const total = event?.splits?.length || 0;
+  const ids = (event?.splits || []).map((s) => s.id);
+  const nSplits = ids.filter((id) => m.splits?.[id] != null).length;
+  const nAuto = ids.filter((id) => m.splits?.[id] != null && m.splitAuto?.[id]).length;
+  const total = ids.length;
   return h('span', { class: 'marker-badges' },
     h('span', { class: `mk ${m.start != null ? (m.startAuto ? 'mk-auto' : 'mk-on') : ''}`, title: m.start != null ? (m.startAuto ? 'Start auto-detected (unconfirmed)' : 'Start marked') : 'Start not marked' }, 'S'),
-    total ? h('span', { class: `mk ${nSplits === total ? 'mk-on' : nSplits ? 'mk-part' : ''}`, title: `${nSplits}/${total} splits marked` }, `${nSplits}/${total}`) : null,
+    total ? h('span', { class: `mk ${nAuto ? 'mk-auto' : nSplits === total ? 'mk-on' : nSplits ? 'mk-part' : ''}`, title: `${nSplits}/${total} splits marked${nAuto ? ` (${nAuto} auto — confirm in the run editor)` : ''}` }, `${nSplits}/${total}`) : null,
     h('span', { class: `mk ${m.finish != null ? 'mk-on' : run.rawTime != null && m.start != null ? 'mk-auto' : ''}`, title: m.finish != null ? 'Finish marked' : 'Finish estimated from official time' }, 'F'),
   );
 }
@@ -163,4 +174,18 @@ export function allTags() {
   const s = new Set();
   for (const r of store.all('runs')) for (const t of r.tags || []) s.add(t);
   return [...s].sort();
+}
+
+/**
+ * Keep the event's launch→beam offset in step with its runs (unless the user set it by hand).
+ * Returns true if it changed (and was saved).
+ */
+export async function recalibrateBeam(ev) {
+  if (!ev || ev.beamOffsetManual) return false;
+  const c = calibrateBeamOffset(store.runsOfEvent(ev.id));
+  const v = c == null ? null : Math.round(c * 1000) / 1000;
+  if (v === (ev.beamOffset ?? null)) return false;
+  ev.beamOffset = v;
+  await store.put('events', ev);
+  return true;
 }

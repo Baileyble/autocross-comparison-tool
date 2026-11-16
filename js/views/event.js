@@ -2,7 +2,8 @@
 
 import * as store from '../store.js';
 import { h, clear, modal, toast, confirmDialog, promptDialog, isSelected, toggleSelected, setSelection, onSelection, debounce, pickFiles, add, fill } from '../ui.js';
-import { entitySelect, driverName, markerBadges, thumbEl, today, nextRunNumber } from '../common.js';
+import { entitySelect, driverName, markerBadges, thumbEl, today, nextRunNumber, recalibrateBeam, runTitle, indexedTime } from '../common.js';
+import { autoMarkSplits } from '../automark.js';
 import { adjustedTime, bestRun, fmtTime, fmtDelta, fmtDate, parseTime, splitTable, theoreticalBest, isCleanRun, STATUSES } from '../model.js';
 import { lineChart } from '../charts.js';
 import { openImport } from './import.js';
@@ -37,6 +38,7 @@ export function renderEvent(root, id) {
   if (!ev) { fill(root, h('div', { class: 'empty' }, 'Event not found. ', h('a', { href: '#/' }, 'Back to library'))); return; }
   ev.splits ||= [];
   const runs = store.runsOfEvent(id);
+  recalibrateBeam(ev); // async; re-renders via the store if it changed
   const pen = store.settings.conePenalty;
   const driverIds = [...new Set(runs.map((r) => r.driverId || ''))];
   const colorOf = (d) => DRIVER_COLORS[driverIds.indexOf(d || '') % DRIVER_COLORS.length];
@@ -64,9 +66,13 @@ export function renderEvent(root, id) {
   const best = bestRun(runs, pen);
   const tbl = splitTable(runs.filter((r) => r.markers?.start != null), ev);
   const refTime = ev.refTime ?? null;
+  const hasIndex = runs.some((r) => indexedTime(r) != null);
+  let bestIdx = null;
+  for (const r of runs) { const t = indexedTime(r); if (t != null && (!bestIdx || t < bestIdx.t)) bestIdx = { r, t }; }
   const tiles = h('div', { class: 'tiles' },
     tile('Runs', String(runs.length)),
     tile('Fastest', best ? fmtTime(adjustedTime(best, pen)) : '—', best ? `${driverName(best.driverId) || '—'} · run ${best.runNumber ?? '?'}` : ''),
+    bestIdx ? tile('Fastest indexed', fmtTime(bestIdx.t), `${driverName(bestIdx.r.driverId) || '—'} · run ${bestIdx.r.runNumber ?? '?'}`) : null,
     tile('Cones', String(runs.reduce((s, r) => s + (r.cones || 0), 0))),
     tile('Theoretical best', tbl.theoretical != null && ev.splits.length ? fmtTime(tbl.theoretical) : '—', ev.splits.length ? 'best of each segment, all drivers' : 'add course splits to enable'),
   );
@@ -76,8 +82,8 @@ export function renderEvent(root, id) {
   for (const d of driverIds) { const b = bestRun(runs.filter((r) => (r.driverId || '') === d), pen); if (b) bestPerDriver.set(d, adjustedTime(b, pen)); }
   const runsTable = runs.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'table runs-table entry-table' },
     h('thead', null, h('tr', null,
-      h('th', { title: 'Select to compare' }, '⇄'), h('th', null, ''), h('th', null, '#'), h('th', null, 'Driver'), h('th', null, 'Car'),
-      h('th', { class: 'r' }, 'Raw time'), h('th', { class: 'r' }, 'Cones'), h('th', null, 'Status'), h('th', { class: 'r' }, 'Adjusted'), h('th', { class: 'r' }, 'Δ own best'), h('th', null, 'Marks'), h('th', null, ''),
+      h('th', { title: 'Select to compare' }, '⇄'), h('th', { class: 'col-sm-hide' }, ''), h('th', null, '#'), h('th', null, 'Driver'), h('th', { class: 'col-sm-hide' }, 'Car'),
+      h('th', { class: 'r' }, 'Raw time'), h('th', { class: 'r' }, 'Cones'), h('th', null, 'Status'), h('th', { class: 'r' }, 'Adjusted'), hasIndex ? h('th', { class: 'r', title: 'Adjusted × car index factor (set per car in Settings)' }, 'Indexed') : null, h('th', { class: 'r col-sm-hide' }, 'Δ own best'), h('th', { class: 'col-sm-hide' }, 'Marks'), h('th', null, ''),
     )),
     h('tbody', null, runs.map((r) => {
       const adj = adjustedTime(r, pen);
@@ -86,11 +92,11 @@ export function renderEvent(root, id) {
       const isBest = adj != null && adj === own;
       return h('tr', { class: isBest ? 'best-row' : '' },
         h('td', null, h('input', { type: 'checkbox', 'data-run': r.id, checked: isSelected(r.id), onchange: (e) => { if (!toggleSelected(r.id, e.target.checked)) e.target.checked = false; } })),
-        h('td', null, h('a', { href: `#/run/${r.id}` }, thumbEl(r, 'row-thumb'))),
+        h('td', { class: 'col-sm-hide' }, h('a', { href: `#/run/${r.id}` }, thumbEl(r, 'row-thumb'))),
         h('td', null, h('input', { class: 'input num', type: 'number', min: 1, value: r.runNumber ?? '', style: { width: '4.2em' }, onchange: (e) => { r.runNumber = parseInt(e.target.value) || null; save(); } })),
         h('td', null, h('span', { class: 'dot', style: { background: colorOf(r.driverId) } }), entitySelect('drivers', r.driverId, (v) => { r.driverId = v; save(); })),
-        h('td', null, entitySelect('cars', r.carId, (v) => { r.carId = v; save(); })),
-        h('td', { class: 'r' }, h('input', { class: 'input num time-input', inputmode: 'decimal', value: r.rawTime != null ? fmtTime(r.rawTime) : '', placeholder: '00.000', onchange: (e) => {
+        h('td', { class: 'col-sm-hide' }, entitySelect('cars', r.carId, (v) => { r.carId = v; save(); })),
+        h('td', { class: 'r' }, h('input', { class: 'input num time-input', inputmode: 'decimal', enterkeyhint: 'next', value: r.rawTime != null ? fmtTime(r.rawTime) : '', placeholder: '00.000', onkeydown: nextTimeOnEnter, onchange: (e) => {
           const t = parseTime(e.target.value);
           if (e.target.value.trim() && t == null) { toast('Time format: 45.123 or 1:05.123', { type: 'warn' }); return; }
           r.rawTime = t; save();
@@ -99,8 +105,9 @@ export function renderEvent(root, id) {
         h('td', null, h('select', { class: 'input', onchange: (e) => { r.status = e.target.value; save(); } },
           Object.entries(STATUSES).map(([k, v]) => h('option', { value: k, selected: (r.status || 'ok') === k }, v)))),
         h('td', { class: 'r mono strong' }, fmtTime(adj)),
-        h('td', { class: 'r mono' }, adj != null && own != null ? (isBest ? h('span', { class: 'badge badge-best' }, 'BEST') : fmtDelta(adj - own)) : '—'),
-        h('td', null, markerBadges(r, ev)),
+        hasIndex ? h('td', { class: 'r mono' }, fmtTime(indexedTime(r))) : null,
+        h('td', { class: 'r mono col-sm-hide' }, adj != null && own != null ? (isBest ? h('span', { class: 'badge badge-best' }, 'BEST') : fmtDelta(adj - own)) : '—'),
+        h('td', { class: 'col-sm-hide' }, markerBadges(r, ev)),
         h('td', null, h('a', { class: 'btn btn-small', href: `#/run/${r.id}` }, r.source ? 'Open' : 'Details')),
       );
     })),
@@ -130,6 +137,9 @@ export function renderEvent(root, id) {
       const n = await promptDialog('Split name', `Split ${ev.splits.length + 1}`, { title: 'Add course split' });
       if (n?.trim()) { ev.splits.push({ id: store.uid(), name: n.trim() }); await store.put('events', ev); }
     } }, '+ Add split'),
+    ev.splits.length && runs.filter((r) => r.source?.type === 'local').length > 1
+      ? h('button', { class: 'btn btn-small', title: 'Mark splits on one run by hand, then copy them to the other runs by matching what the cameras see', onclick: () => autoMarkDialog(ev, runs) }, '✨ Auto-mark splits from a reference run')
+      : null,
   );
 
   // ---- split analysis ----
@@ -163,6 +173,19 @@ export function renderEvent(root, id) {
           await store.put('events', ev);
         } })),
       h('p', { class: 'hint' }, 'Used on the Progress page to show your best as a % of a reference — the fairest way to compare across different courses.'),
+      h('label', { class: 'field inline' }, h('span', null, 'Launch → timing-beam offset (s)'),
+        h('input', { class: 'input num time-input', value: ev.beamOffset != null ? ev.beamOffset.toFixed(3) : '', placeholder: '0.000', onchange: async (e) => {
+          const raw = e.target.value.trim();
+          if (!raw) { ev.beamOffsetManual = false; ev.beamOffset = null; await store.put('events', ev); await recalibrateBeam(ev); return; }
+          const v = parseFloat(raw.replace(',', '.'));
+          if (!Number.isFinite(v) || Math.abs(v) > 5) { toast('Enter seconds, e.g. 0.35', { type: 'warn' }); e.target.value = ev.beamOffset != null ? ev.beamOffset.toFixed(3) : ''; return; }
+          ev.beamOffset = v; ev.beamOffsetManual = true; await store.put('events', ev);
+        } })),
+      h('p', { class: 'hint' }, ev.beamOffsetManual
+        ? 'Set by hand. Clear the field to calibrate automatically again.'
+        : ev.beamOffset != null
+          ? `Auto-calibrated from runs with both a finish mark and an official time. Used to place the finish on runs where you only entered the time.`
+          : 'Your start mark is the launch, but the official clock starts at the timing beam. Mark the finish on at least one run that has an official time and this is calibrated automatically.'),
     ),
     h('div', null, h('h2', { class: 'section-title' }, 'Course map'), mapBox),
   );
@@ -279,3 +302,48 @@ function compareMyProgression(runs) {
 }
 
 export { DRIVER_COLORS };
+
+function autoMarkDialog(ev, runs) {
+  const cands = runs.filter((r) => r.source?.type === 'local' && ev.splits.some((s) => r.markers?.splits?.[s.id] != null && !r.markers?.splitAuto?.[s.id]));
+  if (!cands.length) { toast('First mark the splits by hand on one run (open it, press 1–9 at each landmark).', { type: 'warn', ms: 5000 }); return; }
+  const manualCount = (r) => ev.splits.filter((s) => r.markers?.splits?.[s.id] != null && !r.markers?.splitAuto?.[s.id]).length;
+  cands.sort((a, b) => manualCount(b) - manualCount(a));
+  let refId = cands[0].id;
+  const targets = runs.filter((r) => r.source?.type === 'local');
+  const picks = new Map(targets.map((r) => [r.id, true]));
+  const sel = h('select', { class: 'input', onchange: (e) => { refId = e.target.value; } },
+    cands.map((r) => h('option', { value: r.id }, `${runTitle(r)} — ${manualCount(r)}/${ev.splits.length} splits marked by hand`)));
+  modal({
+    title: 'Auto-mark splits',
+    wide: true,
+    body: h('div', null,
+      h('p', { class: 'sub' }, 'The reference run\'s split marks are copied to the other runs by aligning their videos frame by frame (works best when the runs were filmed from the same camera position). Marks you set by hand are never overwritten; new marks are flagged "auto" until you confirm them in each run.'),
+      h('label', { class: 'field' }, h('span', null, 'Reference run'), sel),
+      h('div', { class: 'field' }, h('span', null, 'Runs to mark'),
+        h('div', { class: 'check-list' }, targets.map((r) => h('label', { class: 'field check' },
+          h('input', { type: 'checkbox', checked: true, onchange: (e) => picks.set(r.id, e.target.checked) }), h('span', null, runTitle(r)))))),
+    ),
+    actions: [{ label: 'Cancel' }, { label: 'Auto-mark', primary: true, onClick: async () => {
+      const ref = store.get('runs', refId);
+      const tg = targets.filter((r) => picks.get(r.id) && r.id !== refId);
+      toast('Aligning videos…', { ms: 1500 });
+      try {
+        const res = await autoMarkSplits(ref, tg, ev);
+        const n = res.marked.filter((m) => m.count).length;
+        const weak = res.marked.filter((m) => m.cost > 0.6);
+        toast(`Marked splits on ${n} run${n === 1 ? '' : 's'}.${res.skipped.length ? ` Skipped ${res.skipped.length}: ${res.skipped.map((x) => `${runTitle(x.run)} (${x.reason})`).join(', ')}.` : ''}`, { type: n ? 'ok' : 'warn', ms: 7000 });
+        if (weak.length) toast(`Alignment looked uncertain for ${weak.map((m) => runTitle(m.run)).join(', ')} — check those marks.`, { type: 'warn', ms: 7000 });
+      } catch (e) { toast(e.message, { type: 'error', ms: 5000 }); return false; }
+    } }],
+  });
+}
+
+/** Enter in a time field moves to the next run's time (fast results entry at the track). */
+function nextTimeOnEnter(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const all = [...document.querySelectorAll('.entry-table .time-input')];
+  const next = all[all.indexOf(e.target) + 1];
+  e.target.blur();
+  if (next) { next.focus(); next.select(); }
+}

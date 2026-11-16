@@ -2,7 +2,8 @@
 
 import * as store from '../store.js';
 import { h, rerenderRoute, clear, toast, modal, confirmDialog, debounce, isTyping, toggleSelected, isSelected, setSelection, add, fill } from '../ui.js';
-import { entitySelect, resolveSource, relinkFlow, runTitle, eventOptions, eventLabel, driverName, nextRunNumber } from '../common.js';
+import { entitySelect, resolveSource, relinkFlow, runTitle, eventOptions, eventLabel, driverName, nextRunNumber, recalibrateBeam } from '../common.js';
+import { autoMarkSplits } from '../automark.js';
 import { adjustedTime, bestRun, effectiveFinish, fmtTime, fmtDelta, parseTime, STATUSES, videoTime } from '../model.js';
 import { LocalPlayer, YouTubePlayer } from '../players.js';
 import { Timeline } from '../timeline.js';
@@ -64,7 +65,8 @@ export function renderRun(root, id) {
       ),
       h('div', { class: 'actions' }, prevNext,
         h('button', { class: 'btn', onclick: () => { toggleSelected(run.id, true); toast('Added to compare selection.'); } }, '+ Compare tray'),
-        h('button', { class: 'btn btn-primary', onclick: () => compareWithBest(run) }, '⇄ Compare with best'),
+        h('button', { class: 'btn btn-primary', title: 'This run vs your own best other run in this event', onclick: () => compareWithBest(run, 'mine') }, '⇄ vs my best'),
+        h('button', { class: 'btn', title: 'This run vs the fastest run in this event (any driver)', onclick: () => compareWithBest(run, 'fastest') }, 'vs fastest'),
       ),
     ),
     h('div', { class: 'run-layout' },
@@ -141,7 +143,7 @@ export function renderRun(root, id) {
     const st = analysisStatus(vid);
     if (st?.state === 'running' || st?.state === 'queued') add(statusLine, h('span', null, `Analyzing video… ${Math.round((st.progress || 0) * 100)}%`), h('progress', { max: 1, value: st.progress || 0 }));
     else if (st?.state === 'error') add(statusLine, h('span', { class: 'error' }, `Analysis failed: ${st.error}`), h('button', { class: 'btn btn-small', onclick: () => queueAnalysis(vid, { force: true }) }, 'Retry'));
-    else if (analysis) add(statusLine, h('span', { class: 'legend' }, h('i', { class: 'lg-motion' }), 'camera motion', h('i', { class: 'lg-audio' }), 'audio'), h('span', { class: 'sub' }, ' · scroll to zoom, shift+scroll to pan, drag a flag to move a mark'));
+    else if (analysis) add(statusLine, h('span', { class: 'legend' }, h('i', { class: 'lg-motion' }), 'camera motion', h('i', { class: 'lg-audio' }), 'audio'), h('span', { class: 'sub' }, ' · scroll or pinch to zoom, shift+scroll to pan, drag a flag to move a mark'));
     else add(statusLine, h('button', { class: 'btn btn-small', onclick: () => queueAnalysis(vid) }, 'Analyze video'), h('span', { class: 'sub' }, ' — finds the launch automatically and draws motion/audio graphs.'));
   }
 
@@ -153,7 +155,7 @@ export function renderRun(root, id) {
   function zoomRun() {
     const s = run.markers.start;
     if (s == null || !timeline) return timeline?.fit();
-    const f = effectiveFinish(run) ?? s + 60;
+    const f = effectiveFinish(run, ev) ?? s + 60;
     timeline.zoomTo(s - 3, f + 3);
   }
 
@@ -162,7 +164,7 @@ export function renderRun(root, id) {
     const m = run.markers;
     if (m.start != null) out.push({ key: 'start', t: m.start, label: m.startAuto ? 'START?' : 'START', color: '#a3e635', draggable: true });
     (ev?.splits || []).forEach((s, i) => { if (m.splits[s.id] != null) out.push({ key: s.id, t: m.splits[s.id], label: `${i + 1} ${s.name}`, color: '#facc15', draggable: true }); });
-    const f = effectiveFinish(run);
+    const f = effectiveFinish(run, ev);
     if (f != null) out.push({ key: 'finish', t: f, label: m.finish == null ? 'FINISH (time)' : 'FINISH', color: '#f43f5e', draggable: m.finish != null, dashed: m.finish == null });
     for (const a of run.annotations) out.push({ key: 'note:' + a.id, t: a.t, label: a.text, color: '#a78bfa', kind: 'note' });
     return out;
@@ -174,8 +176,9 @@ export function renderRun(root, id) {
     t = Math.round(t * 1000) / 1000;
     if (key === 'start') { run.markers.start = t; run.markers.startAuto = false; }
     else if (key === 'finish') run.markers.finish = t;
-    else run.markers.splits[key] = t;
+    else { run.markers.splits[key] = t; if (run.markers.splitAuto) delete run.markers.splitAuto[key]; }
     save();
+    if (key === 'start' || key === 'finish') recalibrateBeam(ev);
     renderMarks();
     if (!quiet) toast(`${key === 'start' ? 'Start' : key === 'finish' ? 'Finish' : ev.splits.find((s) => s.id === key)?.name} marked at ${fmtTime(t)}`, { ms: 1500 });
     if (key === 'start' && !run.thumb && run.source?.type === 'local') store.getVideoFile(run.source.videoId).then((f) => f && captureThumb(f, t + 3)).then((th) => { if (th) { run.thumb = th; save(); } });
@@ -183,7 +186,7 @@ export function renderRun(root, id) {
   function clearMarker(key) {
     if (key === 'start') { run.markers.start = null; run.markers.startAuto = false; }
     else if (key === 'finish') run.markers.finish = null;
-    else delete run.markers.splits[key];
+    else { delete run.markers.splits[key]; if (run.markers.splitAuto) delete run.markers.splitAuto[key]; }
     save(); renderMarks();
   }
 
@@ -216,6 +219,29 @@ export function renderRun(root, id) {
     run.markers.start = Math.round(t * 1000) / 1000; run.markers.startAuto = true;
     saveNow(); renderMarks(); seek(t); zoomRun();
     toast(`Launch detected at ${fmtTime(t)} — check it with the frame buttons, then press S to confirm.`, { ms: 5000 });
+  }
+
+  function splitsFrom() {
+    const manual = (r) => (ev?.splits || []).filter((s) => r.markers?.splits?.[s.id] != null && !r.markers?.splitAuto?.[s.id]).length;
+    const cands = store.runsOfEvent(run.eventId).filter((r) => r.id !== run.id && r.source?.type === 'local' && manual(r) > 0).sort((a, b) => manual(b) - manual(a));
+    if (!cands.length) return toast('No other run in this event has split marks set by hand yet.', { type: 'warn' });
+    let refId = cands[0].id;
+    modal({
+      title: 'Copy splits from another run',
+      body: h('div', null,
+        h('p', { class: 'sub' }, 'Aligns the two videos frame by frame and places this run\'s splits where the reference run\'s splits are. Splits you marked by hand here are kept.'),
+        h('select', { class: 'input', onchange: (e) => { refId = e.target.value; } }, cands.map((r) => h('option', { value: r.id }, `${runTitle(r)} (${manual(r)} splits)`)))),
+      actions: [{ label: 'Cancel' }, { label: 'Copy splits', primary: true, onClick: async () => {
+        try {
+          const res = await autoMarkSplits(store.get('runs', refId), [run], ev);
+          if (res.skipped.length) { toast(`Can't align: ${res.skipped[0].reason}.`, { type: 'warn', ms: 5000 }); return false; }
+          const m = res.marked[0];
+          toast(m?.count ? `Placed ${m.count} split${m.count > 1 ? 's' : ''} — check each, then confirm.` : 'Nothing to place (all splits already marked by hand).', { type: 'ok' });
+          if (m?.cost > 0.6) toast('The videos matched poorly (different camera view?). Check the marks carefully.', { type: 'warn', ms: 6000 });
+          renderMarks();
+        } catch (e) { toast(e.message, { type: 'error' }); return false; }
+      } }],
+    });
   }
 
   async function findRuns() {
@@ -266,6 +292,7 @@ export function renderRun(root, id) {
       h('button', { class: 'btn mark-btn', title: 'Add a note at the current time (N)', onclick: addNote }, 'Note', h('kbd', null, 'N')),
       h('span', { class: 'spacer' }),
       run.source?.type === 'local' ? h('button', { class: 'btn btn-small', onclick: autoStart, title: 'Detect launch from camera motion' }, '✨ Auto-detect start') : null,
+      run.source?.type === 'local' && splits.length ? h('button', { class: 'btn btn-small', onclick: splitsFrom, title: 'Copy split marks from another run of this event by matching the videos' }, '✨ Splits from…') : null,
       ev ? null : h('span', { class: 'sub' }, 'Assign an event to use course splits.'),
     );
     if (ev && !splits.length) add(markBar, h('a', { class: 'sub', href: `#/event/${ev.id}` }, 'Add course splits on the event page →'));
@@ -285,8 +312,9 @@ export function renderRun(root, id) {
         t != null && key ? h('button', { class: 'icon-btn danger', title: 'Clear', onclick: () => clearMarker(key) }, '✕') : null),
     ));
     row(h('span', { class: 'mk-dot start' }, 'Start'), m.start, 'start', m.startAuto ? h('span', { class: 'badge badge-auto', title: 'Auto-detected — verify and press S (or Confirm) to accept' }, 'auto', h('button', { class: 'linkish', onclick: () => { m.startAuto = false; saveNow(); renderMarks(); } }, ' confirm')) : null);
-    for (const s of ev?.splits || []) row(h('span', { class: 'mk-dot split' }, s.name), m.splits[s.id], s.id);
-    const f = effectiveFinish(run);
+    for (const s of ev?.splits || []) row(h('span', { class: 'mk-dot split' }, s.name), m.splits[s.id], s.id,
+      m.splits[s.id] != null && m.splitAuto?.[s.id] ? h('span', { class: 'badge badge-auto', title: 'Copied from another run by video alignment — check it, then confirm' }, 'auto', h('button', { class: 'linkish', onclick: () => { delete m.splitAuto[s.id]; saveNow(); renderMarks(); } }, ' confirm')) : null);
+    const f = effectiveFinish(run, ev);
     row(h('span', { class: 'mk-dot finish' }, 'Finish'), f, m.finish != null ? 'finish' : null,
       m.finish == null && f != null ? h('span', { class: 'badge badge-auto', title: 'Start + official time. Mark it on video for split-accurate syncing.' }, 'from time') : null);
     const vt = videoTime(run);
@@ -344,7 +372,7 @@ export function renderRun(root, id) {
         field('Raw time', h('input', { class: 'input num time-input', inputmode: 'decimal', value: run.rawTime != null ? fmtTime(run.rawTime) : '', placeholder: '45.123', onchange: (e) => {
           const t = parseTime(e.target.value);
           if (e.target.value.trim() && t == null) return toast('Time format: 45.123 or 1:05.123', { type: 'warn' });
-          run.rawTime = t; saveNow(); renderMarks(); renderSide();
+          run.rawTime = t; saveNow(); recalibrateBeam(ev); renderMarks(); renderSide();
         } })),
         field('Cones', h('input', { class: 'input num', type: 'number', min: 0, value: run.cones || 0, onchange: (e) => { run.cones = Math.max(0, parseInt(e.target.value) || 0); saveNow(); renderSide(); } })),
         field('Status', h('select', { class: 'input', onchange: (e) => { run.status = e.target.value; saveNow(); renderSide(); } }, Object.entries(STATUSES).map(([k, v]) => h('option', { value: k, selected: (run.status || 'ok') === k }, v)))),
@@ -386,7 +414,7 @@ export function renderRun(root, id) {
     else if (k === 'f' || k === 'F') setMarker('finish', now());
     else if (k === 'n' || k === 'N') { e.preventDefault(); addNote(); }
     else if (k === 'Home') { e.preventDefault(); if (run.markers.start != null) seek(run.markers.start); }
-    else if (k === 'End') { e.preventDefault(); const f = effectiveFinish(run); if (f != null) seek(f); }
+    else if (k === 'End') { e.preventDefault(); const f = effectiveFinish(run, ev); if (f != null) seek(f); }
     else if (k === '[') setSpeed(Math.max(0, speedIdx - 1));
     else if (k === ']') setSpeed(Math.min(SPEEDS.length - 1, speedIdx + 1));
     else if (/^[1-9]$/.test(k)) { const s = ev?.splits?.[parseInt(k) - 1]; if (s) setMarker(s.id, now()); }
@@ -425,15 +453,16 @@ function navLinks(run) {
   );
 }
 
-function compareWithBest(run) {
+function compareWithBest(run, which = 'mine') {
   const pen = store.settings.conePenalty;
   const pool = store.runsOfEvent(run.eventId).filter((r) => r.source && r.id !== run.id);
-  const mine = bestRun(pool.filter((r) => r.driverId === run.driverId), pen);
-  const overall = bestRun(pool, pen);
-  const ids = [run.id];
-  if (overall) ids.push(overall.id);
-  if (mine && mine.id !== overall?.id) ids.push(mine.id);
-  if (ids.length < 2) { toast('No other timed run with video in this event to compare against.', { type: 'warn' }); return; }
+  const other = which === 'mine' ? bestRun(pool.filter((r) => r.driverId === run.driverId), pen) : bestRun(pool, pen);
+  if (!other) {
+    toast(which === 'mine' ? 'You have no other timed run with video in this event yet.' : 'No other timed run with video in this event to compare against.', { type: 'warn' });
+    return;
+  }
+  // The faster run becomes the reference automatically, so deltas read "how much slower than the best".
+  const ids = [run.id, other.id];
   setSelection(ids);
   location.hash = `#/compare/${ids.join(',')}`;
 }

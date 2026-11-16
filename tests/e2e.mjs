@@ -206,6 +206,37 @@ try {
   const notes = await store((s, id) => s.get('runs', id).annotations.length, ra.id);
   check('timed note added with N', notes === 1);
 
+  // ---- finish mark on A calibrates the launch→beam offset used for B's estimated finish ----
+  await page.goto(`http://127.0.0.1:${PORT}/#/run/${ra.id}`);
+  await page.waitForFunction(() => document.querySelector('.stage video')?.readyState >= 2);
+  const trueFinishA = truth.launchA + truth.finishA; // video time the car actually reaches the finish
+  await page.evaluate((t) => { document.querySelector('.stage video').currentTime = t; }, trueFinishA);
+  await page.waitForTimeout(400);
+  await page.keyboard.press('f');
+  await page.waitForTimeout(600);
+  const off = await store((s) => s.all('events')[0].beamOffset);
+  const expectedOff = trueFinishA - ra.start - truth.finishA;
+  check('launch→beam offset calibrated from a marked finish', off != null && Math.abs(off - expectedOff) < 0.01, `offset ${off} (expected ${expectedOff.toFixed(3)})`);
+  const { effectiveFinish } = await import(path.join(root, 'js', 'model.js'));
+  const finB = await store((s, id) => { const r = s.get('runs', id); return { r, ev: s.get('events', r.eventId) }; }, rb.id);
+  const estB = effectiveFinish(finB.r, finB.ev);
+  check('estimated finish for B lands near its true finish', Math.abs(estB - (truth.launchB + truth.finishB)) < 0.06, `${estB.toFixed(3)} vs ${truth.launchB + truth.finishB}`);
+
+  // ---- auto-mark splits: clear B's split, copy from A by video alignment ----
+  const evIdA = await store((s) => s.all('events')[0].id);
+  await store((s, id) => { const r = s.get('runs', id); r.markers.splits = {}; return s.put('runs', r); }, rb.id);
+  await page.goto(`http://127.0.0.1:${PORT}/#/event/${evIdA}`);
+  await page.click('button:has-text("Auto-mark splits")');
+  await page.click('.modal-actions >> text=Auto-mark');
+  await page.waitForTimeout(2500);
+  const bSplit = await store((s, id) => { const r = s.get('runs', id); return { t: Object.values(r.markers.splits)[0], auto: Object.values(r.markers.splitAuto || {})[0] }; }, rb.id);
+  // Truth: where B's camera shows what A's camera showed at A's split.
+  const aSplitCourse = (ra.start + 10.5) - truth.launchA;
+  const keys = Object.keys(truth.truth).map(Number).sort((x, y) => x - y);
+  const k = keys.findIndex((x) => x > aSplitCourse);
+  const tB = truth.truth[keys[k - 1]] + (aSplitCourse - keys[k - 1]) * (truth.truth[keys[k]] - truth.truth[keys[k - 1]]) / (keys[k] - keys[k - 1]);
+  check('auto-marked split matches ground truth (±0.15 s) and is flagged auto', bSplit.t != null && Math.abs(bSplit.t - (truth.launchB + tB)) < 0.15 && bSplit.auto === true, `${bSplit.t} vs ${(truth.launchB + tB).toFixed(3)}`);
+
   // ---- event page: segment table & YouTube import ----
   const evId = await store((s) => s.all('events')[0].id);
   await page.goto(`http://127.0.0.1:${PORT}/#/event/${evId}`);
@@ -256,6 +287,20 @@ try {
   await page.goto(`http://127.0.0.1:${PORT}/?v1=https://youtu.be/dQw4w9WgXcQ&v2=https://youtu.be/9bZkp7q19f0&t1=1.5&t2=2`);
   await page.waitForSelector('.run-chip');
   check('legacy ?v1=&v2= link opens shared compare', (await page.locator('.run-chip').count()) === 2);
+
+  // ---- dialogs: Escape closes only the top one; import dialog fits a phone screen ----
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`http://127.0.0.1:${PORT}/#/`);
+  await page.waitForSelector('.event-card');
+  await page.click('button:has-text("Import runs")');
+  await page.locator('.import .grid3 select').nth(1).selectOption('__new');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  check('Escape closes only the topmost dialog', (await page.locator('.modal-overlay').count()) === 1);
+  const box = await page.locator('.modal').boundingBox();
+  check('import dialog fits a 390px-wide screen', box && box.x >= 0 && box.x + box.width <= 390.5, `x=${box?.x} w=${box?.width}`);
+  await page.keyboard.press('Escape');
 
   // ---- mobile layout ----
   await page.setViewportSize({ width: 390, height: 844 });

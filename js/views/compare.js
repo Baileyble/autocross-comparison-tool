@@ -9,8 +9,7 @@ import {
 } from '../model.js';
 import { LocalPlayer, YouTubePlayer } from '../players.js';
 import { SyncEngine } from '../sync.js';
-import { getAnalysis } from '../analyze.js';
-import { alignRuns } from '../signal.js';
+import { alignProblem, alignPair } from '../automark.js';
 
 const SPEEDS = [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2];
 const prefs = loadPrefs();
@@ -106,7 +105,7 @@ export function renderCompare(root, input) {
   let warps = [];
   function rebuildWarps() { warps = runs.map((_, i) => warpFor(i)); }
   function courseEnd(i) {
-    const f = effectiveFinish({ ...runs[i], markers: { ...runs[i].markers, start: startOf(i) } });
+    const f = effectiveFinish({ ...runs[i], markers: { ...runs[i].markers, start: startOf(i) } }, evOf(runs[i]));
     if (f != null) return f - startOf(i);
     const d = panels[i]?.player?.duration;
     return d ? d - startOf(i) : 60;
@@ -144,6 +143,8 @@ export function renderCompare(root, input) {
     const endA = w.lastA;
     return w.delta(Math.min(refT, endA));
   }
+  /** With only start + finish matched, the in-between delta is just the total gap spread evenly. */
+  const deltaIsEstimate = (i, t) => !(st.align === 'auto' && alignments.has(i)) && warps[i]?.size <= 2 && t < warps[i].lastA;
 
   // ---------- panels ----------
   async function buildPanels() {
@@ -176,6 +177,16 @@ export function renderCompare(root, input) {
     engine.seek(-Math.min(1, store.settings.leadIn ?? 2));
     applyAudio();
     renderToolbar(); renderTransport(); renderSplits();
+    // No shared splits? A video alignment gives a real running delta — use it if possible.
+    const onlyEnds = runs.every((_, i) => i === st.ref || warps[i].size <= 2);
+    if (onlyEnds && st.align === 'splits' && runs.every((r) => r.source?.type === 'local')) {
+      if (await ensureAutoAlign({ quiet: true })) {
+        if (destroyed) return;
+        st.align = 'auto';
+        resync();
+        toast('No splits marked — runs aligned by matching the videos. Switch “Align by” to Marks to use your marks only.', { ms: 6000 });
+      }
+    }
   }
 
   async function loadPlayer(p) {
@@ -226,7 +237,10 @@ export function renderCompare(root, input) {
 
   // ---------- zoom & pan ----------
   function attachZoom(p) {
-    let drag = null;
+    let drag = null, pinch = null;
+    const pts = new Map();
+    const rel = (x, y) => { const r = p.shield.getBoundingClientRect(); return { x: (x - r.left) / r.width - 0.5, y: (y - r.top) / r.height - 0.5, w: r.width }; };
+    const two = () => { const [a, b] = [...pts.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y), m: rel((a.x + b.x) / 2, (a.y + b.y) / 2) }; };
     p.shield.addEventListener('wheel', (e) => {
       e.preventDefault();
       const r = p.shield.getBoundingClientRect();
@@ -239,20 +253,35 @@ export function renderCompare(root, input) {
       setZoom(p.i, { z: nz, x: nz === 1 ? 0 : nx, y: nz === 1 ? 0 : ny });
     }, { passive: false });
     p.shield.addEventListener('pointerdown', (e) => {
-      drag = { x: e.clientX, y: e.clientY, z: { ...st.zoom[p.i] }, moved: false };
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       p.shield.setPointerCapture(e.pointerId);
+      if (pts.size === 2) { const t = two(); pinch = { d0: t.d || 1, m0: t.m, z0: { ...st.zoom[p.i] } }; drag = null; return; }
+      drag = { x: e.clientX, y: e.clientY, z: { ...st.zoom[p.i] }, moved: false };
     });
     p.shield.addEventListener('pointermove', (e) => {
+      if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pts.size === 2) {
+        // Two-finger pinch: zoom around the fingers' midpoint and follow it as it moves.
+        const t = two(), z0 = pinch.z0;
+        const nz = Math.max(1, Math.min(6, z0.z * (t.d / pinch.d0)));
+        const k = nz / z0.z;
+        setZoom(p.i, nz === 1 ? { z: 1, x: 0, y: 0 } : { z: nz, x: t.m.x - (pinch.m0.x - z0.x) * k, y: t.m.y - (pinch.m0.y - z0.y) * k });
+        return;
+      }
       if (!drag) return;
       const r = p.shield.getBoundingClientRect();
       const dx = (e.clientX - drag.x) / r.width, dy = (e.clientY - drag.y) / r.height;
       if (Math.abs(dx) + Math.abs(dy) > 0.01) drag.moved = true;
       if (drag.moved && drag.z.z > 1) setZoom(p.i, { ...drag.z, x: drag.z.x + dx, y: drag.z.y + dy });
     });
-    p.shield.addEventListener('pointerup', () => {
-      if (drag && !drag.moved && !st.adjust) engine?.toggle();
+    const up = (e) => {
+      pts.delete(e.pointerId);
+      if (pinch) { if (pts.size < 2) pinch = null; drag = null; return; } // a pinch never toggles playback
+      if (e.type === 'pointerup' && drag && !drag.moved && !st.adjust) engine?.toggle();
       drag = null;
-    });
+    };
+    p.shield.addEventListener('pointerup', up);
+    p.shield.addEventListener('pointercancel', up);
     p.shield.addEventListener('dblclick', () => setZoom(p.i, { z: 1, x: 0, y: 0 }));
   }
   function setZoom(i, z) {
@@ -296,13 +325,15 @@ export function renderCompare(root, input) {
     }
     const finished = ct >= end - 1e-3;
     const timer = ct < -0.005 ? `−${Math.abs(ct).toFixed(2)}` : fmtTime(Math.max(0, Math.min(ct, end)), 2);
-    const key = `${timer}|${d == null ? '' : d.toFixed(2)}|${seg}|${st.ref}|${finished}`;
+    const key = `${timer}|${d == null ? '' : d.toFixed(2)}|${seg}|${st.ref}|${finished}|${deltaIsEstimate(i, t)}`;
     if (key === p.hudKey) return;
     p.hudKey = key;
     fill(p.hud, 
       h('div', { class: 'hud-tl' }, h('span', { class: 'letter' }, RUN_LETTERS[i]), h('span', { class: 'hud-name' }, runTitle(run)), i === st.ref ? h('span', { class: 'hud-ref' }, 'REF') : null),
       h('div', { class: `hud-tr mono big ${finished ? 'finished' : ''}` }, timer),
-      d != null ? h('div', { class: `hud-bl mono ${d > 0.005 ? 'slower' : d < -0.005 ? 'faster' : ''}` }, fmtDelta(d, 2), h('small', null, ` vs ${RUN_LETTERS[st.ref]}`)) : null,
+      d != null ? (deltaIsEstimate(i, t)
+        ? h('div', { class: 'hud-bl mono est', title: 'Estimate: only start and finish are matched, so the final gap is spread evenly over the run. Mark splits or use “Align by: Video” for a real running delta.' }, '≈', fmtDelta(d, 1), h('small', null, ' est.'))
+        : h('div', { class: `hud-bl mono ${d > 0.005 ? 'slower' : d < -0.005 ? 'faster' : ''}` }, fmtDelta(d, 2), h('small', null, ` vs ${RUN_LETTERS[st.ref]}`))) : null,
       seg ? h('div', { class: 'hud-br' }, seg) : null,
     );
   }
@@ -366,11 +397,16 @@ export function renderCompare(root, input) {
       g.fillStyle = '#5b6b7c'; g.font = '10px ui-monospace, monospace';
       g.fillText(`+${maxAbs.toFixed(2)}s slower`, 4, graphTop + 8);
       g.fillText(`−${maxAbs.toFixed(2)}s faster`, 4, graphBot);
+      let anyEst = false;
       for (const d of ds) {
-        g.strokeStyle = RUN_COLORS[d.i]; g.lineWidth = 2; g.beginPath();
+        const est = !(st.align === 'auto' && alignments.has(d.i)) && warps[d.i].size <= 2;
+        anyEst ||= est;
+        g.strokeStyle = RUN_COLORS[d.i]; g.lineWidth = 2; g.setLineDash(est ? [5, 4] : []); g.beginPath();
         d.pts.forEach(([tt, v], k) => { const x = X(tt), y = mid - (v / maxAbs) * (mid - graphTop); k ? g.lineTo(x, y) : g.moveTo(x, y); });
         g.stroke();
+        g.setLineDash([]);
       }
+      if (anyEst) { g.fillStyle = '#8a9bb0'; g.fillText('dashed = start/finish only, gap spread evenly (estimate)', Math.max(110, W / 2 - 150), graphBot); }
     }
     // split markers (reference)
     const kr = knotsOf(runs[st.ref]);
@@ -442,7 +478,8 @@ export function renderCompare(root, input) {
       h('select', { class: 'input input-small', title: 'Speed ([ / ])', onchange: (e) => setSpeed(+e.target.value) },
         SPEEDS.map((s) => h('option', { value: s, selected: s === st.speed }, `${s}×`))),
       h('span', { class: 'spacer' }),
-      st.loopSeg ? h('button', { class: 'btn btn-small btn-primary', onclick: () => setLoop(null) }, `⟲ Looping ${st.loopSeg.label} ✕`) : h('span', { class: 'sub' }, 'Click a segment below to loop it'),
+      st.loopSeg ? h('button', { class: 'btn btn-small btn-primary', onclick: () => setLoop(null) }, `⟲ Looping ${st.loopSeg.label} ✕`) : h('span', { class: 'sub hide-sm' }, 'Click a segment below to loop it'),
+      h('button', { class: 'btn btn-small controls-toggle', title: 'Show/hide run chips and options (they are hidden in fullscreen and on short screens)', onclick: () => wrap.classList.toggle('show-controls') }, '☰'),
     );
   }
   function setSpeed(s) {
@@ -540,11 +577,15 @@ export function renderCompare(root, input) {
 
   // ---------- run chips ----------
   function renderChips() {
+    const sig = (r) => `${(r.setup || '').trim()}|${(r.tags || []).slice().sort().join(',')}`;
+    const setupsDiffer = new Set(runs.map(sig)).size > 1;
     fill(chipsBar, runs.map((r, i) => h('div', { class: `run-chip ${i === st.ref ? 'is-ref' : ''}`, style: { '--c': RUN_COLORS[i] } },
       h('span', { class: 'letter' }, RUN_LETTERS[i]),
       h('div', { class: 'chip-text' },
         h('div', { class: 'strong' }, runTitle(r), h('span', { class: 'mono chip-time' }, timeSummary(r))),
         h('div', { class: 'sub' }, runSubtitle(r) || (ephemeral ? 'Shared run' : ''), r.markers?.start == null ? h('span', { class: 'warn' }, ' · no start mark') : null),
+        r.setup || r.tags?.length ? h('div', { class: `chip-setup ${setupsDiffer ? 'differs' : ''}`, title: setupsDiffer ? 'Setup/tags differ between these runs' : 'Setup / tags' },
+          r.tags?.length ? h('span', { class: 'tags' }, r.tags.map((t) => h('span', { class: 'tag' }, t))) : null, r.setup ? h('span', null, r.setup.length > 90 ? r.setup.slice(0, 88) + '…' : r.setup) : null) : null,
       ),
       h('button', { class: `icon-btn ${i === st.ref ? 'on' : ''}`, title: 'Use as reference (deltas are measured against it)', onclick: () => { st.ref = i; st.audio = i; alignments = new Map(); if (st.align === 'auto') st.align = 'splits'; applyAudio(); applyLayout(); resync(); renderChips(); } }, '★'),
       !ephemeral ? h('a', { class: 'icon-btn', title: 'Open run editor', href: `#/run/${r.id}` }, '✎') : null,
@@ -600,39 +641,28 @@ export function renderCompare(root, input) {
   }
 
   // ---------- auto alignment ----------
-  async function ensureAutoAlign() {
-    const ref = runs[st.ref];
-    if (ref.source?.type !== 'local') { toast('Video alignment needs local video files (not YouTube).', { type: 'warn' }); return false; }
-    const need = runs.map((r, i) => i).filter((i) => i !== st.ref && !alignments.has(i));
-    if (!need.length) return true;
-    const refA = await getAnalysis(ref.source.videoId);
-    if (!refA) { toast('Reference video hasn\'t been analyzed yet (open it in the run editor).', { type: 'warn' }); return false; }
-    const fin = (r) => effectiveFinish({ ...r, markers: { ...r.markers, start: startOf(runs.indexOf(r)) } });
-    if (fin(ref) == null) { toast('Video alignment needs start and finish (or official time) on each run.', { type: 'warn' }); return false; }
-    const busy = toast('Aligning videos…', { ms: 1500 });
+  async function ensureAutoAlign({ quiet = false } = {}) {
+    const ref = runs[st.ref], evR = evOf(ref);
+    const warn = (m) => { if (!quiet) toast(m, { type: 'warn', ms: 6000 }); };
+    const refProblem = await alignProblem(ref, evR);
+    if (refProblem) { warn(`Video alignment needs the reference run to have: ${refProblem === 'not a local video' ? 'a local video file (not YouTube)' : refProblem.replace(/^no /, 'a ')}.`); return false; }
+    const need = runs.map((_, i) => i).filter((i) => i !== st.ref && !alignments.has(i));
+    const problems = [];
     let ok = 0;
     for (const i of need) {
       const r = runs[i];
-      if (r.source?.type !== 'local') continue;
-      const sig = [startOf(st.ref), fin(ref), startOf(i), fin(r)].map((x) => x?.toFixed(3)).join(',');
-      const key = `${ref.id}|${r.id}`;
-      const cached = !ephemeral && store.get('alignments', key);
-      if (cached && cached.sig === sig) { alignments.set(i, cached.knots); ok++; continue; }
-      const a = await getAnalysis(r.source.videoId);
-      if (!a || fin(r) == null) continue;
-      await new Promise((res) => setTimeout(res, 20));
-      const res = alignRuns(
-        { times: refA.times, frames: refA.frames, size: refA.W * refA.H, start: startOf(st.ref), finish: fin(ref) },
-        { times: a.times, frames: a.frames, size: a.W * a.H, start: startOf(i), finish: fin(r) },
-      );
-      if (!res) continue;
-      alignments.set(i, res.knots);
+      const pr = await alignProblem(r, evOf(r));
+      if (pr) { problems.push(`${RUN_LETTERS[i]}: ${pr}`); continue; }
+      await new Promise((res) => setTimeout(res, 0));
+      const al = await alignPair(ref, r, evR, evOf(r));
+      if (destroyed) return false;
+      if (!al) { problems.push(`${RUN_LETTERS[i]}: alignment failed`); continue; }
+      alignments.set(i, al.knots);
       ok++;
-      if (!ephemeral) await store.put('alignments', { id: key, knots: res.knots, cost: res.cost, sig });
-      if (res.cost > 0.6) toast(`Alignment for ${RUN_LETTERS[i]} looks uncertain (different camera view?) — verify in position-locked mode.`, { type: 'warn', ms: 6000 });
+      if (al.cost > 0.6 && !quiet) toast(`Alignment for ${RUN_LETTERS[i]} looks uncertain (different camera view?) — verify in position-locked mode.`, { type: 'warn', ms: 6000 });
     }
-    if (!ok) { toast('Could not align: both runs need analyzed local videos with start and finish.', { type: 'warn', ms: 5000 }); return false; }
-    return true;
+    if (problems.length) warn(`Not aligned by video — ${problems.join('; ')}.`);
+    return need.length === 0 || ok > 0;
   }
 
   function resync() {

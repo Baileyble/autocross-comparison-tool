@@ -63,12 +63,18 @@ export function openSettings() {
       h('div', { class: 'entity-head' }, h('strong', null, isDriver ? 'Drivers' : 'Cars'),
         h('button', { class: 'btn btn-small', onclick: async () => { const n = await promptDialog(isDriver ? 'Driver name' : 'Car (e.g. 2019 Miata ST)'); if (n?.trim()) { await store.put(kind, { id: store.uid(), name: n.trim() }); render(); } } }, '+ Add')),
       items.length ? h('ul', null, items.map((d) => h('li', null,
-        h('span', null, d.name, d.isMe ? h('span', { class: 'badge' }, 'me') : null, h('span', { class: 'sub' }, ` · ${used(d.id)} runs`)),
+        h('span', null, d.name, d.isMe ? h('span', { class: 'badge' }, 'me') : null,
+          !isDriver && d.carClass ? h('span', { class: 'badge' }, d.carClass) : null,
+          !isDriver && d.indexFactor ? h('span', { class: 'sub' }, ` · index ${d.indexFactor}`) : null,
+          h('span', { class: 'sub' }, ` · ${used(d.id)} runs`)),
         isDriver ? h('button', { class: 'btn btn-small btn-ghost', title: 'Mark as you (default driver, shown first on Progress)', onclick: async () => {
           for (const x of store.all('drivers')) if (x.isMe && x.id !== d.id) { x.isMe = false; await store.put('drivers', x); }
           d.isMe = !d.isMe; await store.put('drivers', d); render();
         } }, d.isMe ? 'Unset me' : 'This is me') : null,
-        h('button', { class: 'icon-btn', title: 'Rename', onclick: async () => { const n = await promptDialog('Name', d.name); if (n?.trim()) { d.name = n.trim(); await store.put(kind, d); render(); } } }, '✎'),
+        h('button', { class: 'icon-btn', title: isDriver ? 'Rename' : 'Edit car', onclick: async () => {
+          if (isDriver) { const n = await promptDialog('Name', d.name); if (n?.trim()) { d.name = n.trim(); await store.put(kind, d); render(); } return; }
+          if (await editCar(d)) render();
+        } }, '✎'),
         h('button', { class: 'icon-btn danger', title: 'Delete', onclick: async () => {
           const n = used(d.id);
           if (!(await confirmDialog(n ? `${d.name} is used by ${n} run(s). Delete anyway? Those runs will show no ${isDriver ? 'driver' : 'car'}.` : `Delete ${d.name}?`, { danger: true, okLabel: 'Delete' }))) return;
@@ -119,4 +125,32 @@ function exportCSV() {
       r.markers?.start, r.markers?.finish, (r.tags || []).join('; '), r.setup, r.notes, r.source?.type === 'youtube' ? `https://youtu.be/${r.source.ytId}` : r.source?.fileName].map(q).join(','));
   }
   download(`autocross-runs-${new Date().toISOString().slice(0, 10)}.csv`, lines.join('\n'), 'text/csv');
+}
+
+/** Car details: name, class and an optional index factor (entered by the user — values differ by club and year). */
+function editCar(car) {
+  return new Promise((resolve) => {
+    const d = { name: car.name, carClass: car.carClass || '', indexFactor: car.indexFactor ?? '' };
+    let saved = false;
+    modal({
+      title: 'Edit car',
+      body: h('div', null,
+        h('label', { class: 'field' }, h('span', null, 'Name'), h('input', { class: 'input', value: d.name, oninput: (e) => { d.name = e.target.value; } })),
+        h('div', { class: 'grid2' },
+          h('label', { class: 'field' }, h('span', null, 'Class'), h('input', { class: 'input', value: d.carClass, placeholder: 'e.g. CS, STR', oninput: (e) => { d.carClass = e.target.value; } })),
+          h('label', { class: 'field' }, h('span', null, 'Index factor'), h('input', { class: 'input num', inputmode: 'decimal', value: d.indexFactor, placeholder: 'e.g. 0.823', oninput: (e) => { d.indexFactor = e.target.value; } }))),
+        h('p', { class: 'hint' }, 'Optional. With a class, Progress compares you to the fastest run in your class. With an index factor, indexed times (adjusted × factor) are shown so different classes can be compared. Look up your club\'s current factors — they change between organizations and years.'),
+      ),
+      actions: [{ label: 'Cancel' }, { label: 'Save', primary: true, onClick: async () => {
+        const f = String(d.indexFactor).trim() === '' ? null : parseFloat(String(d.indexFactor).replace(',', '.'));
+        if (f != null && !(f > 0 && f < 3)) { toast('Index factor should be a number like 0.823.', { type: 'warn' }); return false; }
+        car.name = d.name.trim() || car.name;
+        car.carClass = d.carClass.trim() || null;
+        car.indexFactor = f;
+        await store.put('cars', car);
+        saved = true;
+      } }],
+      onClose: () => resolve(saved),
+    });
+  });
 }

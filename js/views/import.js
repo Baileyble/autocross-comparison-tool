@@ -44,7 +44,7 @@ export function openImport({ files = [], eventId = null, driverId = null, carId 
         h('strong', null, 'Choose video files'), h('span', null, ' or drop them here. One file per run works best; a file containing several runs can be split later.')));
       return;
     }
-    filesBox.appendChild(h('table', { class: 'table compact' },
+    filesBox.appendChild(h('div', { class: 'table-wrap' }, h('table', { class: 'table compact' },
       h('thead', null, h('tr', null, h('th', null, ''), h('th', null, 'File'), h('th', null, 'Size'), h('th', null, 'Driver'), h('th', null, 'Run #'))),
       h('tbody', null, state.items.map((it) => h('tr', { class: it.include ? '' : 'muted' },
         h('td', null, h('input', { type: 'checkbox', checked: it.include, onchange: (e) => { it.include = e.target.checked; renumber(); renderFiles(); } })),
@@ -53,7 +53,7 @@ export function openImport({ files = [], eventId = null, driverId = null, carId 
         h('td', null, entitySelect('drivers', it.driverId || state.driverId, (v) => { it.driverId = v; renumber(); renderFiles(); }, { placeholder: '(default)' })),
         h('td', null, h('input', { class: 'input num', type: 'number', min: 1, value: it.runNumber ?? '', style: { width: '5em' }, onchange: (e) => { it.runNumber = parseInt(e.target.value) || null; it.manualNumber = true; } })),
       ))),
-    ));
+    )));
     filesBox.appendChild(h('button', { class: 'btn btn-ghost', onclick: async () => addFiles(await pickFiles()) }, '+ Add more files'));
   };
 

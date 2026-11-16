@@ -14,6 +14,7 @@ export class Timeline {
     this.analysis = null;
     this.drag = null;
     this.hover = null;
+    this.pts = new Map(); // active pointers, for two-finger pinch zoom on touch screens
     canvas.addEventListener('pointerdown', (e) => this._down(e));
     canvas.addEventListener('pointermove', (e) => this._move(e));
     canvas.addEventListener('pointerup', (e) => this._up(e));
@@ -47,6 +48,13 @@ export class Timeline {
   _down(e) {
     const { x, y } = this._pos(e);
     this.c.setPointerCapture(e.pointerId);
+    this.pts.set(e.pointerId, x);
+    if (this.pts.size === 2) {
+      const [a, b] = [...this.pts.values()];
+      this.pinch = { d0: Math.abs(a - b) || 1, v0: this.v0, v1: this.v1, tm: this._t((a + b) / 2), mx0: (a + b) / 2 };
+      this.drag = null;
+      return;
+    }
     const m = this._hit(x, y);
     if (m) { this.drag = { marker: m }; return; }
     this.drag = { scrub: true };
@@ -54,6 +62,19 @@ export class Timeline {
   }
   _move(e) {
     const { x, y } = this._pos(e);
+    if (this.pts.has(e.pointerId)) this.pts.set(e.pointerId, x);
+    if (this.pinch && this.pts.size === 2) {
+      const [a, b] = [...this.pts.values()];
+      const span0 = this.pinch.v1 - this.pinch.v0;
+      const ns = Math.max(0.3, Math.min(this.duration, span0 * (this.pinch.d0 / (Math.abs(a - b) || 1))));
+      const mx = (a + b) / 2;
+      // keep the time under the fingers' midpoint under it
+      let v0 = this.pinch.tm - (mx / this.w) * ns;
+      v0 = Math.max(0, Math.min(this.duration - ns, v0));
+      this.v0 = v0; this.v1 = v0 + ns;
+      this.draw();
+      return;
+    }
     if (!this.drag) {
       const m = this._hit(x, y);
       this.c.style.cursor = m ? 'ew-resize' : 'pointer';
@@ -63,7 +84,11 @@ export class Timeline {
     if (this.drag.marker) { this.o.onMarkerDrag(this.drag.marker, t); this.o.onSeek(t); }
     else this.o.onSeek(t);
   }
-  _up() { this.drag = null; }
+  _up(e) {
+    this.pts.delete(e.pointerId);
+    if (this.pts.size < 2) this.pinch = null;
+    this.drag = null;
+  }
   _clamp(t) { return Math.max(0, Math.min(this.duration, t)); }
   _wheel(e) {
     e.preventDefault();

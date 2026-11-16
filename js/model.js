@@ -21,18 +21,36 @@ export function adjustedTime(run, conePenalty = 2) {
   return run.rawTime + (run.cones || 0) * conePenalty;
 }
 
-/** Finish marker in video time. Falls back to start + official raw time. */
-export function effectiveFinish(run) {
+/**
+ * Finish marker in video time. Falls back to start + official raw time + the event's
+ * launch→beam offset (the start mark is the launch; the official clock starts at the beam).
+ */
+export function effectiveFinish(run, event = null) {
   const m = run?.markers || {};
   if (!isNum(m.start)) return null;
   if (isNum(m.finish)) return m.finish;
-  if (isNum(run.rawTime) && run.rawTime > 0) return m.start + run.rawTime;
+  if (isNum(run.rawTime) && run.rawTime > 0) return m.start + run.rawTime + (isNum(event?.beamOffset) ? event.beamOffset : 0);
   return null;
 }
 
 export function finishIsEstimated(run) {
   const m = run?.markers || {};
   return !isNum(m.finish) && effectiveFinish(run) != null;
+}
+
+/**
+ * Typical difference between video-measured time (launch → finish mark) and official time,
+ * from clean runs that have both. Median, so one bad mark doesn't skew it. null if no data.
+ */
+export function calibrateBeamOffset(runs) {
+  const d = runs
+    .filter((r) => (!r.status || r.status === 'ok') && isNum(r.rawTime) && isNum(r.markers?.start) && isNum(r.markers?.finish))
+    .map((r) => r.markers.finish - r.markers.start - r.rawTime)
+    .filter((x) => Math.abs(x) < 3) // ignore clearly wrong marks
+    .sort((a, b) => a - b);
+  if (!d.length) return null;
+  const mid = d.length >> 1;
+  return d.length % 2 ? d[mid] : (d[mid - 1] + d[mid]) / 2;
 }
 
 /** Time measured on video between start and finish markers (null unless both are set). */
@@ -54,7 +72,7 @@ export function runKnots(run, event) {
     const v = m.splits?.[s.id];
     if (isNum(v)) raw.push({ key: s.id, label: s.name, name: s.name, t: v - m.start });
   }
-  const fin = effectiveFinish(run);
+  const fin = effectiveFinish(run, event);
   if (fin != null) raw.push({ key: 'finish', label: 'Finish', name: 'finish', t: fin - m.start, estimated: !isNum(m.finish) });
   const out = [];
   for (const k of raw) if (!out.length || k.t > out[out.length - 1].t + 1e-6) out.push(k);
